@@ -30,6 +30,14 @@ pub struct EducationList {
 	pub note: Option<String>,
 }
 
+#[derive(Deserialize, Serialize)]
+pub struct EducationShort {
+	pub id: i64,
+	pub contact_id: Option<i64>,
+	pub contact_name: Option<String>,
+	pub start_date: Option<NaiveDate>,
+}
+
 impl Education {
 	pub fn new() -> Self {
 		Default::default()
@@ -190,8 +198,10 @@ impl EducationList {
 		}
 		Ok(educations)
 	}
+}
 
-	pub fn get_near(conn: &Connection) -> Result<Vec<EducationList>, String> {
+impl EducationShort {
+	pub fn get_near(conn: &Connection) -> Result<Vec<EducationShort>, String> {
 		let mut educations = Vec::new();
 		for row in &conn
 			.query(
@@ -200,17 +210,11 @@ impl EducationList {
 						e.id,
 						e.contact_id,
 						c.name AS contact_name,
-						e.start_date,
-						e.end_date,
-						e.post_id,
-						p.name AS post_name,
-						e.note
+						e.start_date
 					FROM
 						educations AS e
 					LEFT JOIN
 						contacts AS c ON c.id = e.contact_id
-					LEFT JOIN
-						posts AS p ON p.id = e.post_id
 					WHERE
 						e.start_date > TIMESTAMP 'now'::timestamp - '1 month'::interval
 					ORDER BY
@@ -221,27 +225,11 @@ impl EducationList {
 			)
 			.map_err(|e| format!("educations list near {}", e.to_string()))?
 		{
-			let start_str: Option<NaiveDate> = row.get(3);
-			let end_str: Option<NaiveDate> = row.get(4);
-			educations.push(EducationList {
+			educations.push(EducationShort {
 				id: row.get(0),
 				contact_id: row.get(1),
 				contact_name: row.get(2),
 				start_date: row.get(3),
-				end_date: row.get(4),
-				start_str: if let Some(d) = start_str {
-					Some(d.format("%Y-%m-%d").to_string())
-				} else {
-					None
-				},
-				end_str: if let Some(d) = end_str {
-					Some(d.format("%Y-%m-%d").to_string())
-				} else {
-					None
-				},
-				post_id: row.get(5),
-				post_name: row.get(6),
-				note: row.get(7),
 			});
 		}
 		Ok(educations)

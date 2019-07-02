@@ -11,21 +11,12 @@ use actix_web::{
 use futures::Future;
 use r2d2::Pool;
 use r2d2_postgres::PostgresConnectionManager;
-use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serde_json::Value::Null;
 
-use repdb::education::EducationList;
-
 use repdb::get_connurl;
-use repdb::practice::PracticeList;
-// pub fn establish_connection() -> Pool {
-//     // dotenv().ok();
-//     let database_url = env::var("DATABASE_URL")
-//         .expect("DATABASE_URL must be set");
-//     let manager = PostgresConnectionManager::new(database_url.clone(), TlsMode::None).expect(&format!("Error connecting to {}", database_url));
-//     r2d2::Pool::new(manager).expect(&format!("Error creating r2d2 pool {:?}", manager))
-// }
+use repdb::practice::PracticeShort;
+use repdb::education::EducationShort;
 
 fn get_manager() -> PostgresConnectionManager {
     let conn_url = get_connurl();
@@ -33,19 +24,12 @@ fn get_manager() -> PostgresConnectionManager {
         .unwrap_or_else(|_| panic!("Error connection manager to {}", conn_url))
 }
 
-#[derive(Deserialize, Serialize)]
-struct JsonData {
-    data: Vec<EducationList>,
-    error: Option<String>,
-    ok: bool,
-}
-
 fn educations_near(
     db: web::Data<Pool<PostgresConnectionManager>>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     web::block(move || {
         let conn = db.get().unwrap();
-        EducationList::get_near(&conn)
+        EducationShort::get_near(&conn)
     })
     .then(|res| match res {
         Ok(db_result) => Ok(HttpResponse::Ok().json(json!({
@@ -62,7 +46,7 @@ fn practices_near(
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     web::block(move || {
         let conn = db.get().unwrap();
-        PracticeList::get_near(&conn)
+        PracticeShort::get_near(&conn)
     })
     .then(|res| match res {
         Ok(db_result) => Ok(HttpResponse::Ok().json(json!({
@@ -91,6 +75,10 @@ fn main() -> io::Result<()> {
                 "/api/go/practices/near",
                 web::get().to_async(practices_near),
             )
+            // .route(
+            //     "/api/go/contacts/list",
+            //     web::get().to_async(contacts_list),
+            // )
     })
     .bind("127.0.0.1:9090")?
     .start();

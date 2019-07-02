@@ -29,6 +29,16 @@ pub struct PracticeList {
     pub date_str: Option<String>,
 }
 
+#[derive(Deserialize, Serialize)]
+pub struct PracticeShort {
+    pub id: i64,
+    pub company_id: Option<i64>,
+    pub company_name: Option<String>,
+    pub kind_id: Option<i64>,
+    pub kind_short_name: Option<String>,
+    pub date_of_practice: Option<NaiveDate>,
+}
+
 impl Practice {
     pub fn new() -> Self {
         Default::default()
@@ -235,8 +245,10 @@ impl PracticeList {
         }
         Ok(practices)
     }
+}
 
-    pub fn get_near(conn: &Connection) -> Result<Vec<PracticeList>, String> {
+impl PracticeShort {
+    pub fn get_near(conn: &Connection) -> Result<Vec<PracticeShort>, String> {
         let mut practices = Vec::new();
         for row in &conn
             .query(
@@ -246,10 +258,8 @@ impl PracticeList {
                         p.company_id,
                         c.name AS company_name,
                         p.kind_id,
-                        k.name AS kind_name,
                         k.short_name AS kind_short_name,
-                        p.date_of_practice,
-                        p.topic
+                        p.date_of_practice
                     FROM
                         practices AS p
                     LEFT JOIN
@@ -266,21 +276,13 @@ impl PracticeList {
             )
             .map_err(|e| format!("practece list near {}", e.to_string()))?
         {
-            let date: Option<NaiveDate> = row.get(6);
-            practices.push(PracticeList {
+            practices.push(PracticeShort {
                 id: row.get(0),
                 company_id: row.get(1),
                 company_name: row.get(2),
                 kind_id: row.get(3),
-                kind_name: row.get(4),
-                kind_short_name: row.get(5),
-                date_of_practice: row.get(6),
-                topic: row.get(7),
-                date_str: if let Some(d) = date {
-                    Some(d.format("%d.%m.%y").to_string())
-                } else {
-                    None
-                },
+                kind_short_name: row.get(4),
+                date_of_practice: row.get(5),
             });
         }
         Ok(practices)
