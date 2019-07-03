@@ -16,8 +16,8 @@ pub struct Company {
 	pub created_at: Option<NaiveDateTime>,
 	pub updated_at: Option<NaiveDateTime>,
 	pub emails: Option<Vec<String>>,
-	pub phones: Option<Vec<String>>,
-	pub faxes: Option<Vec<String>>,
+	pub phones: Option<Vec<i64>>,
+	pub faxes: Option<Vec<i64>>,
 	pub practices: Option<Vec<PracticeList>>,
 	pub contacts: Option<Vec<ContactShort>>,
 }
@@ -29,8 +29,8 @@ pub struct CompanyList {
 	pub address: Option<String>,
 	pub scope_name: Option<String>,
 	pub emails: Option<Vec<String>>,
-	pub phones: Option<Vec<String>>,
-	pub faxes: Option<Vec<String>>,
+	pub phones: Option<Vec<i64>>,
+	pub faxes: Option<Vec<i64>>,
 	pub practices: Option<Vec<String>>,
 }
 

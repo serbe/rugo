@@ -12,12 +12,21 @@ use futures::Future;
 use postgres::Connection;
 use r2d2::Pool;
 use r2d2_postgres::PostgresConnectionManager;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serde_json::Value::Null;
 
 use repdb::get_connurl;
 use repdb::practice::PracticeShort;
 use repdb::education::EducationShort;
+use repdb::company::CompanyList;
+
+#[derive(Deserialize, Serialize)]
+enum DBResult {
+    EducationShorts(Vec<EducationShort>),
+    PracticeShorts(Vec<PracticeShort>),
+    CompanyLists(Vec<CompanyList>),
+}
 
 fn get_manager() -> PostgresConnectionManager {
     let conn_url = get_connurl();
@@ -25,11 +34,12 @@ fn get_manager() -> PostgresConnectionManager {
         .unwrap_or_else(|_| panic!("Error connection manager to {}", conn_url))
 }
 
-fn get_data(conn: &Connection, name: &str, command: &str) -> Result<serde_json::value::Value, serde_json::value::Value> {
+fn get_data(conn: &Connection, name: &str, command: &str) -> Result<DBResult, String> {
     match (name, command) {
-        ("educations", "near") => Ok(json!({"data": EducationShort::get_near(conn)})),
-        ("practices", "near") => Ok(json!({"data": PracticeShort::get_near(conn)})),
-        _ => Err(json!({}))
+        ("educations", "near") => Ok(DBResult::EducationShorts(EducationShort::get_near(conn)?)),
+        ("practices", "near") => Ok(DBResult::PracticeShorts(PracticeShort::get_near(conn)?)),
+        ("company", "list") => Ok(DBResult::CompanyLists(CompanyList::get_all(conn)?)),
+        _ => Err("bad path".to_string())
     }
 }
 

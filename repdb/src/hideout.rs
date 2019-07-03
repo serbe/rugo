@@ -84,7 +84,7 @@ pub struct HideoutList {
 	pub hideout_type_name: Option<String>,
 	pub address: Option<String>,
 	pub contact_name: Option<String>,
-	pub phones: Option<Vec<String>>,
+	pub phones: Option<Vec<i64>>,
 }
 
 // GetHideout - get one hideout by id

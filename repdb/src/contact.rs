@@ -33,8 +33,8 @@ pub struct ContactList {
     pub company_id: Option<i64>,
     pub company_name: Option<String>,
     pub post_name: Option<String>,
-    pub phones: Option<Vec<String>>,
-    pub faxes: Option<Vec<String>>,
+    pub phones: Option<Vec<i64>>,
+    pub faxes: Option<Vec<i64>>,
 }
 
 #[derive(Deserialize, Serialize)]
