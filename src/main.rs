@@ -17,15 +17,21 @@ use serde_json::json;
 use serde_json::Value::Null;
 
 use repdb::get_connurl;
-use repdb::practice::PracticeShort;
-use repdb::education::EducationShort;
-use repdb::company::CompanyList;
+use repdb::practice::{Practice, PracticeShort};
+use repdb::education::{Education, EducationShort};
+use repdb::company::{Company, CompanyList};
+use repdb::contact::{Contact, ContactList};
 
 #[derive(Deserialize, Serialize)]
 enum DBResult {
+    Education(Education),
     EducationShorts(Vec<EducationShort>),
+    Practice(Practice),
     PracticeShorts(Vec<PracticeShort>),
+    Company(Company),
     CompanyLists(Vec<CompanyList>),
+    Contact(Contact),
+    ContactLists(Vec<ContactList>),
 }
 
 fn get_manager() -> PostgresConnectionManager {
@@ -34,11 +40,23 @@ fn get_manager() -> PostgresConnectionManager {
         .unwrap_or_else(|_| panic!("Error connection manager to {}", conn_url))
 }
 
-fn get_data(conn: &Connection, name: &str, command: &str) -> Result<DBResult, String> {
+fn get_list(conn: &Connection, name: &str, command: &str) -> Result<DBResult, String> {
     match (name, command) {
-        ("educations", "near") => Ok(DBResult::EducationShorts(EducationShort::get_near(conn)?)),
-        ("practices", "near") => Ok(DBResult::PracticeShorts(PracticeShort::get_near(conn)?)),
+        ("education", "near") => Ok(DBResult::EducationShorts(EducationShort::get_near(conn)?)),
+        ("practice", "near") => Ok(DBResult::PracticeShorts(PracticeShort::get_near(conn)?)),
         ("company", "list") => Ok(DBResult::CompanyLists(CompanyList::get_all(conn)?)),
+        ("contact", "list") => Ok(DBResult::ContactLists(ContactList::get_all(conn)?)),
+        _ => Err("bad path".to_string())
+    }
+}
+
+fn get_item(conn: &Connection, name: &str, id: &str) -> Result<DBResult, String> {
+    let id = id.parse::<i64>().map_err(|_| format!("parse {} as i64", id))?;
+    match name {
+        "education" => Ok(DBResult::Education(Education::get(conn, id)?)),
+        "practice" => Ok(DBResult::Practice(Practice::get(conn, id)?)),
+        // "company" => Ok(DBResult::Company(Company::get(conn, id)?)),
+        "contact" => Ok(DBResult::Contact(Contact::get(conn, id)?)),
         _ => Err("bad path".to_string())
     }
 }
@@ -48,7 +66,7 @@ fn name_command(
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     web::block(move || {
         let conn = db.get().unwrap();
-        get_data(&conn, &path.0, &path.1)
+        get_list(&conn, &path.0, &path.1)
     })
     .then(|res| match res {
         Ok(db_result) => Ok(HttpResponse::Ok().json(json!({
@@ -56,43 +74,32 @@ fn name_command(
             "error": Null,
             "ok": true
         }))),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        Err(err) => {
+            println!("{}", err);
+            Ok(HttpResponse::InternalServerError().into())
+        }
     })
 }
 
-// fn educations_near(
-//     db: web::Data<Pool<PostgresConnectionManager>>,
-// ) -> impl Future<Item = HttpResponse, Error = Error> {
-//     web::block(move || {
-//         let conn = db.get().unwrap();
-//         EducationShort::get_near(&conn)
-//     })
-//     .then(|res| match res {
-//         Ok(db_result) => Ok(HttpResponse::Ok().json(json!({
-//             "data": db_result,
-//             "error": Null,
-//             "ok": true
-//         }))),
-//         Err(_) => Ok(HttpResponse::InternalServerError().into()),
-//     })
-// }
-
-// fn practices_near(
-//     db: web::Data<Pool<PostgresConnectionManager>>,
-// ) -> impl Future<Item = HttpResponse, Error = Error> {
-//     web::block(move || {
-//         let conn = db.get().unwrap();
-//         PracticeShort::get_near(&conn)
-//     })
-//     .then(|res| match res {
-//         Ok(db_result) => Ok(HttpResponse::Ok().json(json!({
-//             "data": db_result,
-//             "error": Null,
-//             "ok": true
-//         }))),
-//         Err(_) => Ok(HttpResponse::InternalServerError().into()),
-//     })
-// }
+fn name_id(
+    db: web::Data<Pool<PostgresConnectionManager>>, path: web::Path<(String, String)>
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    web::block(move || {
+        let conn = db.get().unwrap();
+        get_item(&conn, &path.0, &path.1)
+    })
+    .then(|res| match res {
+        Ok(db_result) => Ok(HttpResponse::Ok().json(json!({
+            "data": db_result,
+            "error": Null,
+            "ok": true
+        }))),
+        Err(err) => {
+            println!("{}", err);
+            Ok(HttpResponse::InternalServerError().into())
+        }
+    })
+}
 
 fn main() -> io::Result<()> {
     let manager = get_manager();
@@ -105,6 +112,9 @@ fn main() -> io::Result<()> {
             // .wrap(middleware::Logger::default())
             .service(
                 web::resource("/api/go/{name}/{command}").route(web::get().to_async(name_command))
+            )
+            .service(
+                web::resource("/api/go/{name}/item/{id}").route(web::get().to_async(name_id))
             )
             // .route(
             //     "/api/go/practices/near",
