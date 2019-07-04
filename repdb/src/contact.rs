@@ -193,14 +193,22 @@ impl ContactList {
             )
             .map_err(|e| format!("contact list {}", e.to_string()))?
         {
+			let phones = match row.get_opt(5) {
+				Some(Ok(data)) => Some(data),
+				_ => None,
+			};
+			let faxes = match row.get_opt(6) {
+				Some(Ok(data)) => Some(data),
+				_ => None,
+			};
             contacts.push(ContactList {
                 id: row.get(0),
                 name: row.get(1),
                 company_id: row.get(2),
                 company_name: row.get(3),
                 post_name: row.get(4),
-                phones: row.get(5),
-                faxes: row.get(6),
+                phones,
+                faxes,
             });
         }
         Ok(contacts)
