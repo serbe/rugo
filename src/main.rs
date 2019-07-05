@@ -21,17 +21,20 @@ use repdb::practice::{Practice, PracticeShort};
 use repdb::education::{Education, EducationShort};
 use repdb::company::{Company, CompanyList};
 use repdb::contact::{Contact, ContactList};
+use repdb::department::{Department, DepartmentList};
 
 #[derive(Deserialize, Serialize)]
 enum DBResult {
     Education(Education),
-    EducationShorts(Vec<EducationShort>),
+    EducationShort(Vec<EducationShort>),
     Practice(Practice),
-    PracticeShorts(Vec<PracticeShort>),
+    PracticeShort(Vec<PracticeShort>),
     Company(Company),
-    CompanyLists(Vec<CompanyList>),
+    CompanyList(Vec<CompanyList>),
     Contact(Contact),
-    ContactLists(Vec<ContactList>),
+    ContactList(Vec<ContactList>),
+    Department(Department),
+    DepartmentList(Vec<DepartmentList>),
 }
 
 fn get_manager() -> PostgresConnectionManager {
@@ -42,10 +45,11 @@ fn get_manager() -> PostgresConnectionManager {
 
 fn get_list(conn: &Connection, name: &str, command: &str) -> Result<DBResult, String> {
     match (name, command) {
-        ("education", "near") => Ok(DBResult::EducationShorts(EducationShort::get_near(conn)?)),
-        ("practice", "near") => Ok(DBResult::PracticeShorts(PracticeShort::get_near(conn)?)),
-        ("company", "list") => Ok(DBResult::CompanyLists(CompanyList::get_all(conn)?)),
-        ("contact", "list") => Ok(DBResult::ContactLists(ContactList::get_all(conn)?)),
+        ("education", "near") => Ok(DBResult::EducationShort(EducationShort::get_near(conn)?)),
+        ("practice", "near") => Ok(DBResult::PracticeShort(PracticeShort::get_near(conn)?)),
+        ("company", "list") => Ok(DBResult::CompanyList(CompanyList::get_all(conn)?)),
+        ("contact", "list") => Ok(DBResult::ContactList(ContactList::get_all(conn)?)),
+        ("department", "list") => Ok(DBResult::DepartmentList(DepartmentList::get_all(conn)?)),
         _ => Err("bad path".to_string())
     }
 }
@@ -57,6 +61,7 @@ fn get_item(conn: &Connection, name: &str, id: &str) -> Result<DBResult, String>
         "practice" => Ok(DBResult::Practice(Practice::get(conn, id)?)),
         // "company" => Ok(DBResult::Company(Company::get(conn, id)?)),
         "contact" => Ok(DBResult::Contact(Contact::get(conn, id)?)),
+        "department" => Ok(DBResult::Department(Department::get(conn, id)?)),
         _ => Err("bad path".to_string())
     }
 }
