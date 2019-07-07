@@ -13,28 +13,38 @@ use postgres::Connection;
 use r2d2::Pool;
 use r2d2_postgres::PostgresConnectionManager;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
-use serde_json::Value::Null;
+use serde_json::{json, Value::Null};
 
 use repdb::get_connurl;
-use repdb::practice::{Practice, PracticeShort};
-use repdb::education::{Education, EducationShort};
+use repdb::certificate::{Certificate, CertificateList};
 use repdb::company::{Company, CompanyList};
 use repdb::contact::{Contact, ContactList};
 use repdb::department::{Department, DepartmentList};
+use repdb::education::{Education, EducationList, EducationShort};
+use repdb::kind::{Kind, KindList};
+use repdb::post::{Post, PostList};
+use repdb::practice::{Practice, PracticeList, PracticeShort};
 
 #[derive(Deserialize, Serialize)]
 enum DBResult {
-    Education(Education),
-    EducationShort(Vec<EducationShort>),
-    Practice(Practice),
-    PracticeShort(Vec<PracticeShort>),
+    Certificate(Certificate),
+    CertificateList(Vec<CertificateList>),
     Company(Company),
     CompanyList(Vec<CompanyList>),
     Contact(Contact),
     ContactList(Vec<ContactList>),
     Department(Department),
     DepartmentList(Vec<DepartmentList>),
+    Education(Education),
+    EducationList(Vec<EducationList>),
+    EducationShort(Vec<EducationShort>),
+    Kind(Kind),
+    KindList(Vec<KindList>),
+    Post(Post),
+    PostList(Vec<PostList>),
+    Practice(Practice),
+    PracticeList(Vec<PracticeList>),
+    PracticeShort(Vec<PracticeShort>),
 }
 
 fn get_manager() -> PostgresConnectionManager {
@@ -45,11 +55,16 @@ fn get_manager() -> PostgresConnectionManager {
 
 fn get_list(conn: &Connection, name: &str, command: &str) -> Result<DBResult, String> {
     match (name, command) {
-        ("education", "near") => Ok(DBResult::EducationShort(EducationShort::get_near(conn)?)),
-        ("practice", "near") => Ok(DBResult::PracticeShort(PracticeShort::get_near(conn)?)),
+        ("certificate", "list") => Ok(DBResult::CompanyList(CompanyList::get_all(conn)?)),
         ("company", "list") => Ok(DBResult::CompanyList(CompanyList::get_all(conn)?)),
         ("contact", "list") => Ok(DBResult::ContactList(ContactList::get_all(conn)?)),
         ("department", "list") => Ok(DBResult::DepartmentList(DepartmentList::get_all(conn)?)),
+        ("education", "list") => Ok(DBResult::EducationList(EducationList::get_all(conn)?)),
+        ("education", "near") => Ok(DBResult::EducationShort(EducationShort::get_near(conn)?)),
+        ("kind", "list") => Ok(DBResult::KindList(KindList::get_all(conn)?)),
+        ("post", "list") => Ok(DBResult::PostList(PostList::get_all(conn)?)),
+        ("practice", "list") => Ok(DBResult::PracticeList(PracticeList::get_all(conn)?)),
+        ("practice", "near") => Ok(DBResult::PracticeShort(PracticeShort::get_near(conn)?)),
         _ => Err("bad path".to_string())
     }
 }
@@ -57,11 +72,14 @@ fn get_list(conn: &Connection, name: &str, command: &str) -> Result<DBResult, St
 fn get_item(conn: &Connection, name: &str, id: &str) -> Result<DBResult, String> {
     let id = id.parse::<i64>().map_err(|_| format!("parse {} as i64", id))?;
     match name {
-        "education" => Ok(DBResult::Education(Education::get(conn, id)?)),
-        "practice" => Ok(DBResult::Practice(Practice::get(conn, id)?)),
+        "certificate" => Ok(DBResult::Certificate(Certificate::get(conn, id)?)),
         // "company" => Ok(DBResult::Company(Company::get(conn, id)?)),
         "contact" => Ok(DBResult::Contact(Contact::get(conn, id)?)),
         "department" => Ok(DBResult::Department(Department::get(conn, id)?)),
+        "education" => Ok(DBResult::Education(Education::get(conn, id)?)),
+        "kind" => Ok(DBResult::Kind(Kind::get(conn, id)?)),
+        "post" => Ok(DBResult::Post(Post::get(conn, id)?)),
+        "practice" => Ok(DBResult::Practice(Practice::get(conn, id)?)),
         _ => Err("bad path".to_string())
     }
 }

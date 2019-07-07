@@ -34,6 +34,14 @@ pub struct CompanyList {
 	pub practices: Option<Vec<String>>,
 }
 
+impl Company {
+	pub fn new() -> Self {
+        Default::default()
+    }
+
+	
+}
+
 impl CompanyList {
 	pub fn get_all(conn: &Connection) -> Result<Vec<CompanyList>, String> {
 		let mut companies = Vec::new();
