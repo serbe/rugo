@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value::Null};
 
 use repdb::get_connurl;
+
 use repdb::certificate::{Certificate, CertificateList};
 use repdb::company::{Company, CompanyList};
 use repdb::contact::{Contact, ContactList};
@@ -65,27 +66,30 @@ fn get_list(conn: &Connection, name: &str, command: &str) -> Result<DBResult, St
         ("post", "list") => Ok(DBResult::PostList(PostList::get_all(conn)?)),
         ("practice", "list") => Ok(DBResult::PracticeList(PracticeList::get_all(conn)?)),
         ("practice", "near") => Ok(DBResult::PracticeShort(PracticeShort::get_near(conn)?)),
-        _ => Err("bad path".to_string())
+        _ => Err("bad path".to_string()),
     }
 }
 
 fn get_item(conn: &Connection, name: &str, id: &str) -> Result<DBResult, String> {
-    let id = id.parse::<i64>().map_err(|_| format!("parse {} as i64", id))?;
+    let id = id
+        .parse::<i64>()
+        .map_err(|_| format!("parse {} as i64", id))?;
     match name {
         "certificate" => Ok(DBResult::Certificate(Certificate::get(conn, id)?)),
-        // "company" => Ok(DBResult::Company(Company::get(conn, id)?)),
+        "company" => Ok(DBResult::Company(Company::get(conn, id)?)),
         "contact" => Ok(DBResult::Contact(Contact::get(conn, id)?)),
         "department" => Ok(DBResult::Department(Department::get(conn, id)?)),
         "education" => Ok(DBResult::Education(Education::get(conn, id)?)),
         "kind" => Ok(DBResult::Kind(Kind::get(conn, id)?)),
         "post" => Ok(DBResult::Post(Post::get(conn, id)?)),
         "practice" => Ok(DBResult::Practice(Practice::get(conn, id)?)),
-        _ => Err("bad path".to_string())
+        _ => Err("bad path".to_string()),
     }
 }
 
 fn name_command(
-    db: web::Data<Pool<PostgresConnectionManager>>, path: web::Path<(String, String)>
+    db: web::Data<Pool<PostgresConnectionManager>>,
+    path: web::Path<(String, String)>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     web::block(move || {
         let conn = db.get().unwrap();
@@ -105,7 +109,8 @@ fn name_command(
 }
 
 fn name_id(
-    db: web::Data<Pool<PostgresConnectionManager>>, path: web::Path<(String, String)>
+    db: web::Data<Pool<PostgresConnectionManager>>,
+    path: web::Path<(String, String)>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     web::block(move || {
         let conn = db.get().unwrap();
@@ -134,19 +139,17 @@ fn main() -> io::Result<()> {
             .data(pool.clone())
             // .wrap(middleware::Logger::default())
             .service(
-                web::resource("/api/go/{name}/{command}").route(web::get().to_async(name_command))
+                web::resource("/api/go/{name}/{command}").route(web::get().to_async(name_command)),
             )
-            .service(
-                web::resource("/api/go/{name}/item/{id}").route(web::get().to_async(name_id))
-            )
-            // .route(
-            //     "/api/go/practices/near",
-            //     web::get().to_async(practices_near),
-            // )
-            // .route(
-            //     "/api/go/contacts/list",
-            //     web::get().to_async(contacts_list),
-            // )
+            .service(web::resource("/api/go/{name}/item/{id}").route(web::get().to_async(name_id)))
+        // .route(
+        //     "/api/go/practices/near",
+        //     web::get().to_async(practices_near),
+        // )
+        // .route(
+        //     "/api/go/contacts/list",
+        //     web::get().to_async(contacts_list),
+        // )
     })
     .bind("127.0.0.1:9090")?
     .start();

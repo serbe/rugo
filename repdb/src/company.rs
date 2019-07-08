@@ -39,7 +39,79 @@ impl Company {
         Default::default()
     }
 
-	
+	pub fn get(conn: &Connection, id: i64) -> Result<Company, String> {
+		let mut company = Company::new();
+        if id == 0 {
+            Ok(company)
+        } else {
+            for row in &conn
+                .query(
+                    "
+                        SELECT
+                            c.id,
+                            c.name,
+                            c.address,
+                            c.scope_id,
+                            s.name AS scope_name,
+                            c.note,
+                            c.created_at,
+                            c.updated_at,
+                            array_agg(DISTINCT e.email) AS emails,
+                            array_agg(DISTINCT ph.phone) AS phones,
+                            array_agg(DISTINCT f.phone) AS faxes
+                        FROM
+                            companies AS c
+                        LEFT JOIN
+                            scopes AS s ON c.scope_id = s.id
+                        LEFT JOIN
+                            emails AS e ON c.id = e.company_id
+                        LEFT JOIN
+                            phones AS ph ON c.id = ph.company_id AND ph.fax = false
+                        LEFT JOIN
+                            phones AS f ON c.id = f.company_id AND f.fax = true
+                        WHERE
+                            c.id = $1
+                        GROUP BY
+                            c.id,
+                            s.name
+                    ",
+                    &[&id],
+                )
+                .map_err(|e| format!("contacts id {} {}", id, e.to_string()))?
+            {
+                let emails = match row.get_opt(16) {
+                    Some(Ok(data)) => Some(data),
+                    _ => None,
+                };
+                let phones = match row.get_opt(17) {
+                    Some(Ok(data)) => Some(data),
+                    _ => None,
+                };
+                let faxes = match row.get_opt(18) {
+                    Some(Ok(data)) => Some(data),
+                    _ => None,
+                };
+				let practices = PracticeList::get_by_company(conn, id).ok();
+				let contacts = ContactShort::get_by_company(conn, id).ok();
+                company = Company {
+                    id: row.get(0),
+                    name: row.get(1),
+                    address: row.get(2),
+                    scope_id: row.get(3),
+                    scope_name: row.get(4),
+                    note: row.get(5),
+                    created_at: row.get(6),
+                    updated_at: row.get(7),
+                    emails,
+                    phones,
+                    faxes,
+					practices,
+                    contacts,
+                };
+            }
+            Ok(company)
+        }
+	}
 }
 
 impl CompanyList {
