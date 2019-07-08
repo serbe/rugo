@@ -226,7 +226,7 @@ impl ContactShort {
                         c.name,
                         d.name AS department_name,
                         p.name AS post_name,
-                        pg.name AS post_go_name,
+                        pg.name AS post_go_name
                     FROM
                         contacts AS c
                     LEFT JOIN
