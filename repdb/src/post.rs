@@ -63,41 +63,41 @@ impl Post {
 }
 
 impl PostList {
-	pub fn new() -> Self {
-		Default::default()
-	}
+	// pub fn new() -> Self {
+	// 	Default::default()
+	// }
 
-	pub fn get(conn: &Connection, id: i64) -> Result<PostList, String> {
-		let mut post = PostList::new();
-		if id == 0 {
-			Ok(post)
-		} else {
-			for row in &conn
-				.query(
-					"
-						SELECT
-							name,
-							go,
-							note
-						FROM
-							posts
-						WHERE
-							id = $1
-					",
-					&[&id],
-				)
-				.map_err(|e| format!("postList id {} {}", id, e.to_string()))?
-			{
-				post = PostList {
-					id,
-					name: row.get(0),
-					go: row.get(1),
-					note: row.get(2),
-				}
-			}
-			Ok(post)
-		}
-	}
+	// pub fn get(conn: &Connection, id: i64) -> Result<PostList, String> {
+	// 	let mut post = PostList::new();
+	// 	if id == 0 {
+	// 		Ok(post)
+	// 	} else {
+	// 		for row in &conn
+	// 			.query(
+	// 				"
+	// 					SELECT
+	// 						name,
+	// 						go,
+	// 						note
+	// 					FROM
+	// 						posts
+	// 					WHERE
+	// 						id = $1
+	// 				",
+	// 				&[&id],
+	// 			)
+	// 			.map_err(|e| format!("postList id {} {}", id, e.to_string()))?
+	// 		{
+	// 			post = PostList {
+	// 				id,
+	// 				name: row.get(0),
+	// 				go: row.get(1),
+	// 				note: row.get(2),
+	// 			}
+	// 		}
+	// 		Ok(post)
+	// 	}
+	// }
 
 	pub fn get_all(conn: &Connection) -> Result<Vec<PostList>, String> {
 		let mut posts = Vec::new();

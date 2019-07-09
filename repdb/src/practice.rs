@@ -95,60 +95,60 @@ impl Practice {
 }
 
 impl PracticeList {
-    pub fn new() -> Self {
-        Default::default()
-    }
+    // pub fn new() -> Self {
+    //     Default::default()
+    // }
 
-    pub fn get(conn: &Connection, id: i64) -> Result<PracticeList, String> {
-        let mut practice = PracticeList::new();
-        if id == 0 {
-            Ok(practice)
-        } else {
-            for row in &conn
-                .query(
-                    "
-                        SELECT
-                            p.id,
-                            p.company_id,
-                            c.name AS company_name,
-                            p.kind_id,
-                            k.name AS kind_name,
-                            k.short_name AS kind_short_name,
-                            p.date_of_practice,
-                            p.topic
-                        FROM
-                            practices AS p
-                        LEFT JOIN
-                            companies AS c ON c.id = p.company_id
-                        LEFT JOIN
-                            kinds AS k ON k.id = p.kind_id
-                        WHERE
-                            id = $1
-                    ",
-                    &[&id],
-                )
-                .map_err(|e| format!("practice list by id {}", e.to_string()))?
-            {
-                let date: Option<NaiveDate> = row.get(6);
-                practice = PracticeList {
-                    id: row.get(0),
-                    company_id: row.get(1),
-                    company_name: row.get(2),
-                    kind_id: row.get(3),
-                    kind_name: row.get(4),
-                    kind_short_name: row.get(5),
-                    date_of_practice: row.get(6),
-                    topic: row.get(7),
-                    date_str: if let Some(d) = date {
-                        Some(d.format("%d.%m.%y").to_string())
-                    } else {
-                        None
-                    },
-                };
-            }
-            Ok(practice)
-        }
-    }
+    // pub fn get(conn: &Connection, id: i64) -> Result<PracticeList, String> {
+    //     let mut practice = PracticeList::new();
+    //     if id == 0 {
+    //         Ok(practice)
+    //     } else {
+    //         for row in &conn
+    //             .query(
+    //                 "
+    //                     SELECT
+    //                         p.id,
+    //                         p.company_id,
+    //                         c.name AS company_name,
+    //                         p.kind_id,
+    //                         k.name AS kind_name,
+    //                         k.short_name AS kind_short_name,
+    //                         p.date_of_practice,
+    //                         p.topic
+    //                     FROM
+    //                         practices AS p
+    //                     LEFT JOIN
+    //                         companies AS c ON c.id = p.company_id
+    //                     LEFT JOIN
+    //                         kinds AS k ON k.id = p.kind_id
+    //                     WHERE
+    //                         id = $1
+    //                 ",
+    //                 &[&id],
+    //             )
+    //             .map_err(|e| format!("practice list by id {}", e.to_string()))?
+    //         {
+    //             let date: Option<NaiveDate> = row.get(6);
+    //             practice = PracticeList {
+    //                 id: row.get(0),
+    //                 company_id: row.get(1),
+    //                 company_name: row.get(2),
+    //                 kind_id: row.get(3),
+    //                 kind_name: row.get(4),
+    //                 kind_short_name: row.get(5),
+    //                 date_of_practice: row.get(6),
+    //                 topic: row.get(7),
+    //                 date_str: if let Some(d) = date {
+    //                     Some(d.format("%d.%m.%y").to_string())
+    //                 } else {
+    //                     None
+    //                 },
+    //             };
+    //         }
+    //         Ok(practice)
+    //     }
+    // }
 
     pub fn get_all(conn: &Connection) -> Result<Vec<PracticeList>, String> {
         let mut practices = Vec::new();
@@ -170,8 +170,6 @@ impl PracticeList {
                         companies AS c ON c.id = p.company_id
                     LEFT JOIN
                         kinds AS k ON k.id = p.kind_id
-                    WHERE
-                        id = $1
                 ",
                 &[],
             )

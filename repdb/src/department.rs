@@ -60,39 +60,39 @@ impl Department {
 }
 
 impl DepartmentList {
-	pub fn new() -> Self {
-		Default::default()
-	}
+	// pub fn new() -> Self {
+	// 	Default::default()
+	// }
 
-	pub fn get(conn: &Connection, id: i64) -> Result<DepartmentList, String> {
-		let mut department = DepartmentList::new();
-		if id == 0 {
-			Ok(department)
-		} else {
-			for row in &conn
-				.query(
-					"
-						SELECT
-							name,
-							note
-						FROM
-							departments
-						WHERE
-							id = $1
-					",
-					&[&id],
-				)
-				.map_err(|e| format!("department list id {} {}", id, e.to_string()))?
-			{
-				department = DepartmentList {
-					id,
-					name: row.get(0),
-					note: row.get(1),
-				};
-			}
-			Ok(department)
-		}
-	}
+	// pub fn get(conn: &Connection, id: i64) -> Result<DepartmentList, String> {
+	// 	let mut department = DepartmentList::new();
+	// 	if id == 0 {
+	// 		Ok(department)
+	// 	} else {
+	// 		for row in &conn
+	// 			.query(
+	// 				"
+	// 					SELECT
+	// 						name,
+	// 						note
+	// 					FROM
+	// 						departments
+	// 					WHERE
+	// 						id = $1
+	// 				",
+	// 				&[&id],
+	// 			)
+	// 			.map_err(|e| format!("department list id {} {}", id, e.to_string()))?
+	// 		{
+	// 			department = DepartmentList {
+	// 				id,
+	// 				name: row.get(0),
+	// 				note: row.get(1),
+	// 			};
+	// 		}
+	// 		Ok(department)
+	// 	}
+	// }
 
 	pub fn get_all(conn: &Connection) -> Result<Vec<DepartmentList>, String> {
 		let mut departments = Vec::new();
