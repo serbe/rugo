@@ -25,6 +25,11 @@ use repdb::education::{Education, EducationList, EducationShort};
 use repdb::kind::{Kind, KindList};
 use repdb::post::{Post, PostList};
 use repdb::practice::{Practice, PracticeList, PracticeShort};
+use repdb::rank::{Rank, RankList};
+use repdb::scope::{Scope, ScopeList};
+use repdb::select::SelectItem;
+use repdb::siren::SirenList;
+use repdb::siren_type::SirenTypeList;
 
 #[derive(Deserialize, Serialize)]
 enum DBResult {
@@ -46,6 +51,13 @@ enum DBResult {
     Practice(Practice),
     PracticeList(Vec<PracticeList>),
     PracticeShort(Vec<PracticeShort>),
+    Rank(Rank),
+    RankList(Vec<RankList>),
+    Scope(Scope),
+    ScopeList(Vec<ScopeList>),
+    SelectItem(Vec<SelectItem>),
+    SirenList(Vec<SirenList>),
+    SirenTypeList(Vec<SirenTypeList>),
 }
 
 fn get_manager() -> PostgresConnectionManager {
@@ -56,8 +68,9 @@ fn get_manager() -> PostgresConnectionManager {
 
 fn get_list(conn: &Connection, name: &str, command: &str) -> Result<DBResult, String> {
     match (name, command) {
-        ("certificate", "list") => Ok(DBResult::CompanyList(CompanyList::get_all(conn)?)),
+        ("certificate", "list") => Ok(DBResult::CertificateList(CertificateList::get_all(conn)?)),
         ("company", "list") => Ok(DBResult::CompanyList(CompanyList::get_all(conn)?)),
+        ("company", "select") => Ok(DBResult::SelectItem(SelectItem::company_all(conn)?)),
         ("contact", "list") => Ok(DBResult::ContactList(ContactList::get_all(conn)?)),
         ("department", "list") => Ok(DBResult::DepartmentList(DepartmentList::get_all(conn)?)),
         ("education", "list") => Ok(DBResult::EducationList(EducationList::get_all(conn)?)),
@@ -66,6 +79,10 @@ fn get_list(conn: &Connection, name: &str, command: &str) -> Result<DBResult, St
         ("post", "list") => Ok(DBResult::PostList(PostList::get_all(conn)?)),
         ("practice", "list") => Ok(DBResult::PracticeList(PracticeList::get_all(conn)?)),
         ("practice", "near") => Ok(DBResult::PracticeShort(PracticeShort::get_near(conn)?)),
+        ("rank", "list") => Ok(DBResult::RankList(RankList::get_all(conn)?)),
+        ("scope", "list") => Ok(DBResult::ScopeList(ScopeList::get_all(conn)?)),
+        ("siren", "list") => Ok(DBResult::SirenList(SirenList::get_all(conn)?)),
+        ("sirentype", "list") => Ok(DBResult::SirenTypeList(SirenTypeList::get_all(conn)?)),
         _ => Err("bad path".to_string()),
     }
 }

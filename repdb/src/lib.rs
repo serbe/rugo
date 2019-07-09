@@ -13,6 +13,10 @@ pub mod kind;
 pub mod phone;
 pub mod post;
 pub mod practice;
+pub mod rank;
+pub mod scope;
+pub mod siren;
+pub mod siren_type;
 pub mod select;
 
 pub fn get_connurl() -> String {
