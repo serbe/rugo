@@ -4,18 +4,18 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Scope {
-	pub id: i64,
-	pub name: Option<String>,
-	pub note: Option<String>,
-	pub created_at: Option<NaiveDateTime>,
-	pub updated_at: Option<NaiveDateTime>,
+    pub id: i64,
+    pub name: Option<String>,
+    pub note: Option<String>,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
 }
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct ScopeList {
-	pub id: i64,
-	pub name: Option<String>,
-	pub note: Option<String>,
+    pub id: i64,
+    pub name: Option<String>,
+    pub note: Option<String>,
 }
 
 // // GetScope - get one scope by id
@@ -48,11 +48,11 @@ pub struct ScopeList {
 
 // GetScopeListAll - get all scope for list
 impl ScopeList {
-	pub fn get_all(conn: &Connection) -> Result<Vec<ScopeList>, String> {
-		let mut scopes = Vec::new();
-		for row in &conn
-			.query(
-				"
+    pub fn get_all(conn: &Connection) -> Result<Vec<ScopeList>, String> {
+        let mut scopes = Vec::new();
+        for row in &conn
+            .query(
+                "
 					SELECT
 						id,
 						name,
@@ -62,18 +62,18 @@ impl ScopeList {
 					ORDER BY
 						name ASC
 				",
-				&[],
-			)
-			.map_err(|e| format!("scopeList all {}", e.to_string()))?
-		{
-			scopes.push(ScopeList {
-				id: row.get(0),
-				name: row.get(1),
-				note: row.get(2),
-			});
-		}
-		Ok(scopes)
-	}
+                &[],
+            )
+            .map_err(|e| format!("scopeList all {}", e.to_string()))?
+        {
+            scopes.push(ScopeList {
+                id: row.get(0),
+                name: row.get(1),
+                note: row.get(2),
+            });
+        }
+        Ok(scopes)
+    }
 }
 
 // // GetScopeSelect - get scope for select

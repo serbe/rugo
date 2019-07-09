@@ -4,20 +4,20 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct SirenType {
-	pub id: i64,
-	pub name: Option<String>,
-	pub radius: Option<i64>,
-	pub note: Option<String>,
-	pub created_at: Option<NaiveDateTime>,
-	pub updated_at: Option<NaiveDateTime>,
+    pub id: i64,
+    pub name: Option<String>,
+    pub radius: Option<i64>,
+    pub note: Option<String>,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
 }
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct SirenTypeList {
-	pub id: i64,
-	pub name: Option<String>,
-	pub radius: Option<i64>,
-	pub note: Option<String>,
+    pub id: i64,
+    pub name: Option<String>,
+    pub radius: Option<i64>,
+    pub note: Option<String>,
 }
 
 // // GetSirenType - get one sirenType by id
@@ -36,23 +36,23 @@ pub struct SirenTypeList {
 // }
 
 impl SirenTypeList {
-// pub fn GetSirenTypeList(conn: &Connection, id: i64) -> Result<SirenTypeList, String> {
-// 	let mut sirenType = SirenTypeList::new();
-// 	else { for row in &conn.query("
-// 		Column("id", "name", "radius", "note").
-// 		Where("id = ?", id).
-// 		Select(&sirenType)
-// 	if err != nil {
-// 		errmsg("GetSirenTypeList select", err)
-// 	}
-// 	Ok(sirenType)
-// }
+    // pub fn GetSirenTypeList(conn: &Connection, id: i64) -> Result<SirenTypeList, String> {
+    // 	let mut sirenType = SirenTypeList::new();
+    // 	else { for row in &conn.query("
+    // 		Column("id", "name", "radius", "note").
+    // 		Where("id = ?", id).
+    // 		Select(&sirenType)
+    // 	if err != nil {
+    // 		errmsg("GetSirenTypeList select", err)
+    // 	}
+    // 	Ok(sirenType)
+    // }
 
-	pub fn get_all(conn: &Connection) -> Result<Vec<SirenTypeList>, String> {
-		let mut siren_types = Vec::new();
-		for row in &conn
-			.query(
-				"
+    pub fn get_all(conn: &Connection) -> Result<Vec<SirenTypeList>, String> {
+        let mut siren_types = Vec::new();
+        for row in &conn
+            .query(
+                "
 					SELECT
 						id,
 						name,
@@ -63,19 +63,19 @@ impl SirenTypeList {
 					ORDER BY
 						name ASC
 				",
-				&[],
-			)
-			.map_err(|e| format!("postList all {}", e.to_string()))?
-		{
-			siren_types.push(SirenTypeList {
-				id: row.get(0),
-				name: row.get(1),
-				radius: row.get(2),
-				note: row.get(3),
-			});
-		}
-		Ok(siren_types)
-	}
+                &[],
+            )
+            .map_err(|e| format!("postList all {}", e.to_string()))?
+        {
+            siren_types.push(SirenTypeList {
+                id: row.get(0),
+                name: row.get(1),
+                radius: row.get(2),
+                note: row.get(3),
+            });
+        }
+        Ok(siren_types)
+    }
 }
 
 // // GetSirenTypeSelect - get sirenType for select by id

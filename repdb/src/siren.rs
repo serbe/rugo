@@ -4,35 +4,35 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Siren {
-	pub id: i64,
-	pub num_id: Option<i64>,
-	pub num_pass: Option<String>,
-	pub type_id: Option<i64>,
-	pub siren_type_id: Option<i64>,
-	pub siren_type_name: Option<String>,
-	pub address: Option<String>,
-	pub radio: Option<String>,
-	pub desk: Option<String>,
-	pub contact_id: Option<i64>,
-	pub contact_name: Option<String>,
-	pub company_id: Option<i64>,
-	pub company_name: Option<String>,
-	pub latitude: Option<String>,
-	pub longitude: Option<String>,
-	pub stage: Option<i64>,
-	pub own: Option<String>,
-	pub note: Option<String>,
-	pub created_at: Option<NaiveDateTime>,
-	pub updated_at: Option<NaiveDateTime>,
+    pub id: i64,
+    pub num_id: Option<i64>,
+    pub num_pass: Option<String>,
+    pub type_id: Option<i64>,
+    pub siren_type_id: Option<i64>,
+    pub siren_type_name: Option<String>,
+    pub address: Option<String>,
+    pub radio: Option<String>,
+    pub desk: Option<String>,
+    pub contact_id: Option<i64>,
+    pub contact_name: Option<String>,
+    pub company_id: Option<i64>,
+    pub company_name: Option<String>,
+    pub latitude: Option<String>,
+    pub longitude: Option<String>,
+    pub stage: Option<i64>,
+    pub own: Option<String>,
+    pub note: Option<String>,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
 }
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct SirenList {
-	pub id: i64,
-	pub siren_type_name: Option<String>,
-	pub address: Option<String>,
-	pub contact_name: Option<String>,
-	pub phones: Option<Vec<i64>>,
+    pub id: i64,
+    pub siren_type_name: Option<String>,
+    pub address: Option<String>,
+    pub contact_name: Option<String>,
+    pub phones: Option<Vec<i64>>,
 }
 
 // // GetSiren - get one siren by id
@@ -51,11 +51,11 @@ pub struct SirenList {
 // }
 
 impl SirenList {
-	pub fn get_all(conn: &Connection) -> Result<Vec<SirenList>, String> {
-		let mut sirens = Vec::new();
-		for row in &conn
-			.query(
-				"
+    pub fn get_all(conn: &Connection) -> Result<Vec<SirenList>, String> {
+        let mut sirens = Vec::new();
+        for row in &conn
+            .query(
+                "
 					SELECT
 						s.id,
 						s.address,
@@ -77,24 +77,24 @@ impl SirenList {
 					ORDER BY
 						t.name ASC
 				",
-				&[],
-			)
-			.map_err(|e| format!("sirenList all {}", e.to_string()))?
-		{
-			let phones = match row.get_opt(4) {
-				Some(Ok(data)) => Some(data),
-				_ => None,
-			};
-			sirens.push(SirenList {
-				id: row.get(0),
-				siren_type_name: row.get(1),
-				address: row.get(2),
-				contact_name: row.get(3),
-				phones,
-			});
-		}
-		Ok(sirens)
-	}
+                &[],
+            )
+            .map_err(|e| format!("sirenList all {}", e.to_string()))?
+        {
+            let phones = match row.get_opt(4) {
+                Some(Ok(data)) => Some(data),
+                _ => None,
+            };
+            sirens.push(SirenList {
+                id: row.get(0),
+                siren_type_name: row.get(1),
+                address: row.get(2),
+                contact_name: row.get(3),
+                phones,
+            });
+        }
+        Ok(sirens)
+    }
 }
 
 // // CreateSiren - create new siren

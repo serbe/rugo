@@ -4,35 +4,35 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Post {
-	pub id: i64,
-	pub name: Option<String>,
-	pub go: bool,
-	pub note: Option<String>,
-	pub created_at: Option<NaiveDateTime>,
-	pub updated_at: Option<NaiveDateTime>,
+    pub id: i64,
+    pub name: Option<String>,
+    pub go: bool,
+    pub note: Option<String>,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
 }
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct PostList {
-	pub id: i64,
-	pub name: Option<String>,
-	pub go: bool,
-	pub note: Option<String>,
+    pub id: i64,
+    pub name: Option<String>,
+    pub go: bool,
+    pub note: Option<String>,
 }
 
 impl Post {
-	pub fn new() -> Self {
-		Default::default()
-	}
+    pub fn new() -> Self {
+        Default::default()
+    }
 
-	pub fn get(conn: &Connection, id: i64) -> Result<Post, String> {
-		let mut post = Post::new();
-		if id == 0 {
-			Ok(post)
-		} else {
-			for row in &conn
-				.query(
-					"
+    pub fn get(conn: &Connection, id: i64) -> Result<Post, String> {
+        let mut post = Post::new();
+        if id == 0 {
+            Ok(post)
+        } else {
+            for row in &conn
+                .query(
+                    "
 						SELECT
 							name,
 							go,
@@ -44,66 +44,66 @@ impl Post {
 						WHERE
 							id = $1
 					",
-					&[&id],
-				)
-				.map_err(|e| format!("post id {} {}", id, e.to_string()))?
-			{
-				post = Post {
-					id,
-					name: row.get(1),
-					go: row.get(2),
-					note: row.get(3),
-					created_at: row.get(4),
-					updated_at: row.get(5),
-				}
-			}
-			Ok(post)
-		}
-	}
+                    &[&id],
+                )
+                .map_err(|e| format!("post id {} {}", id, e.to_string()))?
+            {
+                post = Post {
+                    id,
+                    name: row.get(1),
+                    go: row.get(2),
+                    note: row.get(3),
+                    created_at: row.get(4),
+                    updated_at: row.get(5),
+                }
+            }
+            Ok(post)
+        }
+    }
 }
 
 impl PostList {
-	// pub fn new() -> Self {
-	// 	Default::default()
-	// }
+    // pub fn new() -> Self {
+    // 	Default::default()
+    // }
 
-	// pub fn get(conn: &Connection, id: i64) -> Result<PostList, String> {
-	// 	let mut post = PostList::new();
-	// 	if id == 0 {
-	// 		Ok(post)
-	// 	} else {
-	// 		for row in &conn
-	// 			.query(
-	// 				"
-	// 					SELECT
-	// 						name,
-	// 						go,
-	// 						note
-	// 					FROM
-	// 						posts
-	// 					WHERE
-	// 						id = $1
-	// 				",
-	// 				&[&id],
-	// 			)
-	// 			.map_err(|e| format!("postList id {} {}", id, e.to_string()))?
-	// 		{
-	// 			post = PostList {
-	// 				id,
-	// 				name: row.get(0),
-	// 				go: row.get(1),
-	// 				note: row.get(2),
-	// 			}
-	// 		}
-	// 		Ok(post)
-	// 	}
-	// }
+    // pub fn get(conn: &Connection, id: i64) -> Result<PostList, String> {
+    // 	let mut post = PostList::new();
+    // 	if id == 0 {
+    // 		Ok(post)
+    // 	} else {
+    // 		for row in &conn
+    // 			.query(
+    // 				"
+    // 					SELECT
+    // 						name,
+    // 						go,
+    // 						note
+    // 					FROM
+    // 						posts
+    // 					WHERE
+    // 						id = $1
+    // 				",
+    // 				&[&id],
+    // 			)
+    // 			.map_err(|e| format!("postList id {} {}", id, e.to_string()))?
+    // 		{
+    // 			post = PostList {
+    // 				id,
+    // 				name: row.get(0),
+    // 				go: row.get(1),
+    // 				note: row.get(2),
+    // 			}
+    // 		}
+    // 		Ok(post)
+    // 	}
+    // }
 
-	pub fn get_all(conn: &Connection) -> Result<Vec<PostList>, String> {
-		let mut posts = Vec::new();
-		for row in &conn
-			.query(
-				"
+    pub fn get_all(conn: &Connection) -> Result<Vec<PostList>, String> {
+        let mut posts = Vec::new();
+        for row in &conn
+            .query(
+                "
 					SELECT
 						id,
 						name,
@@ -114,19 +114,19 @@ impl PostList {
 					ORDER BY
 						name ASC
 				",
-				&[],
-			)
-			.map_err(|e| format!("postList all {}", e.to_string()))?
-		{
-			posts.push(PostList {
-				id: row.get(0),
-				name: row.get(1),
-				go: row.get(2),
-				note: row.get(3),
-			});
-		}
-		Ok(posts)
-	}
+                &[],
+            )
+            .map_err(|e| format!("postList all {}", e.to_string()))?
+        {
+            posts.push(PostList {
+                id: row.get(0),
+                name: row.get(1),
+                go: row.get(2),
+                note: row.get(3),
+            });
+        }
+        Ok(posts)
+    }
 }
 
 // // CreatePost - create new post

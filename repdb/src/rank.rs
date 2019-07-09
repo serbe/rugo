@@ -4,18 +4,18 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Rank {
-	pub id: i64,
-	pub name: Option<String>,
-	pub note: Option<String>,
-	pub created_at: Option<NaiveDateTime>,
-	pub updated_at: Option<NaiveDateTime>,
+    pub id: i64,
+    pub name: Option<String>,
+    pub note: Option<String>,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
 }
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct RankList {
-	pub id: i64,
-	pub name: Option<String>,
-	pub note: Option<String>,
+    pub id: i64,
+    pub name: Option<String>,
+    pub note: Option<String>,
 }
 
 // // GetRank - get one rank by id
@@ -35,47 +35,47 @@ pub struct RankList {
 
 // GetRankList - get rank for list by id
 impl RankList {
-// pub fn new() -> Self {
-// 		Default::default()
-// 	}
+    // pub fn new() -> Self {
+    // 		Default::default()
+    // 	}
 
-// 	pub fn get(conn: &Connection, id: i64) -> Result<RankList, String> {
-// 		let mut rank = RankList::new();
-// 		if id == 0 {
-// 			Ok(rank)
-// 		} else {
-// 			for row in &conn
-// 				.query(
-// 					"
-// 						SELECT
-// 							name,
-// 							go,
-// 							note
-// 						FROM
-// 							ranks
-// 						WHERE
-// 							id = $1
-// 					",
-// 					&[&id],
-// 				)
-// 				.map_err(|e| format!("rankList id {} {}", id, e.to_string()))?
-// 			{
-// 				rank = RankList {
-// 					id,
-// 					name: row.get(0),
-// 					go: row.get(1),
-// 					note: row.get(2),
-// 				}
-// 			}
-// 			Ok(rank)
-// 		}
-// 	}
+    // 	pub fn get(conn: &Connection, id: i64) -> Result<RankList, String> {
+    // 		let mut rank = RankList::new();
+    // 		if id == 0 {
+    // 			Ok(rank)
+    // 		} else {
+    // 			for row in &conn
+    // 				.query(
+    // 					"
+    // 						SELECT
+    // 							name,
+    // 							go,
+    // 							note
+    // 						FROM
+    // 							ranks
+    // 						WHERE
+    // 							id = $1
+    // 					",
+    // 					&[&id],
+    // 				)
+    // 				.map_err(|e| format!("rankList id {} {}", id, e.to_string()))?
+    // 			{
+    // 				rank = RankList {
+    // 					id,
+    // 					name: row.get(0),
+    // 					go: row.get(1),
+    // 					note: row.get(2),
+    // 				}
+    // 			}
+    // 			Ok(rank)
+    // 		}
+    // 	}
 
-	pub fn get_all(conn: &Connection) -> Result<Vec<RankList>, String> {
-		let mut ranks = Vec::new();
-		for row in &conn
-			.query(
-				"
+    pub fn get_all(conn: &Connection) -> Result<Vec<RankList>, String> {
+        let mut ranks = Vec::new();
+        for row in &conn
+            .query(
+                "
 					SELECT
 						id,
 						name,
@@ -85,18 +85,18 @@ impl RankList {
 					ORDER BY
 						name ASC
 				",
-				&[],
-			)
-			.map_err(|e| format!("rankList all {}", e.to_string()))?
-		{
-			ranks.push(RankList {
-				id: row.get(0),
-				name: row.get(1),
-				note: row.get(2),
-			});
-		}
-		Ok(ranks)
-	}
+                &[],
+            )
+            .map_err(|e| format!("rankList all {}", e.to_string()))?
+        {
+            ranks.push(RankList {
+                id: row.get(0),
+                name: row.get(1),
+                note: row.get(2),
+            });
+        }
+        Ok(ranks)
+    }
 }
 
 // // GetRankSelect - get all rank for select

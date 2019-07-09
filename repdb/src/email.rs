@@ -4,27 +4,27 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Email {
-	pub id: i64,
-	pub company_id: Option<i64>,
-	pub contact_id: Option<i64>,
-	pub email: Option<String>,
-	pub created_at: Option<NaiveDateTime>,
-	pub updated_at: Option<NaiveDateTime>,
+    pub id: i64,
+    pub company_id: Option<i64>,
+    pub contact_id: Option<i64>,
+    pub email: Option<String>,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
 }
 
 impl Email {
-	pub fn new() -> Self {
-		Default::default()
-	}
+    pub fn new() -> Self {
+        Default::default()
+    }
 
-	pub fn get(conn: &Connection, id: i64) -> Result<Email, String> {
-		let mut email = Email::new();
-		if id == 0 {
-			Ok(email)
-		} else {
-			for row in &conn
-				.query(
-					"
+    pub fn get(conn: &Connection, id: i64) -> Result<Email, String> {
+        let mut email = Email::new();
+        if id == 0 {
+            Ok(email)
+        } else {
+            for row in &conn
+                .query(
+                    "
 				SELECT
 					company_id,
 					contact_id,
@@ -36,22 +36,22 @@ impl Email {
 				WHERE
 					id = $1
 			",
-					&[&id],
-				)
-				.map_err(|e| format!("email id {} {}", id, e.to_string()))?
-			{
-				email = Email {
-					id,
-					company_id: row.get(0),
-					contact_id: row.get(1),
-					email: row.get(2),
-					created_at: row.get(3),
-					updated_at: row.get(4),
-				}
-			}
-			Ok(email)
-		}
-	}
+                    &[&id],
+                )
+                .map_err(|e| format!("email id {} {}", id, e.to_string()))?
+            {
+                email = Email {
+                    id,
+                    company_id: row.get(0),
+                    contact_id: row.get(1),
+                    email: row.get(2),
+                    created_at: row.get(3),
+                    updated_at: row.get(4),
+                }
+            }
+            Ok(email)
+        }
+    }
 }
 
 // // GetEmails - get all emails for list

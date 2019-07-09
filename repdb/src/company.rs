@@ -7,40 +7,40 @@ use crate::practice::PracticeList;
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Company {
-	pub id: i64,
-	pub name: Option<String>,
-	pub address: Option<String>,
-	pub scope_id: Option<i64>,
-	pub scope_name: Option<String>,
-	pub note: Option<String>,
-	pub created_at: Option<NaiveDateTime>,
-	pub updated_at: Option<NaiveDateTime>,
-	pub emails: Option<Vec<String>>,
-	pub phones: Option<Vec<i64>>,
-	pub faxes: Option<Vec<i64>>,
-	pub practices: Option<Vec<PracticeList>>,
-	pub contacts: Option<Vec<ContactShort>>,
+    pub id: i64,
+    pub name: Option<String>,
+    pub address: Option<String>,
+    pub scope_id: Option<i64>,
+    pub scope_name: Option<String>,
+    pub note: Option<String>,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
+    pub emails: Option<Vec<String>>,
+    pub phones: Option<Vec<i64>>,
+    pub faxes: Option<Vec<i64>>,
+    pub practices: Option<Vec<PracticeList>>,
+    pub contacts: Option<Vec<ContactShort>>,
 }
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct CompanyList {
-	pub id: i64,
-	pub name: Option<String>,
-	pub address: Option<String>,
-	pub scope_name: Option<String>,
-	pub emails: Option<Vec<String>>,
-	pub phones: Option<Vec<i64>>,
-	pub faxes: Option<Vec<i64>>,
-	pub practices: Option<Vec<String>>,
+    pub id: i64,
+    pub name: Option<String>,
+    pub address: Option<String>,
+    pub scope_name: Option<String>,
+    pub emails: Option<Vec<String>>,
+    pub phones: Option<Vec<i64>>,
+    pub faxes: Option<Vec<i64>>,
+    pub practices: Option<Vec<String>>,
 }
 
 impl Company {
-	pub fn new() -> Self {
+    pub fn new() -> Self {
         Default::default()
     }
 
-	pub fn get(conn: &Connection, id: i64) -> Result<Company, String> {
-		let mut company = Company::new();
+    pub fn get(conn: &Connection, id: i64) -> Result<Company, String> {
+        let mut company = Company::new();
         if id == 0 {
             Ok(company)
         } else {
@@ -91,8 +91,8 @@ impl Company {
                     Some(Ok(data)) => Some(data),
                     _ => None,
                 };
-				let practices = PracticeList::get_by_company(conn, id).ok();
-				let contacts = ContactShort::get_by_company(conn, id).ok();
+                let practices = PracticeList::get_by_company(conn, id).ok();
+                let contacts = ContactShort::get_by_company(conn, id).ok();
                 company = Company {
                     id: row.get(0),
                     name: row.get(1),
@@ -105,21 +105,21 @@ impl Company {
                     emails,
                     phones,
                     faxes,
-					practices,
+                    practices,
                     contacts,
                 };
             }
             Ok(company)
         }
-	}
+    }
 }
 
 impl CompanyList {
-	pub fn get_all(conn: &Connection) -> Result<Vec<CompanyList>, String> {
-		let mut companies = Vec::new();
-		for row in &conn
-			.query(
-				"
+    pub fn get_all(conn: &Connection) -> Result<Vec<CompanyList>, String> {
+        let mut companies = Vec::new();
+        for row in &conn
+            .query(
+                "
 					SELECT
 						c.id,
 						c.name,
@@ -147,37 +147,37 @@ impl CompanyList {
 					ORDER BY
 						c.name ASC
 				",
-				&[],
-			)
-			.map_err(|e| format!("company list {}", e.to_string()))?
-		{
-			let emails = match row.get_opt(4) {
-				Some(Ok(data)) => Some(data),
-				_ => None,
-			};
-			let phones = match row.get_opt(5) {
-				Some(Ok(data)) => Some(data),
-				_ => None,
-			};
-			let faxes = match row.get_opt(6) {
-				Some(Ok(data)) => Some(data),
-				_ => None,
-			};
-			let practices = match row.get_opt(7) {
-				Some(Ok(data)) => Some(data),
-				_ => None,
-			};
-			companies.push(CompanyList {
-				id: row.get(0),
-				name: row.get(1),
-				address: row.get(2),
-				scope_name: row.get(3),
-				emails,
-				phones,
-				faxes,
-				practices,
-			});
-		}
-		Ok(companies)
-	}
+                &[],
+            )
+            .map_err(|e| format!("company list {}", e.to_string()))?
+        {
+            let emails = match row.get_opt(4) {
+                Some(Ok(data)) => Some(data),
+                _ => None,
+            };
+            let phones = match row.get_opt(5) {
+                Some(Ok(data)) => Some(data),
+                _ => None,
+            };
+            let faxes = match row.get_opt(6) {
+                Some(Ok(data)) => Some(data),
+                _ => None,
+            };
+            let practices = match row.get_opt(7) {
+                Some(Ok(data)) => Some(data),
+                _ => None,
+            };
+            companies.push(CompanyList {
+                id: row.get(0),
+                name: row.get(1),
+                address: row.get(2),
+                scope_name: row.get(3),
+                emails,
+                phones,
+                faxes,
+                practices,
+            });
+        }
+        Ok(companies)
+    }
 }
