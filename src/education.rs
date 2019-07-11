@@ -95,54 +95,54 @@ impl Education {
         }
     }
 
-    pub fn get_all(conn: &Connection) -> Result<Vec<Education>, String> {
-        let mut educations = Vec::new();
-        for row in &conn
-            .query(
-                "
-					SELECT
-						id,
-						contact_id,
-						start_date,
-						end_date,
-						post_id,
-						note,
-						created_at,
-						updated_at,
-					FROM
-						educations
-					ORDER BY
-						start_date
-				",
-                &[],
-            )
-            .map_err(|e| format!("education all {}", e.to_string()))?
-        {
-            let start_date: Option<NaiveDate> = row.get(2);
-            let end_date: Option<NaiveDate> = row.get(3);
-            educations.push(Education {
-                id: row.get(0),
-                contact_id: row.get(1),
-                start_date: row.get(2),
-                end_date: row.get(3),
-                start_str: if let Some(d) = start_date {
-                    Some(d.format("%Y-%m-%d").to_string())
-                } else {
-                    None
-                },
-                end_str: if let Some(d) = end_date {
-                    Some(d.format("%Y-%m-%d").to_string())
-                } else {
-                    None
-                },
-                post_id: row.get(4),
-                note: row.get(5),
-                created_at: row.get(6),
-                updated_at: row.get(7),
-            });
-        }
-        Ok(educations)
-    }
+//     pub fn get_all(conn: &Connection) -> Result<Vec<Education>, String> {
+//         let mut educations = Vec::new();
+//         for row in &conn
+//             .query(
+//                 "
+// 					SELECT
+// 						id,
+// 						contact_id,
+// 						start_date,
+// 						end_date,
+// 						post_id,
+// 						note,
+// 						created_at,
+// 						updated_at,
+// 					FROM
+// 						educations
+// 					ORDER BY
+// 						start_date
+// 				",
+//                 &[],
+//             )
+//             .map_err(|e| format!("education all {}", e.to_string()))?
+//         {
+//             let start_date: Option<NaiveDate> = row.get(2);
+//             let end_date: Option<NaiveDate> = row.get(3);
+//             educations.push(Education {
+//                 id: row.get(0),
+//                 contact_id: row.get(1),
+//                 start_date: row.get(2),
+//                 end_date: row.get(3),
+//                 start_str: if let Some(d) = start_date {
+//                     Some(d.format("%Y-%m-%d").to_string())
+//                 } else {
+//                     None
+//                 },
+//                 end_str: if let Some(d) = end_date {
+//                     Some(d.format("%Y-%m-%d").to_string())
+//                 } else {
+//                     None
+//                 },
+//                 post_id: row.get(4),
+//                 note: row.get(5),
+//                 created_at: row.get(6),
+//                 updated_at: row.get(7),
+//             });
+//         }
+//         Ok(educations)
+//     }
 }
 
 impl EducationList {

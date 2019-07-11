@@ -15,21 +15,39 @@ use r2d2_postgres::PostgresConnectionManager;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value::Null};
 
-use repdb::get_connurl;
+use db::get_connurl;
 
-use repdb::certificate::{Certificate, CertificateList};
-use repdb::company::{Company, CompanyList};
-use repdb::contact::{Contact, ContactList};
-use repdb::department::{Department, DepartmentList};
-use repdb::education::{Education, EducationList, EducationShort};
-use repdb::kind::{Kind, KindList};
-use repdb::post::{Post, PostList};
-use repdb::practice::{Practice, PracticeList, PracticeShort};
-use repdb::rank::{Rank, RankList};
-use repdb::scope::{Scope, ScopeList};
-use repdb::select::SelectItem;
-use repdb::siren::SirenList;
-use repdb::siren_type::SirenTypeList;
+use certificate::{Certificate, CertificateList};
+use company::{Company, CompanyList};
+use contact::{Contact, ContactList};
+use department::{Department, DepartmentList};
+use education::{Education, EducationList, EducationShort};
+use kind::{Kind, KindList};
+use post::{Post, PostList};
+use practice::{Practice, PracticeList, PracticeShort};
+use rank::{Rank, RankList};
+use scope::{Scope, ScopeList};
+use select::SelectItem;
+use siren::SirenList;
+use siren_type::SirenTypeList;
+
+mod db;
+mod certificate;
+mod company;
+mod contact;
+mod department;
+mod education;
+mod email;
+mod kind;
+mod phone;
+mod post;
+mod practice;
+mod rank;
+mod scope;
+mod select;
+mod siren_type;
+mod siren;
+mod tcc;
 
 #[derive(Deserialize, Serialize)]
 enum DBResult {

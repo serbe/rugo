@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use postgres::Connection;
+// use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Deserialize, Serialize)]
@@ -12,47 +12,47 @@ pub struct Email {
     pub updated_at: Option<NaiveDateTime>,
 }
 
-impl Email {
-    pub fn new() -> Self {
-        Default::default()
-    }
+// impl Email {
+//     pub fn new() -> Self {
+//         Default::default()
+//     }
 
-    pub fn get(conn: &Connection, id: i64) -> Result<Email, String> {
-        let mut email = Email::new();
-        if id == 0 {
-            Ok(email)
-        } else {
-            for row in &conn
-                .query(
-                    "
-				SELECT
-					company_id,
-					contact_id,
-					email,
-					created_at,
-					updated_at
-				FROM
-					emails
-				WHERE
-					id = $1
-			",
-                    &[&id],
-                )
-                .map_err(|e| format!("email id {} {}", id, e.to_string()))?
-            {
-                email = Email {
-                    id,
-                    company_id: row.get(0),
-                    contact_id: row.get(1),
-                    email: row.get(2),
-                    created_at: row.get(3),
-                    updated_at: row.get(4),
-                }
-            }
-            Ok(email)
-        }
-    }
-}
+//     pub fn get(conn: &Connection, id: i64) -> Result<Email, String> {
+//         let mut email = Email::new();
+//         if id == 0 {
+//             Ok(email)
+//         } else {
+//             for row in &conn
+//                 .query(
+//                     "
+// 				SELECT
+// 					company_id,
+// 					contact_id,
+// 					email,
+// 					created_at,
+// 					updated_at
+// 				FROM
+// 					emails
+// 				WHERE
+// 					id = $1
+// 			",
+//                     &[&id],
+//                 )
+//                 .map_err(|e| format!("email id {} {}", id, e.to_string()))?
+//             {
+//                 email = Email {
+//                     id,
+//                     company_id: row.get(0),
+//                     contact_id: row.get(1),
+//                     email: row.get(2),
+//                     created_at: row.get(3),
+//                     updated_at: row.get(4),
+//                 }
+//             }
+//             Ok(email)
+//         }
+//     }
+// }
 
 // // GetEmails - get all emails for list
 // pub fn GetEmails(conn: &Connection, id: i64) -> Result<Vec<Email>, String> {
