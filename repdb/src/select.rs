@@ -12,31 +12,31 @@ impl SelectItem {
         Default::default()
     }
 
-    pub fn company(conn: &Connection, id: i64) -> Result<SelectItem, String> {
-        let mut company = SelectItem::new();
-        if id == 0 {
-            Ok(company)
-        } else {
-            for row in &conn
-                .query(
-                    "
-						SELECT
-							name
-						FROM
-							companies
-						WHERE
-							id = $1
-					",
-                    &[&id],
-                )
-                .map_err(|e| format!("company select id {} {}", id, e.to_string()))?
-            {
-                company.id = id;
-                company.name = row.get(0);
-            }
-            Ok(company)
-        }
-    }
+    // pub fn company(conn: &Connection, id: i64) -> Result<SelectItem, String> {
+    //     let mut company = SelectItem::new();
+    //     if id == 0 {
+    //         Ok(company)
+    //     } else {
+    //         for row in &conn
+    //             .query(
+    //                 "
+	// 					SELECT
+	// 						name
+	// 					FROM
+	// 						companies
+	// 					WHERE
+	// 						id = $1
+	// 				",
+    //                 &[&id],
+    //             )
+    //             .map_err(|e| format!("company select id {} {}", id, e.to_string()))?
+    //         {
+    //             company.id = id;
+    //             company.name = row.get(0);
+    //         }
+    //         Ok(company)
+    //     }
+    // }
 
     pub fn company_all(conn: &Connection) -> Result<Vec<SelectItem>, String> {
         let mut companies = Vec::new();
@@ -63,61 +63,61 @@ impl SelectItem {
         Ok(companies)
     }
 
-    pub fn contact(conn: &Connection, id: i64) -> Result<SelectItem, String> {
-        let mut contact = SelectItem::new();
-        if id == 0 {
-            Ok(contact)
-        } else {
-            for row in &conn
-                .query(
-                    "
-                        SELECT
-                            name
-                        FROM
-                            contacts
-                        WHERE
-                            id = $1
-                    ",
-                    &[&id],
-                )
-                .map_err(|e| format!("contact select id {} {}", id, e.to_string()))?
-            {
-                contact = SelectItem {
-                    id,
-                    name: row.get(0),
-                }
-            }
-            Ok(contact)
-        }
-    }
+    // pub fn contact(conn: &Connection, id: i64) -> Result<SelectItem, String> {
+    //     let mut contact = SelectItem::new();
+    //     if id == 0 {
+    //         Ok(contact)
+    //     } else {
+    //         for row in &conn
+    //             .query(
+    //                 "
+    //                     SELECT
+    //                         name
+    //                     FROM
+    //                         contacts
+    //                     WHERE
+    //                         id = $1
+    //                 ",
+    //                 &[&id],
+    //             )
+    //             .map_err(|e| format!("contact select id {} {}", id, e.to_string()))?
+    //         {
+    //             contact = SelectItem {
+    //                 id,
+    //                 name: row.get(0),
+    //             }
+    //         }
+    //         Ok(contact)
+    //     }
+    // }
 
-    pub fn department(conn: &Connection, id: i64) -> Result<SelectItem, String> {
-        let mut department = SelectItem::new();
-        if id == 0 {
-            Ok(department)
-        } else {
-            for row in &conn
-                .query(
-                    "
-						SELECT
-							name
-						FROM
-							departments
-						WHERE
-							id = $1
-					",
-                    &[&id],
-                )
-                .map_err(|e| format!("department select id {} {}", id, e.to_string()))?
-            {
-                department = SelectItem {
-                    id,
-                    name: row.get(0),
-                };
-            }
-            Ok(department)
-        }
-    }
+    // pub fn department(conn: &Connection, id: i64) -> Result<SelectItem, String> {
+    //     let mut department = SelectItem::new();
+    //     if id == 0 {
+    //         Ok(department)
+    //     } else {
+    //         for row in &conn
+    //             .query(
+    //                 "
+	// 					SELECT
+	// 						name
+	// 					FROM
+	// 						departments
+	// 					WHERE
+	// 						id = $1
+	// 				",
+    //                 &[&id],
+    //             )
+    //             .map_err(|e| format!("department select id {} {}", id, e.to_string()))?
+    //         {
+    //             department = SelectItem {
+    //                 id,
+    //                 name: row.get(0),
+    //             };
+    //         }
+    //         Ok(department)
+    //     }
+    // }
 
     pub fn department_all(conn: &Connection) -> Result<Vec<SelectItem>, String> {
         let mut departments = Vec::new();
@@ -169,61 +169,61 @@ impl SelectItem {
         Ok(kinds)
     }
 
-    pub fn post(conn: &Connection, id: i64) -> Result<SelectItem, String> {
-        let mut post = SelectItem::new();
-        if id == 0 {
-            Ok(post)
-        } else {
-            for row in &conn
-                .query(
-                    "
-                        SELECT
-                            name
-                        FROM
-                            posts
-                        WHERE
-                            id = $1 AND go = false
-                    ",
-                    &[&id],
-                )
-                .map_err(|e| format!("post select id {} {}", id, e.to_string()))?
-            {
-                post = SelectItem {
-                    id,
-                    name: row.get(0),
-                }
-            }
-            Ok(post)
-        }
-    }
+    // pub fn post(conn: &Connection, id: i64) -> Result<SelectItem, String> {
+    //     let mut post = SelectItem::new();
+    //     if id == 0 {
+    //         Ok(post)
+    //     } else {
+    //         for row in &conn
+    //             .query(
+    //                 "
+    //                     SELECT
+    //                         name
+    //                     FROM
+    //                         posts
+    //                     WHERE
+    //                         id = $1 AND go = false
+    //                 ",
+    //                 &[&id],
+    //             )
+    //             .map_err(|e| format!("post select id {} {}", id, e.to_string()))?
+    //         {
+    //             post = SelectItem {
+    //                 id,
+    //                 name: row.get(0),
+    //             }
+    //         }
+    //         Ok(post)
+    //     }
+    // }
 
-    pub fn post_go(conn: &Connection, id: i64) -> Result<SelectItem, String> {
-        let mut post = SelectItem::new();
-        if id == 0 {
-            Ok(post)
-        } else {
-            for row in &conn
-                .query(
-                    "
-                        SELECT
-                            name
-                        FROM
-                            posts
-                        WHERE
-                            id = $1 AND go = true
-                    ",
-                    &[&id],
-                )
-                .map_err(|e| format!("post_go select id {} {}", id, e.to_string()))?
-            {
-                post = SelectItem {
-                    id,
-                    name: row.get(0),
-                }
-            }
-            Ok(post)
-        }
-    }
+    // pub fn post_go(conn: &Connection, id: i64) -> Result<SelectItem, String> {
+    //     let mut post = SelectItem::new();
+    //     if id == 0 {
+    //         Ok(post)
+    //     } else {
+    //         for row in &conn
+    //             .query(
+    //                 "
+    //                     SELECT
+    //                         name
+    //                     FROM
+    //                         posts
+    //                     WHERE
+    //                         id = $1 AND go = true
+    //                 ",
+    //                 &[&id],
+    //             )
+    //             .map_err(|e| format!("post_go select id {} {}", id, e.to_string()))?
+    //         {
+    //             post = SelectItem {
+    //                 id,
+    //                 name: row.get(0),
+    //             }
+    //         }
+    //         Ok(post)
+    //     }
+    // }
 
     pub fn post_all(conn: &Connection, go: bool) -> Result<Vec<SelectItem>, String> {
         let mut posts = Vec::new();
@@ -250,5 +250,30 @@ impl SelectItem {
             });
         }
         Ok(posts)
+    }
+
+    pub fn rank_all(conn: &Connection) -> Result<Vec<SelectItem>, String> {
+        let mut ranks = Vec::new();
+        for row in &conn
+            .query(
+                "
+                    SELECT
+                        id,
+                        name
+                    FROM
+                        ranks
+                    ORDER BY
+                        name ASC
+                ",
+                &[],
+            )
+            .map_err(|e| format!("rank select all {}", e.to_string()))?
+        {
+            ranks.push(SelectItem {
+                id: row.get(0),
+                name: row.get(1),
+            });
+        }
+        Ok(ranks)
     }
 }
