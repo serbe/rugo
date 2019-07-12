@@ -11,7 +11,7 @@ pub struct Scope {
     pub updated_at: Option<NaiveDateTime>,
 }
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct ScopeList {
     pub id: i64,
     pub name: Option<String>,

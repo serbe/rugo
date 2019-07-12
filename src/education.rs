@@ -16,7 +16,7 @@ pub struct Education {
     pub updated_at: Option<NaiveDateTime>,
 }
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct EducationList {
     pub id: i64,
     pub contact_id: Option<i64>,

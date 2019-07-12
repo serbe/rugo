@@ -26,7 +26,7 @@ pub struct Siren {
     pub updated_at: Option<NaiveDateTime>,
 }
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct SirenList {
     pub id: i64,
     pub siren_type_name: Option<String>,

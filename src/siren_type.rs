@@ -12,7 +12,7 @@ pub struct SirenType {
     pub updated_at: Option<NaiveDateTime>,
 }
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct SirenTypeList {
     pub id: i64,
     pub name: Option<String>,

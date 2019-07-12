@@ -11,7 +11,7 @@ pub struct Department {
     pub updated_at: Option<NaiveDateTime>,
 }
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct DepartmentList {
     pub id: i64,
     pub name: Option<String>,

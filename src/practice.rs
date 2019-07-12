@@ -16,7 +16,7 @@ pub struct Practice {
     pub updated_at: Option<NaiveDateTime>,
 }
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct PracticeList {
     pub id: i64,
     pub company_id: Option<i64>,
