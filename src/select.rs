@@ -20,13 +20,13 @@ impl SelectItem {
     //         for row in &conn
     //             .query(
     //                 "
-	// 					SELECT
-	// 						name
-	// 					FROM
-	// 						companies
-	// 					WHERE
-	// 						id = $1
-	// 				",
+    // 					SELECT
+    // 						name
+    // 					FROM
+    // 						companies
+    // 					WHERE
+    // 						id = $1
+    // 				",
     //                 &[&id],
     //             )
     //             .map_err(|e| format!("company select id {} {}", id, e.to_string()))?
@@ -99,13 +99,13 @@ impl SelectItem {
     //         for row in &conn
     //             .query(
     //                 "
-	// 					SELECT
-	// 						name
-	// 					FROM
-	// 						departments
-	// 					WHERE
-	// 						id = $1
-	// 				",
+    // 					SELECT
+    // 						name
+    // 					FROM
+    // 						departments
+    // 					WHERE
+    // 						id = $1
+    // 				",
     //                 &[&id],
     //             )
     //             .map_err(|e| format!("department select id {} {}", id, e.to_string()))?

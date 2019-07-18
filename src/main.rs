@@ -31,10 +31,10 @@ use select::SelectItem;
 use siren::SirenList;
 use siren_type::SirenTypeList;
 
-mod db;
 mod certificate;
 mod company;
 mod contact;
+mod db;
 mod department;
 mod education;
 mod email;
@@ -45,17 +45,17 @@ mod practice;
 mod rank;
 mod scope;
 mod select;
-mod siren_type;
 mod siren;
+mod siren_type;
 mod tcc;
 
 #[derive(Deserialize, Serialize)]
 enum DBResult {
     Certificate(Certificate),
     CertificateList(Vec<CertificateList>),
-    Company(Company),
+    Company(Box<Company>),
     CompanyList(Vec<CompanyList>),
-    Contact(Contact),
+    Contact(Box<Contact>),
     ContactList(Vec<ContactList>),
     Department(Department),
     DepartmentList(Vec<DepartmentList>),
@@ -115,8 +115,8 @@ fn get_item(conn: &Connection, name: &str, id: &str) -> Result<DBResult, String>
         .map_err(|_| format!("parse {} as i64", id))?;
     match name {
         "certificate" => Ok(DBResult::Certificate(Certificate::get(conn, id)?)),
-        "company" => Ok(DBResult::Company(Company::get(conn, id)?)),
-        "contact" => Ok(DBResult::Contact(Contact::get(conn, id)?)),
+        "company" => Ok(DBResult::Company(Box::new(Company::get(conn, id)?))),
+        "contact" => Ok(DBResult::Contact(Box::new(Contact::get(conn, id)?))),
         "department" => Ok(DBResult::Department(Department::get(conn, id)?)),
         "education" => Ok(DBResult::Education(Education::get(conn, id)?)),
         "kind" => Ok(DBResult::Kind(Kind::get(conn, id)?)),
@@ -181,14 +181,6 @@ fn main() -> io::Result<()> {
                 web::resource("/api/go/{name}/{command}").route(web::get().to_async(name_command)),
             )
             .service(web::resource("/api/go/{name}/item/{id}").route(web::get().to_async(name_id)))
-        // .route(
-        //     "/api/go/practices/near",
-        //     web::get().to_async(practices_near),
-        // )
-        // .route(
-        //     "/api/go/contacts/list",
-        //     web::get().to_async(contacts_list),
-        // )
     })
     .bind("127.0.0.1:9090")?
     .start();
