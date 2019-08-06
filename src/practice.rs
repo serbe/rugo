@@ -58,11 +58,11 @@ impl Practice {
                             c.name AS company_name,
                             p.kind_id,
                             k.name AS kind_name,
-                            p.topic
+                            p.topic,
                             p.date_of_practice,
                             p.note,
-                            created_at,
-                            updated_at
+                            p.created_at,
+                            p.updated_at
                         FROM
                             practices AS p
                         LEFT JOIN
@@ -70,11 +70,11 @@ impl Practice {
                         LEFT JOIN
                             kinds AS k ON k.id = p.kind_id
                         WHERE
-                            id = $1
+                            p.id = $1
                     ",
                     &[&id],
                 )
-                .map_err(|e| format!("practice {}", e.to_string()))?
+                .map_err(|e| format!("practice id {} {}", id, e.to_string()))?
             {
                 practice = Practice {
                     id: row.get(0),

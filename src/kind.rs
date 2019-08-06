@@ -42,7 +42,7 @@ impl Kind {
 						FROM
 							kinds
 						WHERE
-							id = &1
+							id = $1
 					",
                     &[&id],
                 )

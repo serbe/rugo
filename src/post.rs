@@ -50,11 +50,11 @@ impl Post {
             {
                 post = Post {
                     id,
-                    name: row.get(1),
-                    go: row.get(2),
-                    note: row.get(3),
-                    created_at: row.get(4),
-                    updated_at: row.get(5),
+                    name: row.get(0),
+                    go: row.get(1),
+                    note: row.get(2),
+                    created_at: row.get(3),
+                    updated_at: row.get(4),
                 }
             }
             Ok(post)
