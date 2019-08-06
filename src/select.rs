@@ -276,4 +276,29 @@ impl SelectItem {
         }
         Ok(ranks)
     }
+
+    pub fn scope_all(conn: &Connection) -> Result<Vec<SelectItem>, String> {
+        let mut scopes = Vec::new();
+        for row in &conn
+            .query(
+                "
+                    SELECT
+                        id,
+                        name
+                    FROM
+                        scopes
+                    ORDER BY
+                        name ASC
+                ",
+                &[],
+            )
+            .map_err(|e| format!("scope select all {}", e.to_string()))?
+        {
+            scopes.push(SelectItem {
+                id: row.get(0),
+                name: row.get(1),
+            });
+        }
+        Ok(scopes)
+    }
 }
