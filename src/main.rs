@@ -97,22 +97,23 @@ fn get_list(conn: &Connection, name: &str, command: &str) -> Result<DBResult, St
         ("kind", "list") => Ok(DBResult::KindList(KindList::get_all(conn)?)),
         ("post", "list") => Ok(DBResult::PostList(PostList::get_all(conn)?)),
         ("post", "select") => Ok(DBResult::SelectItem(SelectItem::post_all(conn, false)?)),
-        ("postgo", "select") => Ok(DBResult::SelectItem(SelectItem::post_all(conn, true)?)),
+        ("post_go", "select") => Ok(DBResult::SelectItem(SelectItem::post_all(conn, true)?)),
         ("practice", "list") => Ok(DBResult::PracticeList(PracticeList::get_all(conn)?)),
         ("practice", "near") => Ok(DBResult::PracticeShort(PracticeShort::get_near(conn)?)),
         ("rank", "list") => Ok(DBResult::RankList(RankList::get_all(conn)?)),
         ("rank", "select") => Ok(DBResult::SelectItem(SelectItem::rank_all(conn)?)),
         ("scope", "list") => Ok(DBResult::ScopeList(ScopeList::get_all(conn)?)),
+        ("scope", "select") => Ok(DBResult::SelectItem(SelectItem::scope_all(conn)?)),
         ("siren", "list") => Ok(DBResult::SirenList(SirenList::get_all(conn)?)),
         ("sirentype", "list") => Ok(DBResult::SirenTypeList(SirenTypeList::get_all(conn)?)),
         _ => Err("bad path".to_string()),
     }
 }
 
-fn get_item(conn: &Connection, name: &str, id: &str) -> Result<DBResult, String> {
-    let id = id
-        .parse::<i64>()
-        .map_err(|_| format!("parse {} as i64", id))?;
+fn get_item(conn: &Connection, name: &str, id: i64) -> Result<DBResult, String> {
+    // let id = id
+    //     .parse::<i64>()
+    //     .map_err(|_| format!("parse {} as i64", id))?;
     match name {
         "certificate" => Ok(DBResult::Certificate(Certificate::get(conn, id)?)),
         "company" => Ok(DBResult::Company(Box::new(Company::get(conn, id)?))),
@@ -124,6 +125,44 @@ fn get_item(conn: &Connection, name: &str, id: &str) -> Result<DBResult, String>
         "practice" => Ok(DBResult::Practice(Practice::get(conn, id)?)),
         _ => Err("bad path".to_string()),
     }
+}
+
+fn get_children(conn: &Connection, name: &str, children: &str, id: i64) -> Result<DBResult, String> {
+    // let id = id
+    //     .parse::<i64>()
+    //     .map_err(|_| format!("parse {} as i64", id))?;
+    match (name, children) {
+        // "certificate" => Ok(DBResult::Certificate(Certificate::get(conn, id)?)),
+        ("company", "practice") => Ok(DBResult::PracticeList(PracticeList::get_by_company(conn, id)?)),
+        // "contact" => Ok(DBResult::Contact(Box::new(Contact::get(conn, id)?))),
+        // "department" => Ok(DBResult::Department(Department::get(conn, id)?)),
+        // "education" => Ok(DBResult::Education(Education::get(conn, id)?)),
+        // "kind" => Ok(DBResult::Kind(Kind::get(conn, id)?)),
+        // "post" => Ok(DBResult::Post(Post::get(conn, id)?)),
+        // "practice" => Ok(DBResult::Practice(Practice::get(conn, id)?)),
+        _ => Err("bad path".to_string()),
+    }
+}
+
+fn name_children(
+    db: web::Data<Pool<PostgresConnectionManager>>,
+    path: web::Path<(String, String, i64)>,
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    web::block(move || {
+        let conn = db.get().unwrap();
+        get_children(&conn, &path.0, &path.1, path.2)
+    })
+    .then(|res| match res {
+        Ok(db_result) => Ok(HttpResponse::Ok().json(json!({
+            "data": db_result,
+            "error": Null,
+            "ok": true
+        }))),
+        Err(err) => {
+            println!("{}", err);
+            Ok(HttpResponse::InternalServerError().into())
+        }
+    })
 }
 
 fn name_command(
@@ -149,11 +188,11 @@ fn name_command(
 
 fn name_id(
     db: web::Data<Pool<PostgresConnectionManager>>,
-    path: web::Path<(String, String)>,
+    path: web::Path<(String, i64)>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     web::block(move || {
         let conn = db.get().unwrap();
-        get_item(&conn, &path.0, &path.1)
+        get_item(&conn, &path.0, path.1)
     })
     .then(|res| match res {
         Ok(db_result) => Ok(HttpResponse::Ok().json(json!({
@@ -181,6 +220,7 @@ fn main() -> io::Result<()> {
                 web::resource("/api/go/{name}/{command}").route(web::get().to_async(name_command)),
             )
             .service(web::resource("/api/go/{name}/item/{id}").route(web::get().to_async(name_id)))
+            .service(web::resource("/api/go/{name}/list/{children}/{id}").route(web::get().to_async(name_children)))
     })
     .bind("127.0.0.1:9090")?
     .start();
