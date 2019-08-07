@@ -18,22 +18,44 @@ pub struct RankList {
     pub note: Option<String>,
 }
 
-// // GetRank - get one rank by id
-// pub fn GetRank(conn: &Connection, id: i64) -> Result<Rank, String> {
-// 	let mut rank = Rank::new();
-// 	if id == 0 {
-// 		Ok(rank)
-// 	}
-// 	else { for row in &conn.query("
-// 		Where("id = ?", id).
-// 		.map_err(|e| format!(" id {} {}", id, e.to_string()))? {
-// 	if err != nil {
-// 		errmsg("GetRank select", err)
-// 	}
-// 	Ok(rank)
-// }
+impl Rank {
+    pub fn new() -> Self {
+        Default::default()
+    }
 
-// GetRankList - get rank for list by id
+    pub fn get(conn: &Connection, id: i64) -> Result<Rank, String> {
+        let mut rank = Rank::new();
+        if id == 0 {
+            Ok(rank)
+        } else {
+            for row in &conn
+                .query(
+                    "
+                        SELECT
+                            name,
+                            note,
+                            created_at,
+                            updated_at
+                        WHERE
+                            id = $1
+                    ",
+                    &[&id],
+                )
+                .map_err(|e| format!("rank id {} {}", id, e.to_string()))?
+            {
+                rank = Rank {
+                    id,
+                    name: row.get(0),
+                    note: row.get(1),
+                    created_at: row.get(2),
+                    updated_at: row.get(3),
+                };
+            }
+            Ok(rank)
+        }
+    }
+}
+
 impl RankList {
     // pub fn new() -> Self {
     // 		Default::default()

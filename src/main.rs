@@ -28,8 +28,8 @@ use practice::{Practice, PracticeList, PracticeShort};
 use rank::{Rank, RankList};
 use scope::{Scope, ScopeList};
 use select::SelectItem;
-use siren::SirenList;
-use siren_type::SirenTypeList;
+use siren::{Siren, SirenList};
+use siren_type::{SirenType, SirenTypeList};
 
 mod certificate;
 mod company;
@@ -74,7 +74,9 @@ enum DBResult {
     Scope(Scope),
     ScopeList(Vec<ScopeList>),
     SelectItem(Vec<SelectItem>),
+    Siren(Box<Siren>),
     SirenList(Vec<SirenList>),
+    SirenType(SirenType),
     SirenTypeList(Vec<SirenTypeList>),
 }
 
@@ -102,21 +104,18 @@ fn get_list(conn: &Connection, name: &str, command: &str) -> Result<DBResult, St
         ("post_go", "select") => Ok(DBResult::SelectItem(SelectItem::post_all(conn, true)?)),
         ("practice", "list") => Ok(DBResult::PracticeList(PracticeList::get_all(conn)?)),
         ("practice", "near") => Ok(DBResult::PracticeShort(PracticeShort::get_near(conn)?)),
-        ("practice", "select") => Ok(DBResult::SelectItem(SelectItem::practice_all(conn)?)),
         ("rank", "list") => Ok(DBResult::RankList(RankList::get_all(conn)?)),
         ("rank", "select") => Ok(DBResult::SelectItem(SelectItem::rank_all(conn)?)),
         ("scope", "list") => Ok(DBResult::ScopeList(ScopeList::get_all(conn)?)),
         ("scope", "select") => Ok(DBResult::SelectItem(SelectItem::scope_all(conn)?)),
         ("siren", "list") => Ok(DBResult::SirenList(SirenList::get_all(conn)?)),
-        ("sirentype", "list") => Ok(DBResult::SirenTypeList(SirenTypeList::get_all(conn)?)),
+        ("siren_type", "list") => Ok(DBResult::SirenTypeList(SirenTypeList::get_all(conn)?)),
+        ("siren_type", "select") => Ok(DBResult::SelectItem(SelectItem::siren_type_all(conn)?)),
         _ => Err("bad path".to_string()),
     }
 }
 
 fn get_item(conn: &Connection, name: &str, id: i64) -> Result<DBResult, String> {
-    // let id = id
-    //     .parse::<i64>()
-    //     .map_err(|_| format!("parse {} as i64", id))?;
     match name {
         "certificate" => Ok(DBResult::Certificate(Certificate::get(conn, id)?)),
         "company" => Ok(DBResult::Company(Box::new(Company::get(conn, id)?))),
@@ -126,17 +125,25 @@ fn get_item(conn: &Connection, name: &str, id: i64) -> Result<DBResult, String> 
         "kind" => Ok(DBResult::Kind(Kind::get(conn, id)?)),
         "post" => Ok(DBResult::Post(Post::get(conn, id)?)),
         "practice" => Ok(DBResult::Practice(Practice::get(conn, id)?)),
+        "rank" => Ok(DBResult::Rank(Rank::get(conn, id)?)),
+        "scope" => Ok(DBResult::Scope(Scope::get(conn, id)?)),
+        "siren" => Ok(DBResult::Siren(Box::new(Siren::get(conn, id)?))),
+        "siren_type" => Ok(DBResult::SirenType(SirenType::get(conn, id)?)),
         _ => Err("bad path".to_string()),
     }
 }
 
-fn get_children(conn: &Connection, name: &str, children: &str, id: i64) -> Result<DBResult, String> {
-    // let id = id
-    //     .parse::<i64>()
-    //     .map_err(|_| format!("parse {} as i64", id))?;
+fn get_children(
+    conn: &Connection,
+    name: &str,
+    children: &str,
+    id: i64,
+) -> Result<DBResult, String> {
     match (name, children) {
         // "certificate" => Ok(DBResult::Certificate(Certificate::get(conn, id)?)),
-        ("company", "practice") => Ok(DBResult::PracticeList(PracticeList::get_by_company(conn, id)?)),
+        ("company", "practice") => Ok(DBResult::PracticeList(PracticeList::get_by_company(
+            conn, id,
+        )?)),
         // "contact" => Ok(DBResult::Contact(Box::new(Contact::get(conn, id)?))),
         // "department" => Ok(DBResult::Department(Department::get(conn, id)?)),
         // "education" => Ok(DBResult::Education(Education::get(conn, id)?)),
@@ -223,7 +230,10 @@ fn main() -> io::Result<()> {
                 web::resource("/api/go/{name}/{command}").route(web::get().to_async(name_command)),
             )
             .service(web::resource("/api/go/{name}/item/{id}").route(web::get().to_async(name_id)))
-            .service(web::resource("/api/go/{name}/list/{children}/{id}").route(web::get().to_async(name_children)))
+            .service(
+                web::resource("/api/go/{name}/list/{children}/{id}")
+                    .route(web::get().to_async(name_children)),
+            )
     })
     .bind("127.0.0.1:9090")?
     .start();

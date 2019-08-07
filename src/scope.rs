@@ -18,20 +18,45 @@ pub struct ScopeList {
     pub note: Option<String>,
 }
 
-// // GetScope - get one scope by id
-// pub fn GetScope(conn: &Connection, id: i64) -> Result<Scope, String> {
-// 	let mut scope = Scope::new();
-// 	if id == 0 {
-// 		Ok(scope)
-// 	}
-// 	else { for row in &conn.query("
-// 		Where("id = ?", id).
-// 		.map_err(|e| format!(" id {} {}", id, e.to_string()))? {
-// 	if err != nil {
-// 		errmsg("GetScope select", err)
-// 	}
-// 	Ok(scope)
-// }
+impl Scope {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn get(conn: &Connection, id: i64) -> Result<Scope, String> {
+        let mut scope = Scope::new();
+        if id == 0 {
+            Ok(scope)
+        } else {
+            for row in &conn
+                .query(
+                    "
+                        SELECT
+                            name,
+                            note,
+                            created_at,
+                            updated_at
+                        FROM
+                            scopes
+                        WHERE
+                            id = $1
+                    ",
+                    &[&id],
+                )
+                .map_err(|e| format!("scope id {} {}", id, e.to_string()))?
+            {
+                scope = Scope {
+                    id,
+                    name: row.get(0),
+                    note: row.get(1),
+                    created_at: row.get(2),
+                    updated_at: row.get(3),
+                };
+            }
+            Ok(scope)
+        }
+    }
+}
 
 // // GetScopeList - get scope for list by id
 // pub fn GetScopeList(conn: &Connection, id: i64) -> Result<ScopeList, String> {

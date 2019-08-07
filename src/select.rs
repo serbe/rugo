@@ -65,9 +65,9 @@ impl SelectItem {
 
     pub fn contact_all(conn: &Connection) -> Result<Vec<SelectItem>, String> {
         let mut contacts = Vec::new();
-            for row in &conn
-                .query(
-                    "
+        for row in &conn
+            .query(
+                "
                         SELECT
                             id,
                             name
@@ -76,16 +76,16 @@ impl SelectItem {
                         ORDER BY
 						    name ASC
                     ",
-                    &[],
-                )
-                .map_err(|e| format!("contact select all {}", e.to_string()))?
-            {
-                contacts.push(SelectItem {
-                    id: row.get(0),
-                    name: row.get(1),
-                })
-            }
-            Ok(contacts)
+                &[],
+            )
+            .map_err(|e| format!("contact select all {}", e.to_string()))?
+        {
+            contacts.push(SelectItem {
+                id: row.get(0),
+                name: row.get(1),
+            })
+        }
+        Ok(contacts)
     }
 
     // pub fn contact(conn: &Connection, id: i64) -> Result<SelectItem, String> {
@@ -277,31 +277,6 @@ impl SelectItem {
         Ok(posts)
     }
 
-    pub fn practice_all(conn: &Connection) -> Result<Vec<SelectItem>, String> {
-        let mut practices = Vec::new();
-        for row in &conn
-            .query(
-                "
-                    SELECT
-                        id,
-                        name
-                    FROM
-                        practices
-                    ORDER BY
-                        name ASC
-                ",
-                &[],
-            )
-            .map_err(|e| format!("practice select all {}", e.to_string()))?
-        {
-            practices.push(SelectItem {
-                id: row.get(0),
-                name: row.get(1),
-            });
-        }
-        Ok(practices)
-    }
-
     pub fn rank_all(conn: &Connection) -> Result<Vec<SelectItem>, String> {
         let mut ranks = Vec::new();
         for row in &conn
@@ -350,5 +325,30 @@ impl SelectItem {
             });
         }
         Ok(scopes)
+    }
+
+    pub fn siren_type_all(conn: &Connection) -> Result<Vec<SelectItem>, String> {
+        let mut siren_types = Vec::new();
+        for row in &conn
+            .query(
+                "
+                    SELECT
+                        id,
+                        name
+                    FROM
+                        siren_types
+                    ORDER BY
+                        name ASC
+                ",
+                &[],
+            )
+            .map_err(|e| format!("siren_type select all {}", e.to_string()))?
+        {
+            siren_types.push(SelectItem {
+                id: row.get(0),
+                name: row.get(1),
+            });
+        }
+        Ok(siren_types)
     }
 }

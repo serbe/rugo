@@ -20,6 +20,48 @@ pub struct SirenTypeList {
     pub note: Option<String>,
 }
 
+impl SirenType {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn get(conn: &Connection, id: i64) -> Result<SirenType, String> {
+        let mut siren_type = SirenType::new();
+        if id == 0 {
+            Ok(siren_type)
+        } else {
+            for row in &conn
+                .query(
+                    "
+                        SELECT
+                            name,
+                            radius,
+                            note,
+                            created_at,
+                            updated_at
+                        FROM
+                            siren_types
+                        WHERE
+                            id = $1
+                    ",
+                    &[&id],
+                )
+                .map_err(|e| format!("syren_type id {} {}", id, e.to_string()))?
+            {
+                siren_type = SirenType {
+                    id,
+                    name: row.get(0),
+                    radius: row.get(1),
+                    note: row.get(2),
+                    created_at: row.get(3),
+                    updated_at: row.get(4),
+                };
+            }
+            Ok(siren_type)
+        }
+    }
+}
+
 // // GetSirenType - get one sirenType by id
 // pub fn GetSirenType(conn: &Connection, id: i64) -> Result<SirenType, String> {
 // 	let mut sirenType = SirenType::new();

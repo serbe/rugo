@@ -7,16 +7,12 @@ pub struct Siren {
     pub id: i64,
     pub num_id: Option<i64>,
     pub num_pass: Option<String>,
-    pub type_id: Option<i64>,
     pub siren_type_id: Option<i64>,
-    pub siren_type_name: Option<String>,
     pub address: Option<String>,
     pub radio: Option<String>,
     pub desk: Option<String>,
     pub contact_id: Option<i64>,
-    pub contact_name: Option<String>,
     pub company_id: Option<i64>,
-    pub company_name: Option<String>,
     pub latitude: Option<String>,
     pub longitude: Option<String>,
     pub stage: Option<i64>,
@@ -35,20 +31,67 @@ pub struct SirenList {
     pub phones: Option<Vec<i64>>,
 }
 
-// // GetSiren - get one siren by id
-// pub fn GetSiren(conn: &Connection, id: i64) -> Result<Siren, String> {
-// 	let mut siren = Siren::new();
-// 	if id == 0 {
-// 		Ok(siren)
-// 	}
-// 	else { for row in &conn.query("
-// 		Where("id = ?", id).
-// 		.map_err(|e| format!(" id {} {}", id, e.to_string()))? {
-// 	if err != nil {
-// 		errmsg("GetSiren select", err)
-// 	}
-// 	Ok(siren)
-// }
+impl Siren {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn get(conn: &Connection, id: i64) -> Result<Siren, String> {
+        let mut siren = Siren::new();
+        if id == 0 {
+            Ok(siren)
+        } else {
+            for row in &conn
+                .query(
+                    "
+                        SELECT
+                            num_id,
+                            num_pass,
+                            siren_type_id,
+                            address,
+                            radio,
+                            desk,
+                            contact_id,
+                            company_id,
+                            latitude,
+                            longitude,
+                            stage,
+                            own,
+                            note,
+                            created_at,
+                            updated_at
+                        FROM
+                            sirens
+                        WHERE
+                            id = $1
+                    ",
+                    &[&id],
+                )
+                .map_err(|e| format!("siren id {} {}", id, e.to_string()))?
+            {
+                siren = Siren {
+                    id,
+                    num_id: row.get(0),
+                    num_pass: row.get(1),
+                    siren_type_id: row.get(2),
+                    address: row.get(3),
+                    radio: row.get(4),
+                    desk: row.get(5),
+                    contact_id: row.get(6),
+                    company_id: row.get(7),
+                    latitude: row.get(8),
+                    longitude: row.get(9),
+                    stage: row.get(10),
+                    own: row.get(11),
+                    note: row.get(12),
+                    created_at: row.get(13),
+                    updated_at: row.get(14),
+                };
+            }
+            Ok(siren)
+        }
+    }
+}
 
 impl SirenList {
     pub fn get_all(conn: &Connection) -> Result<Vec<SirenList>, String> {
@@ -65,7 +108,7 @@ impl SirenList {
 					FROM
 						sirens AS s
 					LEFT JOIN
-						siren_types AS t ON s.type_id = t.id
+						siren_types AS t ON s.siren_type_id = t.id
 					LEFT JOIN
 						contacts AS c ON s.contact_id = c.id
 					LEFT JOIN
