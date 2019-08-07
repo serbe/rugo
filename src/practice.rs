@@ -6,9 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct Practice {
     pub id: i64,
     pub company_id: Option<i64>,
-    pub company_name: Option<String>,
     pub kind_id: Option<i64>,
-    pub kind_name: Option<String>,
     pub topic: Option<String>,
     pub date_of_practice: Option<NaiveDate>,
     pub note: Option<String>,
@@ -53,40 +51,31 @@ impl Practice {
                 .query(
                     "
                         SELECT
-                            p.id,
-                            p.company_id,
-                            c.name AS company_name,
-                            p.kind_id,
-                            k.name AS kind_name,
-                            p.topic,
-                            p.date_of_practice,
-                            p.note,
-                            p.created_at,
-                            p.updated_at
+                            company_id,
+                            kind_id,
+                            topic,
+                            date_of_practice,
+                            note,
+                            created_at,
+                            updated_at
                         FROM
-                            practices AS p
-                        LEFT JOIN
-                            companies AS c ON c.id = p.company_id
-                        LEFT JOIN
-                            kinds AS k ON k.id = p.kind_id
+                            practices
                         WHERE
-                            p.id = $1
+                            id = $1
                     ",
                     &[&id],
                 )
                 .map_err(|e| format!("practice id {} {}", id, e.to_string()))?
             {
                 practice = Practice {
-                    id: row.get(0),
-                    company_id: row.get(1),
-                    company_name: row.get(2),
-                    kind_id: row.get(3),
-                    kind_name: row.get(4),
-                    topic: row.get(5),
-                    date_of_practice: row.get(6),
-                    note: row.get(7),
-                    created_at: row.get(8),
-                    updated_at: row.get(9),
+                    id,
+                    company_id: row.get(0),
+                    kind_id: row.get(1),
+                    topic: row.get(2),
+                    date_of_practice: row.get(3),
+                    note: row.get(4),
+                    created_at: row.get(5),
+                    updated_at: row.get(6),
                 };
             }
             Ok(practice)

@@ -7,15 +7,10 @@ pub struct Contact {
     pub id: i64,
     pub name: Option<String>,
     pub company_id: Option<i64>,
-    pub company_name: Option<String>,
     pub department_id: Option<i64>,
-    pub department_name: Option<String>,
     pub post_id: Option<i64>,
-    pub post_name: Option<String>,
     pub post_go_id: Option<i64>,
-    pub post_go_name: Option<String>,
     pub rank_id: Option<i64>,
-    pub rank_name: Option<String>,
     pub birthday: Option<NaiveDate>,
     pub note: Option<String>,
     pub created_at: Option<NaiveDateTime>,
@@ -60,18 +55,12 @@ impl Contact {
                 .query(
                     "
                         SELECT
-                            c.id,
                             c.name,
                             c.company_id,
-                            co.name AS company_name,
                             c.department_id,
-                            de.name AS department_name,
                             c.post_id,
-                            po.name AS post_name,
                             c.post_go_id,
-                            po_go.name AS post_go_name,
                             c.rank_id,
-                            ra.name AS rank_name,
                             c.birthday,
                             c.note,
                             c.created_at,
@@ -83,16 +72,6 @@ impl Contact {
                         FROM
                             contacts AS c
                         LEFT JOIN
-                            companies AS co ON c.company_id = co.id
-                        LEFT JOIN
-                            departments AS de ON c.department_id = de.id
-                        LEFT JOIN
-                            posts AS po ON c.post_id = po.id
-                        LEFT JOIN
-                            posts AS po_go ON c.post_go_id = po_go.id
-                        LEFT JOIN
-                            ranks AS ra ON c.rank_id = ra.id
-                        LEFT JOIN
                             emails AS e ON c.id = e.contact_id
                         LEFT JOIN
                             phones AS ph ON c.id = ph.contact_id AND ph.fax = false
@@ -103,50 +82,40 @@ impl Contact {
                         WHERE
                             c.id = $1
                         GROUP BY
-                            c.id,
-                            co.name,
-                            de.name,
-                            po.name,
-                            po_go.name,
-                            ra.name
+                            c.id
                     ",
                     &[&id],
                 )
                 .map_err(|e| format!("contacts id {} {}", id, e.to_string()))?
             {
-                let emails = match row.get_opt(16) {
+                let emails = match row.get_opt(10) {
                     Some(Ok(data)) => Some(data),
                     _ => None,
                 };
-                let phones = match row.get_opt(17) {
+                let phones = match row.get_opt(11) {
                     Some(Ok(data)) => Some(data),
                     _ => None,
                 };
-                let faxes = match row.get_opt(18) {
+                let faxes = match row.get_opt(12) {
                     Some(Ok(data)) => Some(data),
                     _ => None,
                 };
-                let educations = match row.get_opt(19) {
+                let educations = match row.get_opt(13) {
                     Some(Ok(data)) => Some(data),
                     _ => None,
                 };
                 contact = Contact {
-                    id: row.get(0),
-                    name: row.get(1),
-                    company_id: row.get(2),
-                    company_name: row.get(3),
-                    department_id: row.get(4),
-                    department_name: row.get(5),
-                    post_id: row.get(6),
-                    post_name: row.get(7),
-                    post_go_id: row.get(8),
-                    post_go_name: row.get(9),
-                    rank_id: row.get(10),
-                    rank_name: row.get(11),
-                    birthday: row.get(12),
-                    note: row.get(13),
-                    created_at: row.get(14),
-                    updated_at: row.get(15),
+                    id,
+                    name: row.get(0),
+                    company_id: row.get(1),
+                    department_id: row.get(2),
+                    post_id: row.get(3),
+                    post_go_id: row.get(4),
+                    rank_id: row.get(5),
+                    birthday: row.get(6),
+                    note: row.get(7),
+                    created_at: row.get(8),
+                    updated_at: row.get(9),
                     emails,
                     phones,
                     faxes,

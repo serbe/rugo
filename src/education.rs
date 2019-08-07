@@ -8,8 +8,6 @@ pub struct Education {
     pub contact_id: Option<i64>,
     pub start_date: Option<NaiveDate>,
     pub end_date: Option<NaiveDate>,
-    pub start_str: Option<String>,
-    pub end_str: Option<String>,
     pub post_id: Option<i64>,
     pub note: Option<String>,
     pub created_at: Option<NaiveDateTime>,
@@ -68,23 +66,11 @@ impl Education {
                 )
                 .map_err(|e| format!("education id {} {}", id, e.to_string()))?
             {
-                let start_date: Option<NaiveDate> = row.get(1);
-                let end_date: Option<NaiveDate> = row.get(2);
                 education = Education {
                     id,
                     contact_id: row.get(0),
                     start_date: row.get(1),
                     end_date: row.get(2),
-                    start_str: if let Some(d) = start_date {
-                        Some(d.format("%Y-%m-%d").to_string())
-                    } else {
-                        None
-                    },
-                    end_str: if let Some(d) = end_date {
-                        Some(d.format("%Y-%m-%d").to_string())
-                    } else {
-                        None
-                    },
                     post_id: row.get(3),
                     note: row.get(4),
                     created_at: row.get(5),

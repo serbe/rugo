@@ -32,7 +32,6 @@ impl Department {
                 .query(
                     "
 						SELECT
-							id,
 							name,
 							note,
 							created_at,
@@ -47,11 +46,11 @@ impl Department {
                 .map_err(|e| format!("department id {} {}", id, e.to_string()))?
             {
                 department = Department {
-                    id: row.get(0),
-                    name: row.get(1),
-                    note: row.get(2),
-                    created_at: row.get(3),
-                    updated_at: row.get(4),
+                    id,
+                    name: row.get(0),
+                    note: row.get(1),
+                    created_at: row.get(2),
+                    updated_at: row.get(3),
                 }
             }
             Ok(department)

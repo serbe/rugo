@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +11,6 @@ pub struct Company {
     pub name: Option<String>,
     pub address: Option<String>,
     pub scope_id: Option<i64>,
-    pub scope_name: Option<String>,
     pub note: Option<String>,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
@@ -31,7 +30,7 @@ pub struct CompanyList {
     pub emails: Option<Vec<String>>,
     pub phones: Option<Vec<i64>>,
     pub faxes: Option<Vec<i64>>,
-    pub practices: Option<Vec<String>>,
+    pub practices: Option<Vec<NaiveDate>>,
 }
 
 impl Company {
@@ -48,11 +47,9 @@ impl Company {
                 .query(
                     "
                         SELECT
-                            c.id,
                             c.name,
                             c.address,
                             c.scope_id,
-                            s.name AS scope_name,
                             c.note,
                             c.created_at,
                             c.updated_at,
@@ -62,8 +59,6 @@ impl Company {
                         FROM
                             companies AS c
                         LEFT JOIN
-                            scopes AS s ON c.scope_id = s.id
-                        LEFT JOIN
                             emails AS e ON c.id = e.company_id
                         LEFT JOIN
                             phones AS ph ON c.id = ph.company_id AND ph.fax = false
@@ -72,36 +67,34 @@ impl Company {
                         WHERE
                             c.id = $1
                         GROUP BY
-                            c.id,
-                            s.name
+                            c.id
                     ",
                     &[&id],
                 )
                 .map_err(|e| format!("contacts id {} {}", id, e.to_string()))?
             {
-                let emails = match row.get_opt(16) {
+                let emails = match row.get_opt(6) {
                     Some(Ok(data)) => Some(data),
                     _ => None,
                 };
-                let phones = match row.get_opt(17) {
+                let phones = match row.get_opt(7) {
                     Some(Ok(data)) => Some(data),
                     _ => None,
                 };
-                let faxes = match row.get_opt(18) {
+                let faxes = match row.get_opt(8) {
                     Some(Ok(data)) => Some(data),
                     _ => None,
                 };
                 let practices = PracticeList::get_by_company(conn, id).ok();
                 let contacts = ContactShort::get_by_company(conn, id).ok();
                 company = Company {
-                    id: row.get(0),
-                    name: row.get(1),
-                    address: row.get(2),
-                    scope_id: row.get(3),
-                    scope_name: row.get(4),
-                    note: row.get(5),
-                    created_at: row.get(6),
-                    updated_at: row.get(7),
+                    id,
+                    name: row.get(0),
+                    address: row.get(1),
+                    scope_id: row.get(2),
+                    note: row.get(3),
+                    created_at: row.get(4),
+                    updated_at: row.get(5),
                     emails,
                     phones,
                     faxes,
@@ -167,6 +160,7 @@ impl CompanyList {
                 Some(Ok(data)) => Some(data),
                 _ => None,
             };
+
             companies.push(CompanyList {
                 id: row.get(0),
                 name: row.get(1),

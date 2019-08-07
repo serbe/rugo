@@ -7,9 +7,7 @@ pub struct Certificate {
     pub id: i64,
     pub num: Option<String>,
     pub contact_id: Option<i64>,
-    pub contact_name: Option<String>,
     pub company_id: Option<i64>,
-    pub company_name: Option<String>,
     pub cert_date: Option<NaiveDate>,
     pub note: Option<String>,
     pub created_at: Option<NaiveDateTime>,
@@ -41,23 +39,17 @@ impl Certificate {
                 .query(
                     "
                         SELECT
-                            c.num,
-                            c.contact_id,
-                            cn.name AS contact_name,
-                            c.company_id,
-                            co.name AS company_name,
-                            c.cert_date,
-                            c.note,
-                            c.created_at,
-                            c.updated_at
+                            num,
+                            contact_id,
+                            company_id,
+                            cert_date,
+                            note,
+                            created_at,
+                            updated_at
                         FROM
-                            certificates AS c
-                        LEFT JOIN
-                            contacts AS cn ON c.contact_id = cn.id
-                        LEFT JOIN
-                            companies AS co ON c.company_id = co.id
+                            certificates
                         WHERE
-                            c.id = $1
+                            id = $1
                     ",
                     &[&id],
                 )
@@ -66,13 +58,11 @@ impl Certificate {
                 certificate.id = id;
                 certificate.num = row.get(0);
                 certificate.contact_id = row.get(1);
-                certificate.contact_name = row.get(2);
-                certificate.company_id = row.get(3);
-                certificate.company_name = row.get(4);
-                certificate.cert_date = row.get(5);
-                certificate.note = row.get(6);
-                certificate.created_at = row.get(7);
-                certificate.updated_at = row.get(8);
+                certificate.company_id = row.get(2);
+                certificate.cert_date = row.get(3);
+                certificate.note = row.get(4);
+                certificate.created_at = row.get(5);
+                certificate.updated_at = row.get(6);
             }
             Ok(certificate)
         }
