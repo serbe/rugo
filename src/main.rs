@@ -1,19 +1,12 @@
-use std::io;
 use actix_identity::{CookieIdentityPolicy, IdentityService};
-use actix_web::{
-    middleware,
-    web,
-    App,
-    Error,
-    HttpResponse,
-    HttpServer,
-};
+use actix_web::{middleware, web, App, Error, HttpResponse, HttpServer};
 use futures::Future;
 use postgres::Connection;
 use r2d2::Pool;
 use r2d2_postgres::PostgresConnectionManager;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value::Null};
+use std::io;
 
 use db::get_connurl;
 
