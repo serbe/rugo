@@ -1,7 +1,7 @@
 use std::io;
-
+use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_web::{
-    // middleware,
+    middleware,
     web,
     App,
     Error,
@@ -48,6 +48,8 @@ mod select;
 mod siren;
 mod siren_type;
 mod tcc;
+
+// mod models;
 
 #[derive(Deserialize, Serialize)]
 enum DBResult {
@@ -222,10 +224,23 @@ fn main() -> io::Result<()> {
     let pool = r2d2::Pool::new(manager).unwrap();
     let sys = actix_rt::System::new("rugo");
 
+    std::env::set_var("RUST_LOG", "actix_web=info,actix_server=info");
+    env_logger::init();
+
     HttpServer::new(move || {
         App::new()
             .data(pool.clone())
-            // .wrap(middleware::Logger::default())
+            .wrap(middleware::Logger::default())
+            .wrap(IdentityService::new(
+                CookieIdentityPolicy::new("SECRET_KEY".as_bytes())
+                    .name("auth")
+                    .path("/")
+                    .domain("localhost")
+                    .max_age_time(chrono::Duration::days(1))
+                    .secure(false), // this can only be true if you have https
+            ))
+            // limit the maximum amount of data that server will accept
+            .data(web::JsonConfig::default().limit(4096))
             .service(
                 web::resource("/api/go/{name}/{command}").route(web::get().to_async(name_command)),
             )
