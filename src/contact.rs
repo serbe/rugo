@@ -2,6 +2,8 @@ use chrono::{Local, NaiveDate, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
+use crate::email::Email;
+
 #[derive(Default, Deserialize, Serialize)]
 pub struct Contact {
     pub id: i64,
@@ -185,6 +187,9 @@ impl Contact {
         {
             contact.id = row.get(0)
         }
+        if let Some(emails) = contact.emails.clone() {
+            let _ = Email::update_contacts(conn, contact.id, emails);
+        }
         Ok(contact)
     }
 
@@ -219,7 +224,12 @@ impl Contact {
             ],
         ) {
             Ok(0) => Err(format!("update contact id {}", id)),
-            _ => Ok(contact),
+            _ => {
+                if let Some(emails) = contact.emails.clone() {
+                    let _ = Email::update_contacts(conn, contact.id, emails);
+                }
+                Ok(contact)
+            }
         }
     }
 }

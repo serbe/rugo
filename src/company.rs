@@ -3,6 +3,7 @@ use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
 use crate::contact::ContactShort;
+use crate::email::Email;
 use crate::practice::PracticeList;
 
 #[derive(Default, Deserialize, Serialize)]
@@ -153,6 +154,9 @@ impl Company {
         {
             company.id = row.get(0)
         }
+        if let Some(emails) = company.emails.clone() {
+            let _ = Email::update_companies(conn, company.id, emails);
+        }
         Ok(company)
     }
 
@@ -180,7 +184,12 @@ impl Company {
             ],
         ) {
             Ok(0) => Err(format!("update company id {}", id)),
-            _ => Ok(company),
+            _ => {
+                if let Some(emails) = company.emails.clone() {
+                    let _ = Email::update_companies(conn, company.id, emails);
+                }
+                Ok(company)
+            }
         }
     }
 }
