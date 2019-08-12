@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{Local, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
@@ -61,22 +61,23 @@ impl SirenType {
         }
     }
 
-    pub fn post(conn: &Connection, id: i64, rank: Rank) -> Result<Rank, String> {
+    pub fn post(conn: &Connection, id: i64, siren_type: SirenType) -> Result<SirenType, String> {
         if id == 0 {
-            Rank::insert(conn, rank)
+            SirenType::insert(conn, siren_type)
         } else {
-            Rank::update(conn, id, rank)
+            SirenType::update(conn, id, siren_type)
         }
     }
 
-    pub fn insert(conn: &Connection, rank: Rank) -> Result<Rank, String> {
-        let mut rank = rank;
+    pub fn insert(conn: &Connection, siren_type: SirenType) -> Result<SirenType, String> {
+        let mut siren_type = siren_type;
         for row in &conn
             .query(
                 "
-                    INSERT INTO ranks
+                    INSERT INTO siren_types
                     (
                         name,
+                        radius,
                         note,
                         created_at,
                         updated_at
@@ -86,46 +87,50 @@ impl SirenType {
                         $1,
                         $2,
                         $3,
-                        $4
+                        $4,
+                        $5
                     )
                     RETURNING
                         id
                 ",
                 &[
-                    &rank.name,
-                    &rank.note,
+                    &siren_type.name,
+                    &siren_type.radius,
+                    &siren_type.note,
                     &Local::now().naive_local(),
                     &Local::now().naive_local(),
                 ],
             )
-            .map_err(|e| format!("create rank {} ", e.to_string()))?
+            .map_err(|e| format!("create siren_type {} ", e.to_string()))?
         {
-            rank.id = row.get(0)
+            siren_type.id = row.get(0)
         }
-        Ok(rank)
+        Ok(siren_type)
     }
 
-    pub fn update(conn: &Connection, id: i64, rank: Rank) -> Result<Rank, String> {
-        let mut rank = rank;
-        rank.id = id;
+    pub fn update(conn: &Connection, id: i64, siren_type: SirenType) -> Result<SirenType, String> {
+        let mut siren_type = siren_type;
+        siren_type.id = id;
         match &conn.execute(
             "
-                UPDATE ranks SET
+                UPDATE siren_types SET
                     name = $2,
-                    note = $3,
-                    updated_at = $4
+                    radius = $3,
+                    note = $4,
+                    updated_at = $5
                 WHERE
                     id = $1
             ",
             &[
-                &rank.id,
-                &rank.name,
-                &rank.note,
+                &siren_type.id,
+                &siren_type.name,
+                &siren_type.radius,
+                &siren_type.note,
                 &Local::now().naive_local(),
             ],
         ) {
-            Ok(0) => Err(format!("update rank id {}", id)),
-            _ => Ok(rank),
+            Ok(0) => Err(format!("update siren_type id {}", id)),
+            _ => Ok(siren_type),
         }
     }
 }
