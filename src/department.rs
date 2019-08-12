@@ -101,7 +101,11 @@ impl Department {
         Ok(department)
     }
 
-    pub fn update(conn: &Connection, id: i64, department: Department) -> Result<Department, String> {
+    pub fn update(
+        conn: &Connection,
+        id: i64,
+        department: Department,
+    ) -> Result<Department, String> {
         let mut department = department;
         department.id = id;
         match &conn.execute(

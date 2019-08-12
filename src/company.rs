@@ -180,9 +180,7 @@ impl Company {
             ],
         ) {
             Ok(0) => Err(format!("update company id {}", id)),
-            _ => {
-                Ok(company)
-            },
+            _ => Ok(company),
         }
     }
 }

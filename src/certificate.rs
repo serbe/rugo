@@ -68,7 +68,11 @@ impl Certificate {
         }
     }
 
-    pub fn post(conn: &Connection, id: i64, certificate: Certificate) -> Result<Certificate, String> {
+    pub fn post(
+        conn: &Connection,
+        id: i64,
+        certificate: Certificate,
+    ) -> Result<Certificate, String> {
         if id == 0 {
             Certificate::insert(conn, certificate)
         } else {
@@ -121,7 +125,11 @@ impl Certificate {
         Ok(certificate)
     }
 
-    pub fn update(conn: &Connection, id: i64, certificate: Certificate) -> Result<Certificate, String> {
+    pub fn update(
+        conn: &Connection,
+        id: i64,
+        certificate: Certificate,
+    ) -> Result<Certificate, String> {
         let mut certificate = certificate;
         certificate.id = id;
         match &conn.execute(
