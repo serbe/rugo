@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{Local, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
@@ -61,7 +61,78 @@ impl Kind {
         }
     }
 
-    // pub fn post(conn: &Connection, id: i64, post: web::Form<Kind>)
+    pub fn post(conn: &Connection, id: i64, kind: Kind) -> Result<Kind, String> {
+        if id == 0 {
+            Kind::insert(conn, kind)
+        } else {
+            Kind::update(conn, id, kind)
+        }
+    }
+
+    pub fn insert(conn: &Connection, kind: Kind) -> Result<Kind, String> {
+        let mut kind = kind;
+        for row in &conn
+            .query(
+                "
+                    INSERT INTO kinds
+                    (
+                        name,
+                        short_name,
+                        note,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES
+                    (
+                        $1,
+                        $2,
+                        $3,
+                        $4,
+                        $5
+                    )
+                    RETURNING
+                        id
+                ",
+                &[
+                    &kind.name,
+                    &kind.note,
+                    &kind.short_name,
+                    &Local::now().naive_local(),
+                    &Local::now().naive_local(),
+                ],
+            )
+            .map_err(|e| format!("create kind {} ", e.to_string()))?
+        {
+            kind.id = row.get(0)
+        }
+        Ok(kind)
+    }
+
+    pub fn update(conn: &Connection, id: i64, kind: Kind) -> Result<Kind, String> {
+        let mut kind = kind;
+        kind.id = id;
+        match &conn.execute(
+            "
+                UPDATE kinds SET
+                    name = $2,
+                    short_name = $3,
+                    note = $4,
+                    updated_at = $5
+                WHERE
+                    id = $1
+            ",
+            &[
+                &kind.id,
+                &kind.name,
+                &kind.short_name,
+                &kind.note,
+                &Local::now().naive_local(),
+            ],
+        ) {
+            Ok(0) => Err(format!("update kind id {}", id)),
+            _ => Ok(kind),
+        }
+    }
 }
 
 impl KindList {

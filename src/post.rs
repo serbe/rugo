@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{Local, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
@@ -58,6 +58,79 @@ impl Post {
                 }
             }
             Ok(post)
+        }
+    }
+
+    pub fn post(conn: &Connection, id: i64, post: Post) -> Result<Post, String> {
+        if id == 0 {
+            Post::insert(conn, post)
+        } else {
+            Post::update(conn, id, post)
+        }
+    }
+
+    pub fn insert(conn: &Connection, post: Post) -> Result<Post, String> {
+        let mut post = post;
+        for row in &conn
+            .query(
+                "
+                    INSERT INTO posts
+                    (
+                        name,
+                        go,
+                        note,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES
+                    (
+                        $1,
+                        $2,
+                        $3,
+                        $4,
+                        $5
+                    )
+                    RETURNING
+                        id
+                ",
+                &[
+                    &post.name,
+                    &post.go,
+                    &post.note,
+                    &Local::now().naive_local(),
+                    &Local::now().naive_local(),
+                ],
+            )
+            .map_err(|e| format!("create post {} ", e.to_string()))?
+        {
+            post.id = row.get(0)
+        }
+        Ok(post)
+    }
+
+    pub fn update(conn: &Connection, id: i64, post: Post) -> Result<Post, String> {
+        let mut post = post;
+        post.id = id;
+        match &conn.execute(
+            "
+                UPDATE posts SET
+                    name = $2,
+                    go = $3,
+                    note = $4,
+                    updated_at = $5
+                WHERE
+                    id = $1
+            ",
+            &[
+                &post.id,
+                &post.name,
+                &post.go,
+                &post.note,
+                &Local::now().naive_local(),
+            ],
+        ) {
+            Ok(0) => Err(format!("update post id {}", id)),
+            _ => Ok(post),
         }
     }
 }
@@ -128,24 +201,6 @@ impl PostList {
         Ok(posts)
     }
 }
-
-// // CreatePost - create new post
-// pub fn CreatePost(post Post) (int64, error) {
-// 	err := e.db.Insert(&post)
-// 	if err != nil {
-// 		errmsg("CreatePost insert", err)
-// 	}
-// 	return post.ID, nil
-// }
-
-// // UpdatePost - save post changes
-// pub fn UpdatePost(post Post) error {
-// 	err := e.db.Update(&post)
-// 	if err != nil {
-// 		errmsg("UpdatePost update", err)
-// 	}
-// 	return err
-// }
 
 // // DeletePost - delete post by id
 // pub fn DeletePost(id int64) error {

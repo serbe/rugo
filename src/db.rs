@@ -23,22 +23,6 @@ use crate::siren::{Siren, SirenList};
 use crate::siren_type::{SirenType, SirenTypeList};
 
 #[derive(Deserialize, Serialize)]
-pub enum FormEnum {
-    Certificate,
-    Company,
-    Contact,
-    Department,
-    Education,
-    Kind,
-    Post,
-    Practice,
-    Rank,
-    Scope,
-    Siren,
-    SirenType,
-}
-
-#[derive(Deserialize, Serialize)]
 pub enum DBResult {
     Certificate(Certificate),
     CertificateList(Vec<CertificateList>),
@@ -68,6 +52,15 @@ pub enum DBResult {
     SirenType(SirenType),
     SirenTypeList(Vec<SirenTypeList>),
 }
+
+// impl<T> Into<T> for DBResult {
+//     fn into(self) -> Option<T> {
+//         match self {
+//             DBResult::Post(item) => Some<item>,
+//             _ => None
+//         }
+//     }
+// }
 
 fn get_connurl() -> String {
     dotenv().ok();
@@ -127,18 +120,23 @@ fn get_item(conn: &Connection, name: &str, id: i64) -> Result<DBResult, String> 
     }
 }
 
-fn post_item(conn: &Connection, name: &str, id: i64, params: web::Form<FormEnum>) -> Result<DBResult, String> {
-    match name {
+fn post_item(
+    conn: &Connection,
+    name: &str,
+    id: i64,
+    params: web::Form<DBResult>,
+) -> Result<DBResult, String> {
+    match (name, params.into_inner()) {
         // "certificate" => Ok(DBResult::Certificate(Certificate::post(conn, id, params)?)),
         // "company" => Ok(DBResult::Company(Box::new(Company::post(conn, id, params)?))),
         // "contact" => Ok(DBResult::Contact(Box::new(Contact::post(conn, id, params)?))),
         // "department" => Ok(DBResult::Department(Department::post(conn, id, params)?)),
         // "education" => Ok(DBResult::Education(Education::post(conn, id, params)?)),
-        // "kind" => Ok(DBResult::Kind(Kind::post(conn, id, params)?)),
-        // "post" => Ok(DBResult::Post(Post::post(conn, id, params)?)),
+        ("kind", DBResult::Kind(kind)) => Ok(DBResult::Kind(Kind::post(conn, id, kind)?)),
+        ("post", DBResult::Post(post)) => Ok(DBResult::Post(Post::post(conn, id, post)?)),
         // "practice" => Ok(DBResult::Practice(Practice::post(conn, id, params)?)),
-        // "rank" => Ok(DBResult::Rank(Rank::post(conn, id, params)?)),
-        // "scope" => Ok(DBResult::Scope(Scope::post(conn, id, params)?)),
+        ("rank", DBResult::Rank(rank)) => Ok(DBResult::Rank(Rank::post(conn, id, rank)?)),
+        ("scope", DBResult::Scope(scope)) => Ok(DBResult::Scope(Scope::post(conn, id, scope)?)),
         // "siren" => Ok(DBResult::Siren(Box::new(Siren::post(conn, id, params)?))),
         // "siren_type" => Ok(DBResult::SirenType(SirenType::post(conn, id, params)?)),
         _ => Err("bad path".to_string()),
@@ -232,7 +230,7 @@ pub fn name_id(
 pub fn post_name_id(
     db: web::Data<Pool<PostgresConnectionManager>>,
     path: web::Path<(String, i64)>,
-    params: web::Form<FormEnum>
+    params: web::Form<DBResult>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     web::block(move || {
         let conn = db.get().unwrap();

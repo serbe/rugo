@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{Local, NaiveDate, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
@@ -79,6 +79,89 @@ impl Practice {
                 };
             }
             Ok(practice)
+        }
+    }
+
+    pub fn post(conn: &Connection, id: i64, practice: Practice) -> Result<Practice, String> {
+        if id == 0 {
+            Practice::insert(conn, practice)
+        } else {
+            Practice::update(conn, id, practice)
+        }
+    }
+
+    pub fn insert(conn: &Connection, practice: Practice) -> Result<Practice, String> {
+        let mut practice = practice;
+        for row in &conn
+            .query(
+                "
+                    INSERT INTO practices
+                    (
+                        company_id,
+                        kind_id,
+                        topic,
+                        date_of_practice,
+                        note,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES
+                    (
+                        $1,
+                        $2,
+                        $3,
+                        $4,
+                        $5,
+                        $6,
+                        $7
+                    )
+                    RETURNING
+                        id
+                ",
+                &[
+                    &practice.company_id,
+                    &practice.kind_id,
+                    &practice.topic,
+                    &practice.date_of_practice,
+                    &practice.note,
+                    &Local::now().naive_local(),
+                    &Local::now().naive_local(),
+                ],
+            )
+            .map_err(|e| format!("create practice {} ", e.to_string()))?
+        {
+            practice.id = row.get(0)
+        }
+        Ok(practice)
+    }
+
+    pub fn update(conn: &Connection, id: i64, practice: Practice) -> Result<Practice, String> {
+        let mut practice = practice;
+        practice.id = id;
+        match &conn.execute(
+            "
+                UPDATE practices SET
+                    company_id = $2,
+                    kind_id = $3,
+                    topic = $4,
+                    date_of_practice = $5,
+                    note = $6,
+                    updated_at = $7
+                WHERE
+                    id = $1
+            ",
+            &[
+                &practice.id,
+                &practice.company_id,
+                &practice.kind_id,
+                &practice.topic,
+                &practice.date_of_practice,
+                &practice.note,
+                &Local::now().naive_local(),
+            ],
+        ) {
+            Ok(0) => Err(format!("update practice id {}", id)),
+            _ => Ok(practice),
         }
     }
 }

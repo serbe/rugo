@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{Local, NaiveDate, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
@@ -65,6 +65,89 @@ impl Certificate {
                 certificate.updated_at = row.get(6);
             }
             Ok(certificate)
+        }
+    }
+
+    pub fn post(conn: &Connection, id: i64, certificate: Certificate) -> Result<Certificate, String> {
+        if id == 0 {
+            Certificate::insert(conn, certificate)
+        } else {
+            Certificate::update(conn, id, certificate)
+        }
+    }
+
+    pub fn insert(conn: &Connection, certificate: Certificate) -> Result<Certificate, String> {
+        let mut certificate = certificate;
+        for row in &conn
+            .query(
+                "
+                    INSERT INTO certificates
+                    (
+                        num,
+                        contact_id,
+                        company_id,
+                        cert_date,
+                        note,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES
+                    (
+                        $1,
+                        $2,
+                        $3,
+                        $4,
+                        $5,
+                        $6,
+                        $7
+                    )
+                    RETURNING
+                        id
+                ",
+                &[
+                    &certificate.num,
+                    &certificate.contact_id,
+                    &certificate.company_id,
+                    &certificate.cert_date,
+                    &certificate.note,
+                    &Local::now().naive_local(),
+                    &Local::now().naive_local(),
+                ],
+            )
+            .map_err(|e| format!("create certificate {} ", e.to_string()))?
+        {
+            certificate.id = row.get(0)
+        }
+        Ok(certificate)
+    }
+
+    pub fn update(conn: &Connection, id: i64, certificate: Certificate) -> Result<Certificate, String> {
+        let mut certificate = certificate;
+        certificate.id = id;
+        match &conn.execute(
+            "
+                UPDATE certificates SET
+                    num = $2,
+                    contact_id = $3,
+                    company_id = $4,
+                    cert_date = $5,
+                    note = $6,
+                    updated_at = $7
+                WHERE
+                    id = $1
+            ",
+            &[
+                &certificate.id,
+                &certificate.num,
+                &certificate.contact_id,
+                &certificate.company_id,
+                &certificate.cert_date,
+                &certificate.note,
+                &Local::now().naive_local(),
+            ],
+        ) {
+            Ok(0) => Err(format!("update certificate id {}", id)),
+            _ => Ok(certificate),
         }
     }
 }

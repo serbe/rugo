@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{Local, NaiveDate, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
@@ -78,6 +78,86 @@ impl Education {
                 };
             }
             Ok(education)
+        }
+    }
+
+    pub fn post(conn: &Connection, id: i64, education: Education) -> Result<Education, String> {
+        if id == 0 {
+            Education::insert(conn, education)
+        } else {
+            Education::update(conn, id, education)
+        }
+    }
+
+    pub fn insert(conn: &Connection, education: Education) -> Result<Education, String> {
+        let mut education = education;
+        for row in &conn
+            .query(
+                "
+                    INSERT INTO educations
+                    (
+                        contact_id,
+                        start_date,
+                        end_date,
+                        post_id,
+                        note,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES
+                    (
+                        $1,
+                        $2,
+                        $3,
+                        $4
+                    )
+                    RETURNING
+                        id
+                ",
+                &[
+                    &education.contact_id,
+                    &education.start_date,
+                    &education.end_date,
+                    &education.post_id,
+                    &education.note,
+                    &Local::now().naive_local(),
+                    &Local::now().naive_local(),
+                ],
+            )
+            .map_err(|e| format!("create education {} ", e.to_string()))?
+        {
+            education.id = row.get(0)
+        }
+        Ok(education)
+    }
+
+    pub fn update(conn: &Connection, id: i64, education: Education) -> Result<Education, String> {
+        let mut education = education;
+        education.id = id;
+        match &conn.execute(
+            "
+                UPDATE educations SET
+                    contact_id = $2,
+                    start_date = $3,
+                    end_date = $4,
+                    post_id = $5,
+                    note = $6,
+                    updated_at = $7
+                WHERE
+                    id = $1
+            ",
+            &[
+                &education.id,
+                &education.contact_id,
+                &education.start_date,
+                &education.end_date,
+                &education.post_id,
+                &education.note,
+                &Local::now().naive_local(),
+            ],
+        ) {
+            Ok(0) => Err(format!("update education id {}", id)),
+            _ => Ok(education),
         }
     }
 

@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{Local, NaiveDate, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
@@ -123,6 +123,103 @@ impl Contact {
                 };
             }
             Ok(contact)
+        }
+    }
+
+    pub fn post(conn: &Connection, id: i64, contact: Contact) -> Result<Contact, String> {
+        if id == 0 {
+            Contact::insert(conn, contact)
+        } else {
+            Contact::update(conn, id, contact)
+        }
+    }
+
+    pub fn insert(conn: &Connection, contact: Contact) -> Result<Contact, String> {
+        let mut contact = contact;
+        for row in &conn
+            .query(
+                "
+                    INSERT INTO contacts
+                    (
+                        name,
+                        company_id,
+                        department_id,
+                        post_id,
+                        post_go_id,
+                        rank_id,
+                        birthday,
+                        note,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES
+                    (
+                        $1,
+                        $2,
+                        $3,
+                        $4,
+                        $5,
+                        $6,
+                        $7,
+                        $8,
+                        $9,
+                        $10
+                    )
+                    RETURNING
+                        id
+                ",
+                &[
+                    &contact.name,
+                    &contact.company_id,
+                    &contact.department_id,
+                    &contact.post_id,
+                    &contact.post_go_id,
+                    &contact.rank_id,
+                    &contact.birthday,
+                    &contact.note,
+                    &Local::now().naive_local(),
+                    &Local::now().naive_local(),
+                ],
+            )
+            .map_err(|e| format!("create contact {} ", e.to_string()))?
+        {
+            contact.id = row.get(0)
+        }
+        Ok(contact)
+    }
+
+    pub fn update(conn: &Connection, id: i64, contact: Contact) -> Result<Contact, String> {
+        let mut contact = contact;
+        contact.id = id;
+        match &conn.execute(
+            "
+                UPDATE contacts SET
+                    name = $2,
+                    company_id = $3,
+                    department_id = $4,
+                    post_id = $5,
+                    post_go_id = $6,
+                    rank_id = $7,
+                    birthday = $8,
+                    note = $9,
+                    updated_at = $10
+                WHERE
+                    id = $1
+            ",
+            &[
+                &contact.id,
+                &contact.name,
+                &contact.department_id,
+                &contact.post_id,
+                &contact.post_go_id,
+                &contact.rank_id,
+                &contact.birthday,
+                &contact.note,
+                &Local::now().naive_local(),
+            ],
+        ) {
+            Ok(0) => Err(format!("update contact id {}", id)),
+            _ => Ok(contact),
         }
     }
 }

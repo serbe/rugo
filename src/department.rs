@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{Local, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
@@ -54,6 +54,74 @@ impl Department {
                 }
             }
             Ok(department)
+        }
+    }
+
+    pub fn post(conn: &Connection, id: i64, department: Department) -> Result<Department, String> {
+        if id == 0 {
+            Department::insert(conn, department)
+        } else {
+            Department::update(conn, id, department)
+        }
+    }
+
+    pub fn insert(conn: &Connection, department: Department) -> Result<Department, String> {
+        let mut department = department;
+        for row in &conn
+            .query(
+                "
+                    INSERT INTO departments
+                    (
+                        name,
+                        note,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES
+                    (
+                        $1,
+                        $2,
+                        $3,
+                        $4
+                    )
+                    RETURNING
+                        id
+                ",
+                &[
+                    &department.name,
+                    &department.note,
+                    &Local::now().naive_local(),
+                    &Local::now().naive_local(),
+                ],
+            )
+            .map_err(|e| format!("create department {} ", e.to_string()))?
+        {
+            department.id = row.get(0)
+        }
+        Ok(department)
+    }
+
+    pub fn update(conn: &Connection, id: i64, department: Department) -> Result<Department, String> {
+        let mut department = department;
+        department.id = id;
+        match &conn.execute(
+            "
+                UPDATE departments SET
+                    name = $2,
+                    note = $3,
+                    updated_at = $4
+                WHERE
+                    id = $1
+            ",
+            &[
+                &department.id,
+                &department.name,
+                &department.note,
+                &Local::now().naive_local(),
+            ],
+        ) {
+            Ok(0) => Err(format!("update department id {}", id)),
+            _ => Ok(department),
         }
     }
 }

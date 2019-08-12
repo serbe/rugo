@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{Local, NaiveDate, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
@@ -103,6 +103,86 @@ impl Company {
                 };
             }
             Ok(company)
+        }
+    }
+
+    pub fn post(conn: &Connection, id: i64, company: Company) -> Result<Company, String> {
+        if id == 0 {
+            Company::insert(conn, company)
+        } else {
+            Company::update(conn, id, company)
+        }
+    }
+
+    pub fn insert(conn: &Connection, company: Company) -> Result<Company, String> {
+        let mut company = company;
+        for row in &conn
+            .query(
+                "
+                    INSERT INTO companies
+                    (
+                        name,
+                        address,
+                        scope_id,
+                        note,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES
+                    (
+                        $1,
+                        $2,
+                        $3,
+                        $4,
+                        $5,
+                        $6
+                    )
+                    RETURNING
+                        id
+                ",
+                &[
+                    &company.name,
+                    &company.address,
+                    &company.scope_id,
+                    &company.note,
+                    &Local::now().naive_local(),
+                    &Local::now().naive_local(),
+                ],
+            )
+            .map_err(|e| format!("create company {} ", e.to_string()))?
+        {
+            company.id = row.get(0)
+        }
+        Ok(company)
+    }
+
+    pub fn update(conn: &Connection, id: i64, company: Company) -> Result<Company, String> {
+        let mut company = company;
+        company.id = id;
+        match &conn.execute(
+            "
+                UPDATE companies SET
+                    name = $2,
+                    address = $3,
+                    scope_id = $4,
+                    note = $5,
+                    updated_at = $6
+                WHERE
+                    id = $1
+            ",
+            &[
+                &company.id,
+                &company.name,
+                &company.address,
+                &company.scope_id,
+                &company.note,
+                &Local::now().naive_local(),
+            ],
+        ) {
+            Ok(0) => Err(format!("update company id {}", id)),
+            _ => {
+                Ok(company)
+            },
         }
     }
 }

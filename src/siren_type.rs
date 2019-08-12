@@ -60,6 +60,74 @@ impl SirenType {
             Ok(siren_type)
         }
     }
+
+    pub fn post(conn: &Connection, id: i64, rank: Rank) -> Result<Rank, String> {
+        if id == 0 {
+            Rank::insert(conn, rank)
+        } else {
+            Rank::update(conn, id, rank)
+        }
+    }
+
+    pub fn insert(conn: &Connection, rank: Rank) -> Result<Rank, String> {
+        let mut rank = rank;
+        for row in &conn
+            .query(
+                "
+                    INSERT INTO ranks
+                    (
+                        name,
+                        note,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES
+                    (
+                        $1,
+                        $2,
+                        $3,
+                        $4
+                    )
+                    RETURNING
+                        id
+                ",
+                &[
+                    &rank.name,
+                    &rank.note,
+                    &Local::now().naive_local(),
+                    &Local::now().naive_local(),
+                ],
+            )
+            .map_err(|e| format!("create rank {} ", e.to_string()))?
+        {
+            rank.id = row.get(0)
+        }
+        Ok(rank)
+    }
+
+    pub fn update(conn: &Connection, id: i64, rank: Rank) -> Result<Rank, String> {
+        let mut rank = rank;
+        rank.id = id;
+        match &conn.execute(
+            "
+                UPDATE ranks SET
+                    name = $2,
+                    note = $3,
+                    updated_at = $4
+                WHERE
+                    id = $1
+            ",
+            &[
+                &rank.id,
+                &rank.name,
+                &rank.note,
+                &Local::now().naive_local(),
+            ],
+        ) {
+            Ok(0) => Err(format!("update rank id {}", id)),
+            _ => Ok(rank),
+        }
+    }
 }
 
 // // GetSirenType - get one sirenType by id

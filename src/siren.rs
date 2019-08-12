@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{Local, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
@@ -89,6 +89,129 @@ impl Siren {
                 };
             }
             Ok(siren)
+        }
+    }
+
+    pub fn post(conn: &Connection, id: i64, siren: Siren) -> Result<Siren, String> {
+        if id == 0 {
+            Siren::insert(conn, siren)
+        } else {
+            Siren::update(conn, id, siren)
+        }
+    }
+
+    pub fn insert(conn: &Connection, siren: Siren) -> Result<Siren, String> {
+        let mut siren = siren;
+        for row in &conn
+            .query(
+                "
+                    INSERT INTO sirens
+                    (
+                        num_id,
+                        num_pass,
+                        siren_type_id,
+                        address,
+                        radio,
+                        desk,
+                        contact_id,
+                        company_id,
+                        latitude,
+                        longitude,
+                        stage,
+                        own,
+                        note,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES
+                    (
+                        $1,
+                        $2,
+                        $3,
+                        $4,
+                        $5,
+                        $6,
+                        $7,
+                        $8,
+                        $9,
+                        $10,
+                        $11,
+                        $12,
+                        $13,
+                        $14,
+                        $15
+                    )
+                    RETURNING
+                        id
+                ",
+                &[
+                    &siren.num_id,
+                    &siren.num_pass,
+                    &siren.siren_type_id,
+                    &siren.address,
+                    &siren.radio,
+                    &siren.desk,
+                    &siren.contact_id,
+                    &siren.company_id,
+                    &siren.latitude,
+                    &siren.longitude,
+                    &siren.stage,
+                    &siren.own,
+                    &siren.note,
+                    &Local::now().naive_local(),
+                    &Local::now().naive_local(),
+                ],
+            )
+            .map_err(|e| format!("create siren {} ", e.to_string()))?
+        {
+            siren.id = row.get(0)
+        }
+        Ok(siren)
+    }
+
+    pub fn update(conn: &Connection, id: i64, siren: Siren) -> Result<Siren, String> {
+        let mut siren = siren;
+        siren.id = id;
+        match &conn.execute(
+            "
+                UPDATE sirens SET
+                    num_id = $2,
+                    num_pass = $3,
+                    siren_type_id = $4,
+                    address = $5,
+                    radio = $6,
+                    desk = $7,
+                    contact_id = $8,
+                    company_id = $9,
+                    latitude = $10,
+                    longitude = $11,
+                    stage = $12,
+                    own = $13,
+                    note = $14,
+                    updated_at = $15
+                WHERE
+                    id = $1
+            ",
+            &[
+                &siren.id,
+                &siren.num_id,
+                &siren.num_pass,
+                &siren.siren_type_id,
+                &siren.address,
+                &siren.radio,
+                &siren.desk,
+                &siren.contact_id,
+                &siren.company_id,
+                &siren.latitude,
+                &siren.longitude,
+                &siren.stage,
+                &siren.own,
+                &siren.note,
+                &Local::now().naive_local(),
+            ],
+        ) {
+            Ok(0) => Err(format!("update siren id {}", id)),
+            _ => Ok(siren),
         }
     }
 }
