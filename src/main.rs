@@ -3,7 +3,7 @@
 use actix_web::{middleware, web, App, HttpServer};
 use std::io;
 
-use db::{get_manager, name_command, name_children, name_id};
+use db::{get_manager, name_command, name_children, name_id, post_name_id};
 
 mod certificate;
 mod company;
@@ -55,6 +55,7 @@ fn main() -> io::Result<()> {
                 web::resource("/api/go/{name}/{command}").route(web::get().to_async(name_command)),
             )
             .service(web::resource("/api/go/{name}/item/{id}").route(web::get().to_async(name_id)))
+            .service(web::resource("/api/go/{name}/item/{id}").route(web::post().to_async(post_name_id)))
             .service(
                 web::resource("/api/go/{name}/list/{children}/{id}")
                     .route(web::get().to_async(name_children)),

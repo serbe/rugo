@@ -23,6 +23,22 @@ use crate::siren::{Siren, SirenList};
 use crate::siren_type::{SirenType, SirenTypeList};
 
 #[derive(Deserialize, Serialize)]
+pub enum FormEnum {
+    Certificate,
+    Company,
+    Contact,
+    Department,
+    Education,
+    Kind,
+    Post,
+    Practice,
+    Rank,
+    Scope,
+    Siren,
+    SirenType,
+}
+
+#[derive(Deserialize, Serialize)]
 pub enum DBResult {
     Certificate(Certificate),
     CertificateList(Vec<CertificateList>),
@@ -111,6 +127,24 @@ fn get_item(conn: &Connection, name: &str, id: i64) -> Result<DBResult, String> 
     }
 }
 
+fn post_item(conn: &Connection, name: &str, id: i64, params: web::Form<FormEnum>) -> Result<DBResult, String> {
+    match name {
+        // "certificate" => Ok(DBResult::Certificate(Certificate::post(conn, id, params)?)),
+        // "company" => Ok(DBResult::Company(Box::new(Company::post(conn, id, params)?))),
+        // "contact" => Ok(DBResult::Contact(Box::new(Contact::post(conn, id, params)?))),
+        // "department" => Ok(DBResult::Department(Department::post(conn, id, params)?)),
+        // "education" => Ok(DBResult::Education(Education::post(conn, id, params)?)),
+        // "kind" => Ok(DBResult::Kind(Kind::post(conn, id, params)?)),
+        // "post" => Ok(DBResult::Post(Post::post(conn, id, params)?)),
+        // "practice" => Ok(DBResult::Practice(Practice::post(conn, id, params)?)),
+        // "rank" => Ok(DBResult::Rank(Rank::post(conn, id, params)?)),
+        // "scope" => Ok(DBResult::Scope(Scope::post(conn, id, params)?)),
+        // "siren" => Ok(DBResult::Siren(Box::new(Siren::post(conn, id, params)?))),
+        // "siren_type" => Ok(DBResult::SirenType(SirenType::post(conn, id, params)?)),
+        _ => Err("bad path".to_string()),
+    }
+}
+
 fn get_children(
     conn: &Connection,
     name: &str,
@@ -181,6 +215,28 @@ pub fn name_id(
     web::block(move || {
         let conn = db.get().unwrap();
         get_item(&conn, &path.0, path.1)
+    })
+    .then(|res| match res {
+        Ok(db_result) => Ok(HttpResponse::Ok().json(json!({
+            "data": db_result,
+            "error": Null,
+            "ok": true
+        }))),
+        Err(err) => {
+            println!("{}", err);
+            Ok(HttpResponse::InternalServerError().into())
+        }
+    })
+}
+
+pub fn post_name_id(
+    db: web::Data<Pool<PostgresConnectionManager>>,
+    path: web::Path<(String, i64)>,
+    params: web::Form<FormEnum>
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    web::block(move || {
+        let conn = db.get().unwrap();
+        post_item(&conn, &path.0, path.1, params)
     })
     .then(|res| match res {
         Ok(db_result) => Ok(HttpResponse::Ok().json(json!({

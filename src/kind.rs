@@ -60,6 +60,8 @@ impl Kind {
             Ok(kind)
         }
     }
+
+    // pub fn post(conn: &Connection, id: i64, post: web::Form<Kind>)
 }
 
 impl KindList {
