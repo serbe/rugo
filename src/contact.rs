@@ -3,6 +3,7 @@ use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
 use crate::email::Email;
+use crate::phone::Phone;
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Contact {
@@ -190,6 +191,12 @@ impl Contact {
         if let Some(emails) = contact.emails.clone() {
             let _ = Email::update_contacts(conn, contact.id, emails);
         }
+        if let Some(phones) = contact.phones.clone() {
+            let _ = Phone::update_contacts(conn, contact.id, false, phones);
+        }
+        if let Some(faxes) = contact.faxes.clone() {
+            let _ = Phone::update_contacts(conn, contact.id, true, faxes);
+        }
         Ok(contact)
     }
 
@@ -227,6 +234,12 @@ impl Contact {
             _ => {
                 if let Some(emails) = contact.emails.clone() {
                     let _ = Email::update_contacts(conn, contact.id, emails);
+                }
+                if let Some(phones) = contact.phones.clone() {
+                    let _ = Phone::update_contacts(conn, contact.id, false, phones);
+                }
+                if let Some(faxes) = contact.faxes.clone() {
+                    let _ = Phone::update_contacts(conn, contact.id, true, faxes);
                 }
                 Ok(contact)
             }

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::contact::ContactShort;
 use crate::email::Email;
+use crate::phone::Phone;
 use crate::practice::PracticeList;
 
 #[derive(Default, Deserialize, Serialize)]
@@ -157,6 +158,12 @@ impl Company {
         if let Some(emails) = company.emails.clone() {
             let _ = Email::update_companies(conn, company.id, emails);
         }
+        if let Some(phones) = company.phones.clone() {
+            let _ = Phone::update_companies(conn, company.id, false, phones);
+        }
+        if let Some(faxes) = company.faxes.clone() {
+            let _ = Phone::update_companies(conn, company.id, true, faxes);
+        }
         Ok(company)
     }
 
@@ -187,6 +194,12 @@ impl Company {
             _ => {
                 if let Some(emails) = company.emails.clone() {
                     let _ = Email::update_companies(conn, company.id, emails);
+                }
+                if let Some(phones) = company.phones.clone() {
+                    let _ = Phone::update_companies(conn, company.id, false, phones);
+                }
+                if let Some(faxes) = company.faxes.clone() {
+                    let _ = Phone::update_companies(conn, company.id, true, faxes);
                 }
                 Ok(company)
             }
