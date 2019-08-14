@@ -52,7 +52,8 @@ fn main() -> io::Result<()> {
             // limit the maximum amount of data that server will accept
             .data(web::JsonConfig::default().limit(4096))
             .service(
-                web::resource("/api/go/{name}/{command}").route(web::get().to_async(get_name_command)),
+                web::resource("/api/go/{name}/{command}")
+                    .route(web::get().to_async(get_name_command)),
             )
             .service(
                 web::resource("/api/go/{name}/item/{id}")

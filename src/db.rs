@@ -5,7 +5,7 @@ use postgres::Connection;
 use r2d2::Pool;
 use r2d2_postgres::PostgresConnectionManager;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value::Null, Value};
+use serde_json::{json, Value::Null};
 use std::env;
 
 use crate::certificate::{Certificate, CertificateList};
@@ -51,17 +51,7 @@ pub enum DBResult {
     SirenList(Vec<SirenList>),
     SirenType(SirenType),
     SirenTypeList(Vec<SirenTypeList>),
-    Value(Value)
 }
-
-// impl<T> Into<T> for DBResult {
-//     fn into(self) -> Option<T> {
-//         match self {
-//             DBResult::Post(item) => Some<item>,
-//             _ => None
-//         }
-//     }
-// }
 
 fn get_connurl() -> String {
     dotenv().ok();
@@ -155,10 +145,6 @@ fn post_item(
         ("siren_type", DBResult::SirenType(item)) => {
             Ok(DBResult::SirenType(SirenType::post(conn, id, item)?))
         }
-        ("test", DBResult::Value(value)) => {
-            println!("{}, {}", name, value);
-            Ok(DBResult::Value(value))
-        },
         _ => Err(format!("bad path {}", name)),
     }
 }
