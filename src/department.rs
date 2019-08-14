@@ -2,7 +2,7 @@ use chrono::{Local, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Department {
     pub id: i64,
     pub name: Option<String>,
@@ -11,7 +11,7 @@ pub struct Department {
     pub updated_at: Option<NaiveDateTime>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct DepartmentList {
     pub id: i64,
     pub name: Option<String>,

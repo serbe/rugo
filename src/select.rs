@@ -1,7 +1,7 @@
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SelectItem {
     pub id: i64,
     pub name: Option<String>,

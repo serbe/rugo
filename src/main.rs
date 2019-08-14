@@ -3,7 +3,7 @@
 use actix_web::{middleware, web, App, HttpServer};
 use std::io;
 
-use db::{get_manager, name_children, name_command, name_id, post_name_id};
+use db::{get_manager, get_name_children, get_name_command, get_name_id, post_name_id};
 
 mod certificate;
 mod company;
@@ -52,15 +52,16 @@ fn main() -> io::Result<()> {
             // limit the maximum amount of data that server will accept
             .data(web::JsonConfig::default().limit(4096))
             .service(
-                web::resource("/api/go/{name}/{command}").route(web::get().to_async(name_command)),
+                web::resource("/api/go/{name}/{command}").route(web::get().to_async(get_name_command)),
             )
-            .service(web::resource("/api/go/{name}/item/{id}").route(web::get().to_async(name_id)))
             .service(
-                web::resource("/api/go/{name}/item/{id}").route(web::post().to_async(post_name_id)),
+                web::resource("/api/go/{name}/item/{id}")
+                    .route(web::get().to_async(get_name_id))
+                    .route(web::post().to_async(post_name_id)),
             )
             .service(
                 web::resource("/api/go/{name}/list/{children}/{id}")
-                    .route(web::get().to_async(name_children)),
+                    .route(web::get().to_async(get_name_children)),
             )
     })
     .bind("127.0.0.1:9090")?

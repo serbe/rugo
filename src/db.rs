@@ -5,7 +5,7 @@ use postgres::Connection;
 use r2d2::Pool;
 use r2d2_postgres::PostgresConnectionManager;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value::Null};
+use serde_json::{json, Value::Null, Value};
 use std::env;
 
 use crate::certificate::{Certificate, CertificateList};
@@ -22,7 +22,7 @@ use crate::select::SelectItem;
 use crate::siren::{Siren, SirenList};
 use crate::siren_type::{SirenType, SirenTypeList};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub enum DBResult {
     Certificate(Certificate),
     CertificateList(Vec<CertificateList>),
@@ -51,6 +51,7 @@ pub enum DBResult {
     SirenList(Vec<SirenList>),
     SirenType(SirenType),
     SirenTypeList(Vec<SirenTypeList>),
+    Value(Value)
 }
 
 // impl<T> Into<T> for DBResult {
@@ -124,8 +125,9 @@ fn post_item(
     conn: &Connection,
     name: &str,
     id: i64,
-    params: web::Form<DBResult>,
+    params: web::Json<DBResult>,
 ) -> Result<DBResult, String> {
+    println!("{} {} {:?}", name, id, params);
     match (name, params.into_inner()) {
         ("certificate", DBResult::Certificate(item)) => {
             Ok(DBResult::Certificate(Certificate::post(conn, id, item)?))
@@ -153,7 +155,11 @@ fn post_item(
         ("siren_type", DBResult::SirenType(item)) => {
             Ok(DBResult::SirenType(SirenType::post(conn, id, item)?))
         }
-        _ => Err("bad path".to_string()),
+        ("test", DBResult::Value(value)) => {
+            println!("{}, {}", name, value);
+            Ok(DBResult::Value(value))
+        },
+        _ => Err(format!("bad path {}", name)),
     }
 }
 
@@ -178,7 +184,7 @@ fn get_children(
     }
 }
 
-pub fn name_children(
+pub fn get_name_children(
     db: web::Data<Pool<PostgresConnectionManager>>,
     path: web::Path<(String, String, i64)>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
@@ -199,7 +205,7 @@ pub fn name_children(
     })
 }
 
-pub fn name_command(
+pub fn get_name_command(
     db: web::Data<Pool<PostgresConnectionManager>>,
     path: web::Path<(String, String)>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
@@ -220,7 +226,7 @@ pub fn name_command(
     })
 }
 
-pub fn name_id(
+pub fn get_name_id(
     db: web::Data<Pool<PostgresConnectionManager>>,
     path: web::Path<(String, i64)>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
@@ -244,7 +250,7 @@ pub fn name_id(
 pub fn post_name_id(
     db: web::Data<Pool<PostgresConnectionManager>>,
     path: web::Path<(String, i64)>,
-    params: web::Form<DBResult>,
+    params: web::Json<DBResult>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     web::block(move || {
         let conn = db.get().unwrap();

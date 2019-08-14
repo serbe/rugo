@@ -7,7 +7,7 @@ use crate::email::Email;
 use crate::phone::Phone;
 use crate::practice::PracticeList;
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Company {
     pub id: i64,
     pub name: Option<String>,
@@ -23,7 +23,7 @@ pub struct Company {
     pub contacts: Option<Vec<ContactShort>>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct CompanyList {
     pub id: i64,
     pub name: Option<String>,
