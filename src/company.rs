@@ -7,14 +7,16 @@ use crate::email::Email;
 use crate::phone::Phone;
 use crate::practice::PracticeList;
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Company {
     pub id: i64,
     pub name: Option<String>,
     pub address: Option<String>,
     pub scope_id: Option<i64>,
     pub note: Option<String>,
+    #[serde(skip_serializing)]
     pub created_at: Option<NaiveDateTime>,
+    #[serde(skip_serializing)]
     pub updated_at: Option<NaiveDateTime>,
     pub emails: Option<Vec<String>>,
     pub phones: Option<Vec<i64>>,
@@ -23,7 +25,7 @@ pub struct Company {
     pub contacts: Option<Vec<ContactShort>>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CompanyList {
     pub id: i64,
     pub name: Option<String>,

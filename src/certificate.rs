@@ -2,7 +2,7 @@ use chrono::{Local, NaiveDate, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Certificate {
     pub id: i64,
     pub num: Option<String>,
@@ -10,11 +10,13 @@ pub struct Certificate {
     pub company_id: Option<i64>,
     pub cert_date: Option<NaiveDate>,
     pub note: Option<String>,
+    #[serde(skip_serializing)]
     pub created_at: Option<NaiveDateTime>,
+    #[serde(skip_serializing)]
     pub updated_at: Option<NaiveDateTime>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CertificateList {
     pub id: i64,
     pub num: Option<String>,
@@ -23,6 +25,7 @@ pub struct CertificateList {
     pub company_id: Option<i64>,
     pub company_name: Option<String>,
     pub cert_date: Option<String>,
+    pub note: Option<String>,
 }
 
 impl Certificate {
@@ -173,7 +176,8 @@ impl CertificateList {
                         p.name AS contact_name,
                         c.company_id,
                         co.name AS company_name,
-                        c.cert_date
+                        c.cert_date,
+                        c.note
                     FROM
                         certificates AS c
                     LEFT JOIN
@@ -204,6 +208,7 @@ impl CertificateList {
                 } else {
                     None
                 },
+                note: row.get(7),
             });
         }
         Ok(certificates)

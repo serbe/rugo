@@ -74,7 +74,9 @@ pub struct Hideout {
 	Contact       Contact     `sql:"-"               json:"contact"         form:"contact"         query:"contact"`
 	pub condition: Option<String>,
 	pub note: Option<String>,
+	#[serde(skip_serializing)]
 	pub created_at: Option<NaiveDateTime>,
+	#[serde(skip_serializing)]
 	pub updated_at: Option<NaiveDateTime>,
 }
 

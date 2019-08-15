@@ -2,17 +2,19 @@ use chrono::{Local, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Post {
     pub id: i64,
     pub name: Option<String>,
     pub go: bool,
     pub note: Option<String>,
+    #[serde(skip_serializing)]
     pub created_at: Option<NaiveDateTime>,
+    #[serde(skip_serializing)]
     pub updated_at: Option<NaiveDateTime>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PostList {
     pub id: i64,
     pub name: Option<String>,

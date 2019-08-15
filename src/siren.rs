@@ -2,7 +2,7 @@ use chrono::{Local, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Siren {
     pub id: i64,
     pub num_id: Option<i64>,
@@ -18,11 +18,13 @@ pub struct Siren {
     pub stage: Option<i64>,
     pub own: Option<String>,
     pub note: Option<String>,
+    #[serde(skip_serializing)]
     pub created_at: Option<NaiveDateTime>,
+    #[serde(skip_serializing)]
     pub updated_at: Option<NaiveDateTime>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct SirenList {
     pub id: i64,
     pub siren_type_name: Option<String>,

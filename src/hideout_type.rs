@@ -5,7 +5,9 @@ pub struct HideoutType {
 	pub id: i64,
 	pub name: Option<String>,
 	pub note: Option<String>,
+	#[serde(skip_serializing)]
 	pub created_at: Option<NaiveDateTime>,
+	#[serde(skip_serializing)]
 	pub updated_at: Option<NaiveDateTime>,
 }
 

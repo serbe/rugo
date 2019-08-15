@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::email::Email;
 use crate::phone::Phone;
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Contact {
     pub id: i64,
     pub name: Option<String>,
@@ -16,7 +16,9 @@ pub struct Contact {
     pub rank_id: Option<i64>,
     pub birthday: Option<NaiveDate>,
     pub note: Option<String>,
+    #[serde(skip_serializing)]
     pub created_at: Option<NaiveDateTime>,
+    #[serde(skip_serializing)]
     pub updated_at: Option<NaiveDateTime>,
     pub emails: Option<Vec<String>>,
     pub phones: Option<Vec<i64>>,
@@ -24,7 +26,7 @@ pub struct Contact {
     pub educations: Option<Vec<String>>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ContactList {
     pub id: i64,
     pub name: Option<String>,
@@ -35,7 +37,7 @@ pub struct ContactList {
     pub faxes: Option<Vec<i64>>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ContactShort {
     pub id: i64,
     pub name: Option<String>,

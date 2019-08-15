@@ -2,14 +2,16 @@ use chrono::{Local, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Phone {
     pub id: i64,
     pub company_id: Option<i64>,
     pub contact_id: Option<i64>,
     pub phone: Option<i64>,
     pub fax: bool,
+    #[serde(skip_serializing)]
     pub created_at: Option<NaiveDateTime>,
+    #[serde(skip_serializing)]
     pub updated_at: Option<NaiveDateTime>,
 }
 

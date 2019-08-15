@@ -5,7 +5,7 @@ use postgres::Connection;
 use r2d2::Pool;
 use r2d2_postgres::PostgresConnectionManager;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value::Null};
+use serde_json::{json, Value, Value::Null};
 use std::env;
 
 use crate::certificate::{Certificate, CertificateList};
@@ -22,7 +22,7 @@ use crate::select::SelectItem;
 use crate::siren::{Siren, SirenList};
 use crate::siren_type::{SirenType, SirenTypeList};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum DBResult {
     Certificate(Certificate),
     CertificateList(Vec<CertificateList>),
@@ -51,6 +51,11 @@ pub enum DBResult {
     SirenList(Vec<SirenList>),
     SirenType(SirenType),
     SirenTypeList(Vec<SirenTypeList>),
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct TestStruct {
+    value: Value
 }
 
 fn get_connurl() -> String {
@@ -117,7 +122,6 @@ fn post_item(
     id: i64,
     params: web::Json<DBResult>,
 ) -> Result<DBResult, String> {
-    println!("{} {} {:?}", name, id, params);
     match (name, params.into_inner()) {
         ("certificate", DBResult::Certificate(item)) => {
             Ok(DBResult::Certificate(Certificate::post(conn, id, item)?))
@@ -253,4 +257,18 @@ pub fn post_name_id(
             Ok(HttpResponse::InternalServerError().into())
         }
     })
+}
+
+pub fn test_post_name_id(
+    _db: web::Data<Pool<PostgresConnectionManager>>,
+    path: web::Path<(String, i64)>,
+    params: web::Json<TestStruct>,
+) -> HttpResponse {
+        let values = params.into_inner();
+        println!("{} {} {:?}", path.0, path.1, values);
+        HttpResponse::Ok().json(json!({
+            "data": values,
+            "error": Null,
+            "ok": true
+        }))
 }
