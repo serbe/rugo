@@ -55,7 +55,7 @@ pub enum DBResult {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TestStruct {
-    value: Value
+    value: Value,
 }
 
 fn get_connurl() -> String {
@@ -264,11 +264,11 @@ pub fn test_post_name_id(
     path: web::Path<(String, i64)>,
     params: web::Json<TestStruct>,
 ) -> HttpResponse {
-        let values = params.into_inner();
-        println!("{} {} {:?}", path.0, path.1, values);
-        HttpResponse::Ok().json(json!({
-            "data": values,
-            "error": Null,
-            "ok": true
-        }))
+    let values = params.into_inner();
+    println!("{} {} {:?}", path.0, path.1, values);
+    HttpResponse::Ok().json(json!({
+        "data": values,
+        "error": Null,
+        "ok": true
+    }))
 }
