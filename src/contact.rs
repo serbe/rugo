@@ -223,6 +223,7 @@ impl Contact {
             &[
                 &contact.id,
                 &contact.name,
+                &contact.company_id,
                 &contact.department_id,
                 &contact.post_id,
                 &contact.post_go_id,
