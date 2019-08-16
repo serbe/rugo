@@ -1,5 +1,5 @@
-// use actix_identity::{CookieIdentityPolicy, IdentityService};
-// use actix_session::{Session, CookieSession};
+use actix_identity::{CookieIdentityPolicy, IdentityService};
+// use actix_session::{CookieSession};
 use actix_web::{middleware, web, App, HttpServer};
 use std::io;
 
@@ -39,10 +39,11 @@ fn main() -> io::Result<()> {
         App::new()
             .data(pool.clone())
             .wrap(middleware::Logger::default())
-            // .wrap(
-            //   CookieSession::signed(&[0; 32]) // <- create cookie based session middleware
-            //         .secure(false)
-            //  )
+            .wrap(IdentityService::new(
+                CookieIdentityPolicy::new(&[0; 32])
+                    .name("auth-example")
+                    .secure(false),
+            ))
             // .wrap(IdentityService::new(
             //     CookieIdentityPolicy::new(secret_key.as_bytes())
             //         .name("auth")

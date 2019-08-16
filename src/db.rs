@@ -1,3 +1,5 @@
+// use actix_session::{Session};
+use actix_identity::{Identity};
 use actix_web::{web, Error, HttpResponse};
 use dotenv::dotenv;
 use futures::Future;
@@ -196,9 +198,16 @@ pub fn get_name_children(
 }
 
 pub fn get_name_command(
+    _identity: Identity,
     db: web::Data<Pool<PostgresConnectionManager>>,
     path: web::Path<(String, String)>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
+    // if let Ok(Some(count)) = session.get::<i32>("counter") {
+    //     println!("SESSION value: {}", count);
+    //     let _ = session.set("counter", count+1);
+    // } else {
+    //     let _ = session.set("counter", 1);
+    // };
     web::block(move || {
         let conn = db.get().unwrap();
         get_list(&conn, &path.0, &path.1)
