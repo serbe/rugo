@@ -1,5 +1,4 @@
-// use actix_session::{Session};
-use actix_identity::{Identity};
+use actix_identity::Identity;
 use actix_web::{web, Error, HttpResponse};
 use dotenv::dotenv;
 use futures::Future;
@@ -10,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value, Value::Null};
 use std::env;
 
+use crate::auth::check_auth;
 use crate::certificate::{Certificate, CertificateList};
 use crate::company::{Company, CompanyList};
 use crate::contact::{Contact, ContactList};
@@ -198,17 +198,13 @@ pub fn get_name_children(
 }
 
 pub fn get_name_command(
-    _identity: Identity,
+    id: Identity,
     db: web::Data<Pool<PostgresConnectionManager>>,
     path: web::Path<(String, String)>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    // if let Ok(Some(count)) = session.get::<i32>("counter") {
-    //     println!("SESSION value: {}", count);
-    //     let _ = session.set("counter", count+1);
-    // } else {
-    //     let _ = session.set("counter", 1);
-    // };
+    let a = check_auth(id);
     web::block(move || {
+        a?;
         let conn = db.get().unwrap();
         get_list(&conn, &path.0, &path.1)
     })
@@ -247,11 +243,14 @@ pub fn get_name_id(
 }
 
 pub fn post_name_id(
+    id: Identity,
     db: web::Data<Pool<PostgresConnectionManager>>,
     path: web::Path<(String, i64)>,
     params: web::Json<DBResult>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
+    let a = check_auth(id);
     web::block(move || {
+        a?;
         let conn = db.get().unwrap();
         post_item(&conn, &path.0, path.1, params)
     })

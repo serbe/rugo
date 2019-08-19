@@ -3,10 +3,12 @@ use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_web::{middleware, web, App, HttpServer};
 use std::io;
 
+use auth::{login, logout};
 use db::{
     get_manager, get_name_children, get_name_command, get_name_id, post_name_id, test_post_name_id,
 };
 
+mod auth;
 mod certificate;
 mod company;
 mod contact;
@@ -26,11 +28,10 @@ mod siren_type;
 mod tcc;
 
 fn main() -> io::Result<()> {
+    let _secret_key = dotenv::var("SECRET_KEY").unwrap();
     let manager = get_manager();
     let pool = r2d2::Pool::new(manager).unwrap();
     let sys = actix_rt::System::new("rugo");
-    // let secret_key = dotenv::var("SECRET_KEY").unwrap();
-    // let cookie_secret = base64::decode(&secret_key).unwrap();
 
     std::env::set_var("RUST_LOG", "actix_web=info,actix_server=info");
     env_logger::init();
@@ -44,16 +45,11 @@ fn main() -> io::Result<()> {
                     .name("auth-example")
                     .secure(false),
             ))
-            // .wrap(IdentityService::new(
-            //     CookieIdentityPolicy::new(secret_key.as_bytes())
-            //         .name("auth")
-            //         .path("/")
-            //         .domain("localhost")
-            //         .max_age_time(chrono::Duration::days(1))
-            //         .secure(false), // this can only be true if you have https
-            // ))
-            // limit the maximum amount of data that server will accept
             .data(web::JsonConfig::default().limit(4096))
+            .service(web::resource("/api/go/login")
+                    .route(web::post().to(login)),)
+            .service(web::resource("/api/go/logout")
+                    .route(web::to(logout)),)
             .service(
                 web::resource("/api/go/{name}/{command}")
                     .route(web::get().to_async(get_name_command)),
