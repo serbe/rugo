@@ -1,9 +1,8 @@
 use actix_identity::{CookieIdentityPolicy, IdentityService};
-// use actix_session::{CookieSession};
 use actix_web::{middleware, web, App, HttpServer};
 use std::io;
 
-use auth::{login, logout};
+use auth::{check, login, logout};
 use db::{
     get_manager, get_name_children, get_name_command, get_name_id, post_name_id, test_post_name_id,
 };
@@ -46,10 +45,9 @@ fn main() -> io::Result<()> {
                     .secure(false),
             ))
             .data(web::JsonConfig::default().limit(4096))
-            .service(web::resource("/api/go/login")
-                    .route(web::post().to(login)),)
-            .service(web::resource("/api/go/logout")
-                    .route(web::to(logout)),)
+            .service(web::resource("/api/go/check").route(web::get().to(check)))
+            .service(web::resource("/api/go/login").route(web::post().to(login)))
+            .service(web::resource("/api/go/logout").route(web::to(logout)))
             .service(
                 web::resource("/api/go/{name}/{command}")
                     .route(web::get().to_async(get_name_command)),
