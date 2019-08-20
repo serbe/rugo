@@ -2,6 +2,7 @@ package edc
 
 // HideoutType - struct for hideoutType
 pub struct HideoutType {
+	#[serde(default)]
 	pub id: i64,
 	pub name: Option<String>,
 	pub note: Option<String>,

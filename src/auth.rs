@@ -31,25 +31,21 @@ pub fn logout(id: Identity) -> HttpResponse {
 }
 
 pub fn check(id: Identity) -> HttpResponse {
-    if let Ok(user) = check_auth(id) {
-        HttpResponse::Ok().json(json!({
+    match check_auth(id) {
+        Ok(user) => HttpResponse::Ok().json(json!({
+            "user": user,
             "error": Null,
-            "user": user
-        }))
-    } else {
-        HttpResponse::Ok().json(json!({
-            "error": "Not auth".to_owned(),
-            "user": Null
-        }))
+        })),
+        Err(err) => HttpResponse::Ok().json(json!({
+            "user": Null,
+            "error": err,
+        })),
     }
 }
 
 pub fn check_auth(id: Identity) -> Result<String, String> {
-    if let Some(i) = id.identity() {
-        // println!("auth {}", i);
-        Ok(i)
-    } else {
-        // println!("not auth");
-        Err("Not auth".to_owned())
+    match id.identity() {
+        Some(i) => Ok(i),
+        None => Err("Not auth".to_owned()),
     }
 }

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Siren {
+    #[serde(default)]
     pub id: i64,
     pub num_id: Option<i64>,
     pub num_pass: Option<String>,

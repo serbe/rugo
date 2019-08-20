@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Certificate {
+    #[serde(default)]
     pub id: i64,
     pub num: Option<String>,
     pub contact_id: Option<i64>,

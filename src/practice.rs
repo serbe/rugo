@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Practice {
+    #[serde(default)]
     pub id: i64,
     pub company_id: Option<i64>,
     pub kind_id: Option<i64>,

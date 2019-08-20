@@ -7,6 +7,7 @@ use crate::phone::Phone;
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Contact {
+    #[serde(default)]
     pub id: i64,
     pub name: Option<String>,
     pub company_id: Option<i64>,

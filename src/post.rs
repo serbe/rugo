@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Post {
+    #[serde(default)]
     pub id: i64,
     pub name: Option<String>,
     pub go: bool,

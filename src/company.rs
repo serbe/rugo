@@ -9,6 +9,7 @@ use crate::practice::PracticeList;
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Company {
+    #[serde(default)]
     pub id: i64,
     pub name: Option<String>,
     pub address: Option<String>,

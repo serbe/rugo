@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Department {
+    #[serde(default)]
     pub id: i64,
     pub name: Option<String>,
     pub note: Option<String>,
