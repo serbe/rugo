@@ -177,10 +177,13 @@ fn get_children(
 }
 
 pub fn get_name_children(
+    id: Identity,
     db: web::Data<Pool<PostgresConnectionManager>>,
     path: web::Path<(String, String, i64)>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
+    let a = check_auth(id);
     web::block(move || {
+        a?;
         let conn = db.get().unwrap();
         get_children(&conn, &path.0, &path.1, path.2)
     })
@@ -190,10 +193,11 @@ pub fn get_name_children(
             "error": Null,
             "ok": true
         }))),
-        Err(err) => {
-            println!("{}", err);
-            Ok(HttpResponse::InternalServerError().into())
-        }
+        Err(err) => Ok(HttpResponse::Ok().json(json!({
+            "data": Null,
+            "error": err.to_string(),
+            "ok": false
+        }))),
     })
 }
 
@@ -214,18 +218,22 @@ pub fn get_name_command(
             "error": Null,
             "ok": true
         }))),
-        Err(err) => {
-            println!("{}", err);
-            Ok(HttpResponse::InternalServerError().into())
-        }
+        Err(err) => Ok(HttpResponse::Ok().json(json!({
+            "data": Null,
+            "error": err.to_string(),
+            "ok": false
+        }))),
     })
 }
 
 pub fn get_name_id(
+    id: Identity,
     db: web::Data<Pool<PostgresConnectionManager>>,
     path: web::Path<(String, i64)>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
+    let a = check_auth(id);
     web::block(move || {
+        a?;
         let conn = db.get().unwrap();
         get_item(&conn, &path.0, path.1)
     })
@@ -235,10 +243,11 @@ pub fn get_name_id(
             "error": Null,
             "ok": true
         }))),
-        Err(err) => {
-            println!("{}", err);
-            Ok(HttpResponse::InternalServerError().into())
-        }
+        Err(err) => Ok(HttpResponse::Ok().json(json!({
+            "data": Null,
+            "error": err.to_string(),
+            "ok": false
+        }))),
     })
 }
 
@@ -260,20 +269,23 @@ pub fn post_name_id(
             "error": Null,
             "ok": true
         }))),
-        Err(err) => {
-            println!("{}", err);
-            Ok(HttpResponse::InternalServerError().into())
-        }
+        Err(err) => Ok(HttpResponse::Ok().json(json!({
+            "data": Null,
+            "error": err.to_string(),
+            "ok": false
+        }))),
     })
 }
 
 pub fn test_post_name_id(
+    id: Identity,
     _db: web::Data<Pool<PostgresConnectionManager>>,
     path: web::Path<(String, i64)>,
     params: web::Json<TestStruct>,
 ) -> HttpResponse {
+    let a = check_auth(id);
     let values = params.into_inner();
-    println!("{} {} {:?}", path.0, path.1, values);
+    println!("{} {} {:?} {:?}", path.0, path.1, a, values);
     HttpResponse::Ok().json(json!({
         "data": values,
         "error": Null,
