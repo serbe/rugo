@@ -1,5 +1,5 @@
 use actix_identity::Identity;
-use actix_web::{web, Error, HttpResponse};
+use actix_web::{error::BlockingError, web, Error, HttpResponse};
 use dotenv::dotenv;
 use futures::Future;
 use postgres::Connection;
@@ -176,6 +176,21 @@ fn get_children(
     }
 }
 
+fn http_result(res: Result<DBResult, BlockingError<std::string::String>>) -> HttpResponse {
+    match res {
+        Ok(db_result) => HttpResponse::Ok().json(json!({
+            "data": db_result,
+            "error": Null,
+            "ok": true
+        })),
+        Err(err) => HttpResponse::Ok().json(json!({
+            "data": Null,
+            "error": err.to_string(),
+            "ok": false
+        })),
+    }
+}
+
 pub fn get_name_children(
     id: Identity,
     db: web::Data<Pool<PostgresConnectionManager>>,
@@ -187,18 +202,7 @@ pub fn get_name_children(
         let conn = db.get().unwrap();
         get_children(&conn, &path.0, &path.1, path.2)
     })
-    .then(|res| match res {
-        Ok(db_result) => Ok(HttpResponse::Ok().json(json!({
-            "data": db_result,
-            "error": Null,
-            "ok": true
-        }))),
-        Err(err) => Ok(HttpResponse::Ok().json(json!({
-            "data": Null,
-            "error": err.to_string(),
-            "ok": false
-        }))),
-    })
+    .then(|res| Ok(http_result(res)))
 }
 
 pub fn get_name_command(
@@ -212,18 +216,7 @@ pub fn get_name_command(
         let conn = db.get().unwrap();
         get_list(&conn, &path.0, &path.1)
     })
-    .then(|res| match res {
-        Ok(db_result) => Ok(HttpResponse::Ok().json(json!({
-            "data": db_result,
-            "error": Null,
-            "ok": true
-        }))),
-        Err(err) => Ok(HttpResponse::Ok().json(json!({
-            "data": Null,
-            "error": err.to_string(),
-            "ok": false
-        }))),
-    })
+    .then(|res| Ok(http_result(res)))
 }
 
 pub fn get_name_id(
@@ -237,18 +230,7 @@ pub fn get_name_id(
         let conn = db.get().unwrap();
         get_item(&conn, &path.0, path.1)
     })
-    .then(|res| match res {
-        Ok(db_result) => Ok(HttpResponse::Ok().json(json!({
-            "data": db_result,
-            "error": Null,
-            "ok": true
-        }))),
-        Err(err) => Ok(HttpResponse::Ok().json(json!({
-            "data": Null,
-            "error": err.to_string(),
-            "ok": false
-        }))),
-    })
+    .then(|res| Ok(http_result(res)))
 }
 
 pub fn post_name_id(
@@ -263,18 +245,7 @@ pub fn post_name_id(
         let conn = db.get().unwrap();
         post_item(&conn, &path.0, path.1, params)
     })
-    .then(|res| match res {
-        Ok(db_result) => Ok(HttpResponse::Ok().json(json!({
-            "data": db_result,
-            "error": Null,
-            "ok": true
-        }))),
-        Err(err) => Ok(HttpResponse::Ok().json(json!({
-            "data": Null,
-            "error": err.to_string(),
-            "ok": false
-        }))),
-    })
+    .then(|res| Ok(http_result(res)))
 }
 
 pub fn test_post_name_id(
