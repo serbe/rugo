@@ -127,22 +127,21 @@ impl Scope {
             _ => Ok(scope),
         }
     }
+
+    pub fn delete(conn: &Connection, id: i64) -> bool {
+        conn.execute(
+            "
+                DELETE FROM
+                    scopes
+                WHERE
+                    id = $1
+            ",
+            &[&id],
+        )
+        .is_ok()
+    }
 }
 
-// // GetScopeList - get scope for list by id
-// pub fn GetScopeList(conn: &Connection, id: i64) -> Result<ScopeList, String> {
-// 	let mut scope = ScopeList::new();
-// 	else { for row in &conn.query("
-// 		Column("id", "name", "note").
-// 		Where("id = ?", id).
-// 		Select(&scope)
-// 	if err != nil {
-// 		errmsg("GetScopeList select", err)
-// 	}
-// 	Ok(scope)
-// }
-
-// GetScopeListAll - get all scope for list
 impl ScopeList {
     pub fn get_all(conn: &Connection) -> Result<Vec<ScopeList>, String> {
         let mut scopes = Vec::new();
@@ -171,83 +170,3 @@ impl ScopeList {
         Ok(scopes)
     }
 }
-
-// // GetScopeSelect - get scope for select
-// pub fn GetScopeSelect(conn: &Connection, id: i64) -> Result<SelectItem, String> {
-// 	let mut scope = SelectItem::new();
-// 	if id == 0 {
-// 		Ok(scope)
-// 	}
-// 	else { for row in &conn.query("
-// 		Column("id", "name").
-// 		Where("id = ?", id).
-// 		Select(&scope)
-// 	if err != nil {
-// 		errmsg("GetScopeSelect select", err)
-// 	}
-// 	Ok(scope)
-// }
-
-// // GetScopeSelectAll - get all scope for select
-// pub fn GetScopeSelectAll(conn: &Connection, id: i64) -> Result<Vec<SelectItem>, String> {
-// 	let mut $1 = Vec::new();
-// 	else { for row in &conn.query("
-// 		Column("id", "name").
-// 		Order("name ASC").
-// 		Select(&scopes)
-// 	if err != nil {
-// 		errmsg("GetScopeSelectAll query", err)
-// 	}
-// 	Ok(scopes)
-// }
-
-// // CreateScope - create new scope
-// pub fn CreateScope(scope Scope) (int64, error) {
-// 	err := e.db.Insert(&scope)
-// 	if err != nil {
-// 		errmsg("CreateScope insert", err)
-// 	}
-// 	return scope.ID, err
-// }
-
-// // UpdateScope - save scope changes
-// pub fn UpdateScope(scope Scope) error {
-// 	err := e.db.Update(&scope)
-// 	if err != nil {
-// 		errmsg("UpdateScope update", err)
-// 	}
-// 	return err
-// }
-
-// // DeleteScope - delete scope by id
-// pub fn DeleteScope(id int64) error {
-// 	if id == 0 {
-// 		return nil
-// 	}
-// 	else { for row in &conn.query("
-// 		Where("id = ?", id).
-// 		Delete()
-// 	if err != nil {
-// 		errmsg("DeleteScope delete", err)
-// 	}
-// 	return err
-// }
-
-// pub fn scopeCreateTable() error {
-// 	str := `
-// 		CREATE TABLE IF NOT EXISTS
-// 			scopes (
-// 				id bigserial primary key,
-// 				name text,
-// 				note text,
-// 				created_at TIMESTAMP without time zone,
-// 				updated_at TIMESTAMP without time zone default now(),
-// 				UNIQUE (name)
-// 			)
-// 	`
-// 	_, err := e.db.Exec(str)
-// 	if err != nil {
-// 		errmsg("scopeCreateTable exec", err)
-// 	}
-// 	return err
-// }

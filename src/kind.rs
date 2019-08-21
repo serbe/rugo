@@ -136,45 +136,22 @@ impl Kind {
             _ => Ok(kind),
         }
     }
+
+    pub fn delete(conn: &Connection, id: i64) -> bool {
+        conn.execute(
+            "
+                DELETE FROM
+                    kinds
+                WHERE
+                    id = $1
+            ",
+            &[&id],
+        )
+        .is_ok()
+    }
 }
 
 impl KindList {
-    // pub fn new() -> Self {
-    // 	Default::default()
-    // }
-
-    // pub fn get(conn: &Connection, id: i64) -> Result<KindList, String> {
-    // 	let mut kind = KindList::new();
-    // 	if id == 0 {
-    // 		Ok(kind)
-    // 	} else {
-    // 		for row in &conn
-    // 			.query(
-    // 				"
-    // 					SELECT
-    // 						name,
-    // 						short_name,
-    // 						note
-    // 					FROM
-    // 						kinds
-    // 					WHERE
-    // 						id = $1
-    // 				",
-    // 				&[&id],
-    // 			)
-    // 			.map_err(|e| format!("kind list id {} {}", id, e.to_string()))?
-    // 		{
-    // 			kind = KindList {
-    // 				id,
-    // 				name: row.get(0),
-    // 				short_name: row.get(1),
-    // 				note: row.get(2),
-    // 			}
-    // 		}
-    // 		Ok(kind)
-    // 	}
-    // }
-
     pub fn get_all(conn: &Connection) -> Result<Vec<KindList>, String> {
         let mut kinds = Vec::new();
         for row in &conn
@@ -204,55 +181,3 @@ impl KindList {
         Ok(kinds)
     }
 }
-
-// // CreateKind - create new kind
-// pub fn CreateKind(kind Kind) (int64, error) {
-// 	err := e.db.Insert(&kind)
-// 	if err != nil {
-// 		errmsg("CreateKind insert", err)
-// 	}
-// 	return kind.ID, nil
-// }
-
-// // UpdateKind - save kind changes
-// pub fn UpdateKind(kind Kind) error {
-// 	err := e.db.Update(&kind)
-// 	if err != nil {
-// 		errmsg("UpdateKind update", err)
-// 	}
-// 	return err
-// }
-
-// // DeleteKind - delete kind by id
-// pub fn DeleteKind(id int64) error {
-// 	if id == 0 {
-// 		return nil
-// 	}
-// 	else { for row in &conn.query("
-// 		Where("id = ?", id).
-// 		Delete()
-// 	if err != nil {
-// 		errmsg("DeleteKind delete", err)
-// 	}
-// 	return err
-// }
-
-// pub fn kindCreateTable() error {
-// 	str := `
-// 		CREATE TABLE IF NOT EXISTS
-// 			kinds (
-// 				id bigserial primary key,
-// 				name text,
-// 				short_name text,
-// 				note text,
-// 				created_at TIMESTAMP without time zone,
-// 				updated_at TIMESTAMP without time zone default now(),
-// 				UNIQUE(name)
-// 			)
-// 	`
-// 	_, err := e.db.Exec(str)
-// 	if err != nil {
-// 		errmsg("kindCreateTable exec", err)
-// 	}
-// 	return err
-// }

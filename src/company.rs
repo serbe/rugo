@@ -208,6 +208,22 @@ impl Company {
             }
         }
     }
+
+    pub fn delete(conn: &Connection, id: i64) -> bool {
+        Phone::delete_companies(conn, id, true);
+        Phone::delete_companies(conn, id, false);
+        Email::delete_companies(conn, id);
+        conn.execute(
+            "
+                DELETE FROM
+                    companyes
+                WHERE
+                    id = $1
+            ",
+            &[&id],
+        )
+        .is_ok()
+    }
 }
 
 impl CompanyList {

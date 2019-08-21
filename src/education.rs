@@ -164,54 +164,18 @@ impl Education {
         }
     }
 
-    //     pub fn get_all(conn: &Connection) -> Result<Vec<Education>, String> {
-    //         let mut educations = Vec::new();
-    //         for row in &conn
-    //             .query(
-    //                 "
-    // 					SELECT
-    // 						id,
-    // 						contact_id,
-    // 						start_date,
-    // 						end_date,
-    // 						post_id,
-    // 						note,
-    // 						created_at,
-    // 						updated_at,
-    // 					FROM
-    // 						educations
-    // 					ORDER BY
-    // 						start_date
-    // 				",
-    //                 &[],
-    //             )
-    //             .map_err(|e| format!("education all {}", e.to_string()))?
-    //         {
-    //             let start_date: Option<NaiveDate> = row.get(2);
-    //             let end_date: Option<NaiveDate> = row.get(3);
-    //             educations.push(Education {
-    //                 id: row.get(0),
-    //                 contact_id: row.get(1),
-    //                 start_date: row.get(2),
-    //                 end_date: row.get(3),
-    //                 start_str: if let Some(d) = start_date {
-    //                     Some(d.format("%Y-%m-%d").to_string())
-    //                 } else {
-    //                     None
-    //                 },
-    //                 end_str: if let Some(d) = end_date {
-    //                     Some(d.format("%Y-%m-%d").to_string())
-    //                 } else {
-    //                     None
-    //                 },
-    //                 post_id: row.get(4),
-    //                 note: row.get(5),
-    //                 created_at: row.get(6),
-    //                 updated_at: row.get(7),
-    //             });
-    //         }
-    //         Ok(educations)
-    //     }
+    pub fn delete(conn: &Connection, id: i64) -> bool {
+        conn.execute(
+            "
+                DELETE FROM
+                    educations
+                WHERE
+                    id = $1
+            ",
+            &[&id],
+        )
+        .is_ok()
+    }
 }
 
 impl EducationList {
@@ -304,55 +268,3 @@ impl EducationShort {
         Ok(educations)
     }
 }
-
-// // CreateEducation - create new education
-// pub fn CreateEducation(education Education) (int64, error) {
-// 	err := e.db.Insert(&education)
-// 	if err != nil {
-// 		errmsg("CreateEducation insert", err)
-// 	}
-// 	return education.ID, err
-// }
-
-// // UpdateEducation - save changes to education
-// pub fn UpdateEducation(education Education) error {
-// 	err := e.db.Update(&education)
-// 	if err != nil {
-// 		errmsg("UpdateEducation update", err)
-// 	}
-// 	return err
-// }
-
-// // DeleteEducation - delete education by id
-// pub fn DeleteEducation(id int64) error {
-// 	if id == 0 {
-// 		return nil
-// 	}
-// 	else { for row in &conn.query("
-// 		Where("id = ?", id).
-// 		Delete()
-// 	if err != nil {
-// 		errmsg("DeleteEducation delete", err)
-// 	}
-// 	return err
-// }
-
-// pub fn educationCreateTable() error {
-// 	str := `
-// 		CREATE TABLE IF NOT EXISTS
-// 			educations (
-// 				id bigserial primary key,
-// 				start_date date,
-// 				end_date date,
-// 				note text,
-// 				post_id bigint,
-// 				created_at TIMESTAMP without time zone,
-// 				updated_at TIMESTAMP without time zone default now()
-// 			)
-// 	`
-// 	_, err := e.db.Exec(str)
-// 	if err != nil {
-// 		errmsg("educationCreateTable exec", err)
-// 	}
-// 	return err
-// }

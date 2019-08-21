@@ -249,6 +249,22 @@ impl Contact {
             }
         }
     }
+
+    pub fn delete(conn: &Connection, id: i64) -> bool {
+        Phone::delete_contacts(conn, id, true);
+        Phone::delete_contacts(conn, id, false);
+        Email::delete_contacts(conn, id);
+        conn.execute(
+            "
+                DELETE FROM
+                    contacts
+                WHERE
+                    id = $1
+            ",
+            &[&id],
+        )
+        .is_ok()
+    }
 }
 
 impl ContactList {

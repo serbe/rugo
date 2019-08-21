@@ -217,6 +217,19 @@ impl Siren {
             _ => Ok(siren),
         }
     }
+
+    pub fn delete(conn: &Connection, id: i64) -> bool {
+        conn.execute(
+            "
+                DELETE FROM
+                    sirens
+                WHERE
+                    id = $1
+            ",
+            &[&id],
+        )
+        .is_ok()
+    }
 }
 
 impl SirenList {
@@ -265,65 +278,3 @@ impl SirenList {
         Ok(sirens)
     }
 }
-
-// // CreateSiren - create new siren
-// pub fn CreateSiren(siren Siren) (int64, error) {
-// 	err := e.db.Insert(&siren)
-// 	if err != nil {
-// 		errmsg("CreateSiren insert", err)
-// 	}
-// 	return siren.ID, err
-// }
-
-// // UpdateSiren - save siren changes
-// pub fn UpdateSiren(siren Siren) error {
-// 	err := e.db.Update(&siren)
-// 	if err != nil {
-// 		errmsg("UpdateSiren update", err)
-// 	}
-// 	return err
-// }
-
-// // DeleteSiren - delete siren by id
-// pub fn DeleteSiren(id int64) error {
-// 	if id == 0 {
-// 		return nil
-// 	}
-// 	else { for row in &conn.query("
-// 		Where("id = ?", id).
-// 		Delete()
-// 	if err != nil {
-// 		errmsg("DeleteSiren delete", err)
-// 	}
-// 	return err
-// }
-
-// pub fn sirenCreateTable() error {
-// 	str := `
-// 		CREATE TABLE IF NOT EXISTS
-// 			sirens (
-// 				id         bigserial PRIMARY KEY,
-// 				num_id     bigint,
-// 				num_pass   text,
-// 				type_id    bigint,
-// 				address    text,
-// 				radio      text,
-// 				desk       text,
-// 				contact_id bigint,
-// 				company_id bigint,
-// 				latitude   text,
-// 				longitude  text,
-// 				stage      bigint,
-// 				own        text,
-// 				note        text,
-// 				created_at TIMESTAMP without time zone,
-// 				updated_at TIMESTAMP without time zone default now(),
-// 				UNIQUE(num_id, num_pass, type_id)
-// 			)
-// 	`
-// 	_, err := e.db.Exec(str)
-// 	if err != nil {
-// 		errmsg("sirenCreateTable exec", err)
-// 	}
-// 	return err
-// }

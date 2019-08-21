@@ -162,6 +162,19 @@ impl Certificate {
             _ => Ok(certificate),
         }
     }
+
+    pub fn delete(conn: &Connection, id: i64) -> bool {
+        conn.execute(
+            "
+                DELETE FROM
+                    certificates
+                WHERE
+                    id = $1
+            ",
+            &[&id],
+        )
+        .is_ok()
+    }
 }
 
 impl CertificateList {
@@ -215,105 +228,3 @@ impl CertificateList {
         Ok(certificates)
     }
 }
-
-// fn create_certificate(conn: Connection, certificate: Certificate) -> Result<u64, String> {
-//     let mut id = 0u64;
-//     for row in &conn.query("
-//         INSERT INTO
-//             certificates
-//             (
-//                 num,
-//                 contact_id,
-//                 company_id,
-//                 cert_date,
-//                 note,
-//                 created_at,
-//                 updated_at
-//             )
-//         VALUES
-//             ($1, $2, $3, $4, $5, $6, $7)
-//         RETURNING
-//             id
-//     ", &[&certificate.num,
-//         &certificate.contact_id,
-//         &certificate.company_id,
-//         &certificate.cert_date,
-//         &certificate.note,
-//         &certificate.created_at,
-//         &certificate.updated_at]).map_err(|e| format!("insert Certificate {}", e.to_string()))? {
-//         id = row.get("id");
-//     }
-//     Ok(id)
-// }
-
-// // // UpdateCertificate - save certificate changes
-// // pub fn UpdateCertificate(certificate Certificate) error {
-// // 	err := e.db.Update(&certificate)
-// // 	if err != nil {
-// // 		errmsg("UpdateCertificate update", err)
-// // 	}
-// // 	return err
-// // }
-// fn update_certificate(conn: Connection, certificate: Certificate) -> Result<i64, String> {
-//     &conn.execute("
-//         UPDATE
-//             certificates
-//         SET
-//             (
-//                 num,
-//                 contact_id,
-//                 company_id,
-//                 cert_date,
-//                 note,
-//                 created_at,
-//                 updated_at
-//             )
-//         VALUES
-//             ($2, $3, $4, $5, $6, $7, $8)
-//         WHERE
-//             id = $1
-//     ", &[&certificate.id,
-//         &certificate.num,
-//         &certificate.contact_id,
-//         &certificate.company_id,
-//         &certificate.cert_date,
-//         &certificate.note,
-//         &certificate.created_at,
-//         &certificate.updated_at]).map_err("update Certificate")
-// }
-
-// // // DeleteCertificate - delete certificate by id
-// // pub fn DeleteCertificate(id int64) error {
-// // 	if id == 0 {
-// // 		return nil
-// // 	}
-// // 	else { for row in &conn.query("
-// // 		Where("id = ?", id).
-// // 		Delete()
-// // 	if err != nil {
-// // 		errmsg("DeleteCertificate delete", err)
-// // 	}
-// // 	return err
-// // }
-
-// // pub fn certificateCreateTable() error {
-// // 	str := `
-// // 		CREATE TABLE IF NOT EXISTS
-// // 			certificates (
-// // 				id BIGSERIAL PRIMARY KEY,
-// // 				num TEXT,
-// // 				contact_id BIGINT,
-// // 				company_id BIGINT,
-// // 				cert_date DATE,
-// // 				note TEXT,
-// // 				created_at TIMESTAMP without time zone,
-// // 				updated_at TIMESTAMP without time zone default now(),
-// // 				UNIQUE(num)
-// // 			)
-// // 	`
-// // 	_, err := e.db.Exec(str)
-// // 	if err != nil {
-// // 		errmsg("certificateCreateTable exec", err)
-// // 	}
-// // 	return err
-// // }

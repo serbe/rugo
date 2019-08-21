@@ -131,43 +131,22 @@ impl Department {
             _ => Ok(department),
         }
     }
+
+    pub fn delete(conn: &Connection, id: i64) -> bool {
+        conn.execute(
+            "
+                DELETE FROM
+                    departments
+                WHERE
+                    id = $1
+            ",
+            &[&id],
+        )
+        .is_ok()
+    }
 }
 
 impl DepartmentList {
-    // pub fn new() -> Self {
-    // 	Default::default()
-    // }
-
-    // pub fn get(conn: &Connection, id: i64) -> Result<DepartmentList, String> {
-    // 	let mut department = DepartmentList::new();
-    // 	if id == 0 {
-    // 		Ok(department)
-    // 	} else {
-    // 		for row in &conn
-    // 			.query(
-    // 				"
-    // 					SELECT
-    // 						name,
-    // 						note
-    // 					FROM
-    // 						departments
-    // 					WHERE
-    // 						id = $1
-    // 				",
-    // 				&[&id],
-    // 			)
-    // 			.map_err(|e| format!("department list id {} {}", id, e.to_string()))?
-    // 		{
-    // 			department = DepartmentList {
-    // 				id,
-    // 				name: row.get(0),
-    // 				note: row.get(1),
-    // 			};
-    // 		}
-    // 		Ok(department)
-    // 	}
-    // }
-
     pub fn get_all(conn: &Connection) -> Result<Vec<DepartmentList>, String> {
         let mut departments = Vec::new();
         for row in &conn
@@ -195,51 +174,3 @@ impl DepartmentList {
         Ok(departments)
     }
 }
-
-// pub fn CreateDepartment(department Department) (int64, error) {
-// 	err := e.db.Insert(&department)
-// 	if err != nil {
-// 		errmsg("CreateDepartment insert", err)
-// 	}
-// 	return department.ID, nil
-// }
-
-// pub fn UpdateDepartment(department Department) error {
-// 	err := e.db.Update(&department)
-// 	if err != nil {
-// 		errmsg("UpdateDepartment update", err)
-// 	}
-// 	return err
-// }
-
-// pub fn DeleteDepartment(id int64) error {
-// 	if id == 0 {
-// 		return nil
-// 	}
-// 	else { for row in &conn.query("
-// 		Where("id = ?", id).
-// 		Delete()
-// 	if err != nil {
-// 		errmsg("DeleteDepartment delete", err)
-// 	}
-// 	return err
-// }
-
-// pub fn department_reateTable() error {
-// 	str := `
-// 		CREATE TABLE IF NOT EXISTS
-// 			departments (
-// 				id bigserial primary key,
-// 				name text,
-// 				note text,
-// 				created_at TIMESTAMP without time zone,
-// 				updated_at TIMESTAMP without time zone default now(),
-// 				UNIQUE(name)
-// 			)
-// 	`
-// 	_, err := e.db.Exec(str)
-// 	if err != nil {
-// 		errmsg("departmentCreateTable exec", err)
-// 	}
-// 	return err
-// }

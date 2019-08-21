@@ -155,6 +155,24 @@ fn post_item(
     }
 }
 
+fn delete_item(conn: &Connection, name: &str, id: i64) -> Result<bool, String> {
+    match name {
+        "certificate" => Ok(Certificate::delete(conn, id)),
+        "company" => Ok(Company::delete(conn, id)),
+        "contact" => Ok(Contact::delete(conn, id)),
+        "department" => Ok(Department::delete(conn, id)),
+        "education" => Ok(Education::delete(conn, id)),
+        "kind" => Ok(Kind::delete(conn, id)),
+        "post" => Ok(Post::delete(conn, id)),
+        "practice" => Ok(Practice::delete(conn, id)),
+        "rank" => Ok(Rank::delete(conn, id)),
+        "scope" => Ok(Scope::delete(conn, id)),
+        "siren" => Ok(Siren::delete(conn, id)),
+        "siren_type" => Ok(SirenType::delete(conn, id)),
+        _ => Err(format!("bad path {}", name)),
+    }
+}
+
 fn get_children(
     conn: &Connection,
     name: &str,
@@ -246,6 +264,31 @@ pub fn post_name_id(
         post_item(&conn, &path.0, path.1, params)
     })
     .then(|res| Ok(http_result(res)))
+}
+
+pub fn delete_name_id(
+    id: Identity,
+    db: web::Data<Pool<PostgresConnectionManager>>,
+    path: web::Path<(String, i64)>,
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    let a = check_auth(id);
+    web::block(move || {
+        a?;
+        let conn = db.get().unwrap();
+        delete_item(&conn, &path.0, path.1)
+    })
+    .then(|res| match res {
+        Ok(res) => HttpResponse::Ok().json(json!({
+            "data": Null,
+            "error": Null,
+            "ok": res
+        })),
+        Err(err) => HttpResponse::Ok().json(json!({
+            "data": Null,
+            "error": err.to_string(),
+            "ok": false
+        })),
+    })
 }
 
 pub fn test_post_name_id(

@@ -4,7 +4,8 @@ use std::io;
 
 use auth::{check, login, logout};
 use db::{
-    get_manager, get_name_children, get_name_command, get_name_id, post_name_id, test_post_name_id,
+    delete_name_id, get_manager, get_name_children, get_name_command, get_name_id, post_name_id,
+    test_post_name_id,
 };
 
 mod auth;
@@ -55,7 +56,8 @@ fn main() -> io::Result<()> {
             .service(
                 web::resource("/api/go/{name}/item/{id}")
                     .route(web::get().to_async(get_name_id))
-                    .route(web::post().to_async(post_name_id)),
+                    .route(web::post().to_async(post_name_id))
+                    .route(web::delete().to_async(delete_name_id)),
             )
             .service(
                 web::resource("/api/go/{name}/list/{children}/{id}")
