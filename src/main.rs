@@ -28,9 +28,9 @@ mod siren_type;
 mod tcc;
 
 fn main() -> io::Result<()> {
-    let _secret_key = dotenv::var("SECRET_KEY").unwrap();
+    let _secret_key = dotenv::var("SECRET_KEY").expect("SECRET_KEY must be set");
     let manager = get_manager();
-    let pool = r2d2::Pool::new(manager).unwrap();
+    let pool = r2d2::Pool::new(manager).expect("error create r2d2 pool");
     let sys = actix_rt::System::new("rugo");
 
     std::env::set_var("RUST_LOG", "actix_web=info,actix_server=info");

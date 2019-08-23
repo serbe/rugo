@@ -28,9 +28,9 @@ use crate::siren_type::{SirenType, SirenTypeList};
 pub enum DBResult {
     Certificate(Certificate),
     CertificateList(Vec<CertificateList>),
-    Company(Company),
+    Company(Box<Company>),
     CompanyList(Vec<CompanyList>),
-    Contact(Contact),
+    Contact(Box<Contact>),
     ContactList(Vec<ContactList>),
     Department(Department),
     DepartmentList(Vec<DepartmentList>),
@@ -49,7 +49,7 @@ pub enum DBResult {
     Scope(Scope),
     ScopeList(Vec<ScopeList>),
     SelectItem(Vec<SelectItem>),
-    Siren(Siren),
+    Siren(Box<Siren>),
     SirenList(Vec<SirenList>),
     SirenType(SirenType),
     SirenTypeList(Vec<SirenTypeList>),
@@ -103,8 +103,8 @@ fn get_list(conn: &Connection, name: &str, command: &str) -> Result<DBResult, St
 fn get_item(conn: &Connection, name: &str, id: i64) -> Result<DBResult, String> {
     match name {
         "certificate" => Ok(DBResult::Certificate(Certificate::get(conn, id)?)),
-        "company" => Ok(DBResult::Company(Company::get(conn, id)?)),
-        "contact" => Ok(DBResult::Contact(Contact::get(conn, id)?)),
+        "company" => Ok(DBResult::Company(Box::new(Company::get(conn, id)?))),
+        "contact" => Ok(DBResult::Contact(Box::new(Contact::get(conn, id)?))),
         "department" => Ok(DBResult::Department(Department::get(conn, id)?)),
         "education" => Ok(DBResult::Education(Education::get(conn, id)?)),
         "kind" => Ok(DBResult::Kind(Kind::get(conn, id)?)),
@@ -112,7 +112,7 @@ fn get_item(conn: &Connection, name: &str, id: i64) -> Result<DBResult, String> 
         "practice" => Ok(DBResult::Practice(Practice::get(conn, id)?)),
         "rank" => Ok(DBResult::Rank(Rank::get(conn, id)?)),
         "scope" => Ok(DBResult::Scope(Scope::get(conn, id)?)),
-        "siren" => Ok(DBResult::Siren(Siren::get(conn, id)?)),
+        "siren" => Ok(DBResult::Siren(Box::new(Siren::get(conn, id)?))),
         "siren_type" => Ok(DBResult::SirenType(SirenType::get(conn, id)?)),
         _ => Err("bad path".to_string()),
     }
@@ -129,10 +129,10 @@ fn post_item(
             Ok(DBResult::Certificate(Certificate::post(conn, id, item)?))
         }
         ("company", DBResult::Company(item)) => {
-            Ok(DBResult::Company(Company::post(conn, id, item)?))
+            Ok(DBResult::Company(Box::new(Company::post(conn, id, *item)?)))
         }
         ("contact", DBResult::Contact(item)) => {
-            Ok(DBResult::Contact(Contact::post(conn, id, item)?))
+            Ok(DBResult::Contact(Box::new(Contact::post(conn, id, *item)?)))
         }
         ("department", DBResult::Department(item)) => {
             Ok(DBResult::Department(Department::post(conn, id, item)?))
@@ -147,7 +147,7 @@ fn post_item(
         }
         ("rank", DBResult::Rank(item)) => Ok(DBResult::Rank(Rank::post(conn, id, item)?)),
         ("scope", DBResult::Scope(item)) => Ok(DBResult::Scope(Scope::post(conn, id, item)?)),
-        ("siren", DBResult::Siren(item)) => Ok(DBResult::Siren(Siren::post(conn, id, item)?)),
+        ("siren", DBResult::Siren(item)) => Ok(DBResult::Siren(Box::new(Siren::post(conn, id, *item)?))),
         ("siren_type", DBResult::SirenType(item)) => {
             Ok(DBResult::SirenType(SirenType::post(conn, id, item)?))
         }
