@@ -2,7 +2,7 @@ use chrono::{Local, NaiveDate, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Default, Deserialize, Serialize)]
 pub struct Practice {
     #[serde(default)]
     pub id: i64,
@@ -17,7 +17,7 @@ pub struct Practice {
     pub updated_at: Option<NaiveDateTime>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Serialize)]
 pub struct PracticeList {
     pub id: i64,
     pub company_id: Option<i64>,
@@ -30,7 +30,7 @@ pub struct PracticeList {
     pub date_str: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Serialize)]
 pub struct PracticeShort {
     pub id: i64,
     pub company_id: Option<i64>,

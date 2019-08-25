@@ -2,7 +2,7 @@ use chrono::{Local, NaiveDate, NaiveDateTime};
 use postgres::Connection;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Default, Deserialize, Serialize)]
 pub struct Certificate {
     #[serde(default)]
     pub id: i64,
@@ -17,7 +17,7 @@ pub struct Certificate {
     pub updated_at: Option<NaiveDateTime>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Serialize)]
 pub struct CertificateList {
     pub id: i64,
     pub num: Option<String>,
