@@ -7,6 +7,7 @@ use r2d2::Pool;
 use r2d2_postgres::PostgresConnectionManager;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value, Value::Null};
+// use serde_json::{Value};
 use std::env;
 
 use crate::auth::check_auth;
@@ -300,18 +301,18 @@ pub fn delete_name_id(
     })
 }
 
-pub fn test_post_name_id(
-    id: Identity,
-    _db: web::Data<Pool<PostgresConnectionManager>>,
-    path: web::Path<(String, i64)>,
-    params: web::Json<TestStruct>,
-) -> HttpResponse {
-    let a = check_auth(id);
-    let values = params.into_inner();
-    println!("{} {} {:?} {:?}", path.0, path.1, a, values);
-    HttpResponse::Ok().json(json!({
-        "data": values,
-        "error": Null,
-        "ok": true
-    }))
-}
+// pub fn test_post_name_id(
+//     id: Identity,
+//     _db: web::Data<Pool<PostgresConnectionManager>>,
+//     path: web::Path<(String, i64)>,
+//     params: web::Json<TestStruct>,
+// ) -> HttpResponse {
+//     let a = check_auth(id);
+//     let values = params.into_inner();
+//     println!("{} {} {:?} {:?}", path.0, path.1, a, values);
+//     HttpResponse::Ok().json(json!({
+//         "data": values,
+//         "error": Null,
+//         "ok": true
+//     }))
+// }
