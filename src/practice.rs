@@ -203,6 +203,8 @@ impl PracticeList {
                         companies AS c ON c.id = p.company_id
                     LEFT JOIN
                         kinds AS k ON k.id = p.kind_id
+                    ORDER BY 
+                        p.date_of_practice DESC
                 ",
                 &[],
             )

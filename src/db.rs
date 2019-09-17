@@ -7,8 +7,6 @@ use r2d2::Pool;
 use r2d2_postgres::PostgresConnectionManager;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value, Value::Null};
-// use serde_json::{Value};
-use std::env;
 
 use crate::auth::check_auth;
 use crate::certificate::{Certificate, CertificateList};
@@ -67,7 +65,7 @@ pub struct TestStruct {
 
 fn get_connurl() -> String {
     dotenv().ok();
-    env::var("DATABASE_URL").expect("DATABASE_URL must be set")
+    dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set")
 }
 
 pub fn get_manager() -> PostgresConnectionManager {
