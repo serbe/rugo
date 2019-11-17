@@ -224,7 +224,7 @@ pub fn get_name_children(
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let a = check_auth(id);
     web::block(move || {
-        a?;
+        // a?;
         let conn = db.get().unwrap();
         get_children(&conn, &path.0, &path.1, path.2)
     })
@@ -238,7 +238,7 @@ pub fn get_name_command(
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let a = check_auth(id);
     web::block(move || {
-        a?;
+        // a?;
         let conn = db.get().unwrap();
         get_list(&conn, &path.0, &path.1)
     })
@@ -252,7 +252,7 @@ pub fn get_name_id(
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let a = check_auth(id);
     web::block(move || {
-        a?;
+        // a?;
         let conn = db.get().unwrap();
         get_item(&conn, &path.0, path.1)
     })
@@ -267,7 +267,7 @@ pub fn post_name_id(
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     let a = check_auth(id);
     web::block(move || {
-        a?;
+        // a?;
         let conn = db.get().unwrap();
         post_item(&conn, &path.0, path.1, params)
     })

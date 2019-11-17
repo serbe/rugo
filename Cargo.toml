@@ -5,13 +5,15 @@ authors = ["Serbe <mkoctuk@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+actix = "0.8"
 actix-identity = "0.1"
 actix-rt = "0.2"
 actix-web = "1.0"
-base64 = "0.10"
+actix-web-actors = "1.0"
+base64 = "0.11"
 chrono = { version = "0.4", features = ["serde"] }
-dotenv = "0.14"
-env_logger = "0.6"
+dotenv = "0.15"
+env_logger = "0.7"
 futures = "0.1"
 postgres = { version = "0.15", features = ["with-chrono"] }
 r2d2 = "0.8"
