@@ -1,11 +1,11 @@
 // use actix_identity::Identity;
 // use actix_web::{error::BlockingError, web, Error, HttpResponse};
 // use futures::Future;
-// use postgres::Connection;
+use postgres::Connection;
 use r2d2::Pool;
 use r2d2_postgres::PostgresConnectionManager;
 use serde::{Deserialize, Serialize};
-// use serde_json::{json, Value, Value::Null};
+use serde_json::{json, Value};
 
 // use crate::auth::check_auth;
 use crate::certificate::{Certificate, CertificateList};
@@ -22,11 +22,9 @@ use crate::select::SelectItem;
 use crate::siren::{Siren, SirenList};
 use crate::siren_type::{SirenType, SirenTypeList};
 
-#[derive(Deserialize, Serialize)]
-pub struct ClientMessage {
-    pub command: String,
-    pub id: Option<i64>,
-    pub item: Option<DBItem>,
+#[derive(Serialize)]
+pub struct DBResult {
+    data: Value,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -45,24 +43,28 @@ pub enum DBItem {
     SirenType(SirenType),
 }
 
-#[derive(Serialize)]
-pub enum DBList {
-    CertificateList(Vec<CertificateList>),
-    CompanyList(Vec<CompanyList>),
-    ContactList(Vec<ContactList>),
-    DepartmentList(Vec<DepartmentList>),
-    EducationList(Vec<EducationList>),
-    EducationShort(Vec<EducationShort>),
-    KindList(Vec<KindList>),
-    PostList(Vec<PostList>),
-    PracticeList(Vec<PracticeList>),
-    PracticeShort(Vec<PracticeShort>),
-    RankList(Vec<RankList>),
-    ScopeList(Vec<ScopeList>),
-    SelectItem(Vec<SelectItem>),
-    SirenList(Vec<SirenList>),
-    SirenTypeList(Vec<SirenTypeList>),
-}
+// #[derive(Serialize)]
+// pub enum DBList {
+//     CertificateList(Vec<CertificateList>),
+//     CompanyList(Vec<CompanyList>),
+//     ContactList(Vec<ContactList>),
+//     DepartmentList(Vec<DepartmentList>),
+//     EducationList(Vec<EducationList>),
+//     KindList(Vec<KindList>),
+//     PostList(Vec<PostList>),
+//     PracticeList(Vec<PracticeList>),
+//     RankList(Vec<RankList>),
+//     ScopeList(Vec<ScopeList>),
+//     SelectItem(Vec<SelectItem>),
+//     SirenList(Vec<SirenList>),
+//     SirenTypeList(Vec<SirenTypeList>),
+// }
+
+// #[derive(Serialize)]
+// pub enum DBShort {
+//     EducationShort(Vec<EducationShort>),
+//     PracticeShort(Vec<PracticeShort>),
+// }
 
 // #[derive(Debug, Deserialize, Serialize)]
 // pub struct TestStruct {
@@ -83,109 +85,116 @@ pub fn get_pool() -> Pool<PostgresConnectionManager> {
     r2d2::Pool::new(get_manager()).expect("error create r2d2 pool")
 }
 
-// fn get_list(conn: &Connection, name: &str, command: &str) -> Result<DBList, String> {
-//     match (name, command) {
-//         ("certificate", "list") => Ok(DBList::CertificateList(CertificateList::get_all(conn)?)),
-//         ("company", "list") => Ok(DBList::CompanyList(CompanyList::get_all(conn)?)),
-//         ("company", "select") => Ok(DBList::SelectItem(SelectItem::company_all(conn)?)),
-//         ("contact", "list") => Ok(DBList::ContactList(ContactList::get_all(conn)?)),
-//         ("contact", "select") => Ok(DBList::SelectItem(SelectItem::contact_all(conn)?)),
-//         ("department", "list") => Ok(DBList::DepartmentList(DepartmentList::get_all(conn)?)),
-//         ("department", "select") => Ok(DBList::SelectItem(SelectItem::department_all(conn)?)),
-//         ("education", "list") => Ok(DBList::EducationList(EducationList::get_all(conn)?)),
-//         ("education", "near") => Ok(DBList::EducationShort(EducationShort::get_near(conn)?)),
-//         ("kind", "list") => Ok(DBList::KindList(KindList::get_all(conn)?)),
-//         ("kind", "select") => Ok(DBList::SelectItem(SelectItem::kind_all(conn)?)),
-//         ("post", "list") => Ok(DBList::PostList(PostList::get_all(conn)?)),
-//         ("post", "select") => Ok(DBList::SelectItem(SelectItem::post_all(conn, false)?)),
-//         ("post_go", "select") => Ok(DBList::SelectItem(SelectItem::post_all(conn, true)?)),
-//         ("practice", "list") => Ok(DBList::PracticeList(PracticeList::get_all(conn)?)),
-//         ("practice", "near") => Ok(DBList::PracticeShort(PracticeShort::get_near(conn)?)),
-//         ("rank", "list") => Ok(DBList::RankList(RankList::get_all(conn)?)),
-//         ("rank", "select") => Ok(DBList::SelectItem(SelectItem::rank_all(conn)?)),
-//         ("scope", "list") => Ok(DBList::ScopeList(ScopeList::get_all(conn)?)),
-//         ("scope", "select") => Ok(DBList::SelectItem(SelectItem::scope_all(conn)?)),
-//         ("siren", "list") => Ok(DBList::SirenList(SirenList::get_all(conn)?)),
-//         ("siren_type", "list") => Ok(DBList::SirenTypeList(SirenTypeList::get_all(conn)?)),
-//         ("siren_type", "select") => Ok(DBList::SelectItem(SelectItem::siren_type_all(conn)?)),
-//         _ => Err("bad path".to_string()),
-//     }
-// }
+pub fn get_item(conn: &Connection, id: i64, name: String) -> Result<Value, String> {
+    match name.as_str() {
+        "certificate" => Ok(json!(Certificate::get(conn, id)?)),
+        "company" => Ok(json!(Company::get(conn, id)?)),
+        "contact" => Ok(json!(Contact::get(conn, id)?)),
+        "department" => Ok(json!(Department::get(conn, id)?)),
+        "education" => Ok(json!(Education::get(conn, id)?)),
+        "kind" => Ok(json!(Kind::get(conn, id)?)),
+        "post" => Ok(json!(Post::get(conn, id)?)),
+        "practice" => Ok(json!(Practice::get(conn, id)?)),
+        "rank" => Ok(json!(Rank::get(conn, id)?)),
+        "scope" => Ok(json!(Scope::get(conn, id)?)),
+        "siren" => Ok(json!(Siren::get(conn, id)?)),
+        "siren_type" => Ok(json!(SirenType::get(conn, id)?)),
+        _ => Err("bad path".to_string()),
+    }
+}
 
-// fn get_item(conn: &Connection, name: &str, id: i64) -> Result<DBItem, String> {
-//     match name {
-//         "certificate" => Ok(DBItem::Certificate(Certificate::get(conn, id)?)),
-//         "company" => Ok(DBItem::Company(Box::new(Company::get(conn, id)?))),
-//         "contact" => Ok(DBItem::Contact(Box::new(Contact::get(conn, id)?))),
-//         "department" => Ok(DBItem::Department(Department::get(conn, id)?)),
-//         "education" => Ok(DBItem::Education(Education::get(conn, id)?)),
-//         "kind" => Ok(DBItem::Kind(Kind::get(conn, id)?)),
-//         "post" => Ok(DBItem::Post(Post::get(conn, id)?)),
-//         "practice" => Ok(DBItem::Practice(Practice::get(conn, id)?)),
-//         "rank" => Ok(DBItem::Rank(Rank::get(conn, id)?)),
-//         "scope" => Ok(DBItem::Scope(Scope::get(conn, id)?)),
-//         "siren" => Ok(DBItem::Siren(Box::new(Siren::get(conn, id)?))),
-//         "siren_type" => Ok(DBItem::SirenType(SirenType::get(conn, id)?)),
-//         _ => Err("bad path".to_string()),
-//     }
-// }
+pub fn get_list(conn: &Connection, name: String) -> Result<Value, String> {
+    match name.as_str() {
+        "certificate" => Ok(json!(CertificateList::get_all(conn)?)),
+        "company" => Ok(json!(CompanyList::get_all(conn)?)),
+        "contact" => Ok(json!(ContactList::get_all(conn)?)),
+        "department" => Ok(json!(DepartmentList::get_all(conn)?)),
+        "education" => Ok(json!(EducationList::get_all(conn)?)),
+        "kind" => Ok(json!(KindList::get_all(conn)?)),
+        "post" => Ok(json!(PostList::get_all(conn)?)),
+        "practice" => Ok(json!(PracticeList::get_all(conn)?)),
+        "rank" => Ok(json!(RankList::get_all(conn)?)),
+        "scope" => Ok(json!(ScopeList::get_all(conn)?)),
+        "siren" => Ok(json!(SirenList::get_all(conn)?)),
+        "siren_type" => Ok(json!(SirenTypeList::get_all(conn)?)),
+        _ => Err("bad path".to_string()),
+    }
+}
 
-// fn post_item(
-//     conn: &Connection,
-//     name: &str,
-//     id: i64,
-//     params: web::Json<DBItem>,
-// ) -> Result<DBItem, String> {
-//     match (name, params.into_inner()) {
-//         ("certificate", DBItem::Certificate(item)) => {
-//             Ok(DBItem::Certificate(Certificate::post(conn, id, item)?))
-//         }
-//         ("company", DBItem::Company(item)) => {
-//             Ok(DBItem::Company(Box::new(Company::post(conn, id, *item)?)))
-//         }
-//         ("contact", DBItem::Contact(item)) => {
-//             Ok(DBItem::Contact(Box::new(Contact::post(conn, id, *item)?)))
-//         }
-//         ("department", DBItem::Department(item)) => {
-//             Ok(DBItem::Department(Department::post(conn, id, item)?))
-//         }
-//         ("education", DBItem::Education(item)) => {
-//             Ok(DBItem::Education(Education::post(conn, id, item)?))
-//         }
-//         ("kind", DBItem::Kind(item)) => Ok(DBItem::Kind(Kind::post(conn, id, item)?)),
-//         ("post", DBItem::Post(item)) => Ok(DBItem::Post(Post::post(conn, id, item)?)),
-//         ("practice", DBItem::Practice(item)) => {
-//             Ok(DBItem::Practice(Practice::post(conn, id, item)?))
-//         }
-//         ("rank", DBItem::Rank(item)) => Ok(DBItem::Rank(Rank::post(conn, id, item)?)),
-//         ("scope", DBItem::Scope(item)) => Ok(DBItem::Scope(Scope::post(conn, id, item)?)),
-//         ("siren", DBItem::Siren(item)) => {
-//             Ok(DBItem::Siren(Box::new(Siren::post(conn, id, *item)?)))
-//         }
-//         ("siren_type", DBItem::SirenType(item)) => {
-//             Ok(DBItem::SirenType(SirenType::post(conn, id, item)?))
-//         }
-//         _ => Err(format!("bad path {}", name)),
-//     }
-// }
+pub fn get_near(conn: &Connection, name: String) -> Result<Value, String> {
+    match name.as_str() {
+        "education" => Ok(json!(EducationShort::get_near(conn)?)),
+        "practice" => Ok(json!(PracticeShort::get_near(conn)?)),
+        _ => Err("bad path".to_string()),
+    }
+}
 
-// fn delete_item(conn: &Connection, name: &str, id: i64) -> Result<bool, String> {
-//     match name {
-//         "certificate" => Ok(Certificate::delete(conn, id)),
-//         "company" => Ok(Company::delete(conn, id)),
-//         "contact" => Ok(Contact::delete(conn, id)),
-//         "department" => Ok(Department::delete(conn, id)),
-//         "education" => Ok(Education::delete(conn, id)),
-//         "kind" => Ok(Kind::delete(conn, id)),
-//         "post" => Ok(Post::delete(conn, id)),
-//         "practice" => Ok(Practice::delete(conn, id)),
-//         "rank" => Ok(Rank::delete(conn, id)),
-//         "scope" => Ok(Scope::delete(conn, id)),
-//         "siren" => Ok(Siren::delete(conn, id)),
-//         "siren_type" => Ok(SirenType::delete(conn, id)),
-//         _ => Err(format!("bad path {}", name)),
-//     }
-// }
+pub fn get_select(conn: &Connection, name: String) -> Result<Value, String> {
+    match name.as_str() {
+        "company" => Ok(json!(SelectItem::company_all(conn)?)),
+        "contact" => Ok(json!(SelectItem::contact_all(conn)?)),
+        "department" => Ok(json!(SelectItem::department_all(conn)?)),
+        "kind" => Ok(json!(SelectItem::kind_all(conn)?)),
+        "post" => Ok(json!(SelectItem::post_all(conn, false)?)),
+        "post_go" => Ok(json!(SelectItem::post_all(conn, true)?)),
+        "rank" => Ok(json!(SelectItem::rank_all(conn)?)),
+        "scope" => Ok(json!(SelectItem::scope_all(conn)?)),
+        "siren_type" => Ok(json!(SelectItem::siren_type_all(conn)?)),
+        _ => Err("bad path".to_string()),
+    }
+}
+
+pub fn insert_item(conn: &Connection, item: DBItem) -> Result<Value, String> {
+    match item {
+        DBItem::Certificate(item) => Ok(json!(Certificate::insert(conn, item)?)),
+        DBItem::Company(item) => Ok(json!(Company::insert(conn, *item)?)),
+        DBItem::Contact(item) => Ok(json!(Contact::insert(conn, *item)?)),
+        DBItem::Department(item) => Ok(json!(Department::insert(conn, item)?)),
+        DBItem::Education(item) => Ok(json!(Education::insert(conn, item)?)),
+        DBItem::Kind(item) => Ok(json!(Kind::insert(conn, item)?)),
+        DBItem::Post(item) => Ok(json!(Post::insert(conn, item)?)),
+        DBItem::Practice(item) => Ok(json!(Practice::insert(conn, item)?)),
+        DBItem::Rank(item) => Ok(json!(Rank::insert(conn, item)?)),
+        DBItem::Scope(item) => Ok(json!(Scope::insert(conn, item)?)),
+        DBItem::Siren(item) => Ok(json!(Siren::insert(conn, *item)?)),
+        DBItem::SirenType(item) => Ok(json!(SirenType::insert(conn, item)?)),
+    }
+}
+
+pub fn update_item(conn: &Connection, item: DBItem) -> Result<Value, String> {
+    match item {
+        DBItem::Certificate(item) => Ok(json!(Certificate::update(conn, item)?)),
+        DBItem::Company(item) => Ok(json!(Company::update(conn, *item)?)),
+        DBItem::Contact(item) => Ok(json!(Contact::update(conn, *item)?)),
+        DBItem::Department(item) => Ok(json!(Department::update(conn, item)?)),
+        DBItem::Education(item) => Ok(json!(Education::update(conn, item)?)),
+        DBItem::Kind(item) => Ok(json!(Kind::update(conn, item)?)),
+        DBItem::Post(item) => Ok(json!(Post::update(conn, item)?)),
+        DBItem::Practice(item) => Ok(json!(Practice::update(conn, item)?)),
+        DBItem::Rank(item) => Ok(json!(Rank::update(conn, item)?)),
+        DBItem::Scope(item) => Ok(json!(Scope::update(conn, item)?)),
+        DBItem::Siren(item) => Ok(json!(Siren::update(conn, *item)?)),
+        DBItem::SirenType(item) => Ok(json!(SirenType::update(conn, item)?)),
+    }
+}
+
+pub fn delete_item(conn: &Connection, id: i64, name: String) -> Result<Value, String> {
+    match name.as_str() {
+        "certificate" => Ok(json!(Certificate::delete(conn, id))),
+        "company" => Ok(json!(Company::delete(conn, id))),
+        "contact" => Ok(json!(Contact::delete(conn, id))),
+        "department" => Ok(json!(Department::delete(conn, id))),
+        "education" => Ok(json!(Education::delete(conn, id))),
+        "kind" => Ok(json!(Kind::delete(conn, id))),
+        "post" => Ok(json!(Post::delete(conn, id))),
+        "practice" => Ok(json!(Practice::delete(conn, id))),
+        "rank" => Ok(json!(Rank::delete(conn, id))),
+        "scope" => Ok(json!(Scope::delete(conn, id))),
+        "siren" => Ok(json!(Siren::delete(conn, id))),
+        "siren_type" => Ok(json!(SirenType::delete(conn, id))),
+        _ => Err(format!("bad path {}", name)),
+    }
+}
 
 // fn get_children(conn: &Connection, name: &str, children: &str, id: i64) -> Result<DBList, String> {
 //     match (name, children) {

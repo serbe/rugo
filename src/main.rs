@@ -11,11 +11,11 @@ use db::get_pool;
 use server::Server;
 
 // mod auth;
-mod error;
-mod db;
+// mod error;
 mod certificate;
 mod company;
 mod contact;
+mod db;
 mod department;
 mod education;
 mod email;
@@ -41,7 +41,10 @@ fn main() {
     env_logger::init();
 
     ws::Builder::new()
-        .build(|out: ws::Sender| Server { out: out, pool: pool.clone() })
+        .build(|out: ws::Sender| Server {
+            out: out,
+            pool: pool.clone(),
+        })
         .expect("failed build ws builder")
         .listen(ws_addr)
         .expect("failed listen ws");
