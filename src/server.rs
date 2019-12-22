@@ -62,7 +62,7 @@ impl Handler for Server {
             .get()
             .map_err(|err| ws::Error::from(Box::new(err)))?;
 
-        let _ = match message {
+        let db_result = match message {
             ClientMessage::Get(request) => match request.command {
                 Command::Item(id) => get_item(&conn, id, request.name),
                 Command::List => get_list(&conn, request.name),
@@ -72,9 +72,13 @@ impl Handler for Server {
             ClientMessage::Insert(item) => insert_item(&conn, item),
             ClientMessage::Update(item) => update_item(&conn, item),
             ClientMessage::Delete(item) => delete_item(&conn, item.id, item.name),
-        };
+        }
+        .map_err(|err| {
+            // println!("error db {}", err);
+            ws::Error::new(ws::ErrorKind::Internal, err)
+        })?;
 
-        Ok(self.out.send(Message::Text(format!("echo {}", "gg")))?) // simple echo
+        Ok(self.out.send(Message::Text(db_result.to_string()))?) // simple echo
     }
 
     fn on_error(&mut self, err: ws::Error) {
