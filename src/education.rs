@@ -84,14 +84,6 @@ impl Education {
         }
     }
 
-    pub fn post(conn: &Connection, id: i64, education: Education) -> Result<Education, String> {
-        if id == 0 {
-            Education::insert(conn, education)
-        } else {
-            Education::update(conn, id, education)
-        }
-    }
-
     pub fn insert(conn: &Connection, education: Education) -> Result<Education, String> {
         let mut education = education;
         for row in &conn
@@ -134,9 +126,7 @@ impl Education {
         Ok(education)
     }
 
-    pub fn update(conn: &Connection, id: i64, education: Education) -> Result<Education, String> {
-        let mut education = education;
-        education.id = id;
+    pub fn update(conn: &Connection, education: Education) -> Result<Education, String> {
         match &conn.execute(
             "
                 UPDATE educations SET
@@ -159,7 +149,7 @@ impl Education {
                 &Local::now().naive_local(),
             ],
         ) {
-            Ok(0) => Err(format!("update education id {}", id)),
+            Ok(0) => Err(format!("update education id {}", education.id)),
             _ => Ok(education),
         }
     }

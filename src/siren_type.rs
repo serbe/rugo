@@ -64,14 +64,6 @@ impl SirenType {
         }
     }
 
-    pub fn post(conn: &Connection, id: i64, siren_type: SirenType) -> Result<SirenType, String> {
-        if id == 0 {
-            SirenType::insert(conn, siren_type)
-        } else {
-            SirenType::update(conn, id, siren_type)
-        }
-    }
-
     pub fn insert(conn: &Connection, siren_type: SirenType) -> Result<SirenType, String> {
         let mut siren_type = siren_type;
         for row in &conn
@@ -111,9 +103,7 @@ impl SirenType {
         Ok(siren_type)
     }
 
-    pub fn update(conn: &Connection, id: i64, siren_type: SirenType) -> Result<SirenType, String> {
-        let mut siren_type = siren_type;
-        siren_type.id = id;
+    pub fn update(conn: &Connection, siren_type: SirenType) -> Result<SirenType, String> {
         match &conn.execute(
             "
                 UPDATE siren_types SET
@@ -132,7 +122,7 @@ impl SirenType {
                 &Local::now().naive_local(),
             ],
         ) {
-            Ok(0) => Err(format!("update siren_type id {}", id)),
+            Ok(0) => Err(format!("update siren_type id {}", siren_type.id)),
             _ => Ok(siren_type),
         }
     }

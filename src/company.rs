@@ -113,14 +113,6 @@ impl Company {
         }
     }
 
-    pub fn post(conn: &Connection, id: i64, company: Company) -> Result<Company, String> {
-        if id == 0 {
-            Company::insert(conn, company)
-        } else {
-            Company::update(conn, id, company)
-        }
-    }
-
     pub fn insert(conn: &Connection, company: Company) -> Result<Company, String> {
         let mut company = company;
         for row in &conn
@@ -172,9 +164,7 @@ impl Company {
         Ok(company)
     }
 
-    pub fn update(conn: &Connection, id: i64, company: Company) -> Result<Company, String> {
-        let mut company = company;
-        company.id = id;
+    pub fn update(conn: &Connection, company: Company) -> Result<Company, String> {
         match &conn.execute(
             "
                 UPDATE companies SET
@@ -195,7 +185,7 @@ impl Company {
                 &Local::now().naive_local(),
             ],
         ) {
-            Ok(0) => Err(format!("update company id {}", id)),
+            Ok(0) => Err(format!("update company id {}", company.id)),
             _ => {
                 if let Some(emails) = company.emails.clone() {
                     let _ = Email::update_companies(conn, company.id, emails);

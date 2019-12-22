@@ -64,14 +64,6 @@ impl Kind {
         }
     }
 
-    pub fn post(conn: &Connection, id: i64, kind: Kind) -> Result<Kind, String> {
-        if id == 0 {
-            Kind::insert(conn, kind)
-        } else {
-            Kind::update(conn, id, kind)
-        }
-    }
-
     pub fn insert(conn: &Connection, kind: Kind) -> Result<Kind, String> {
         let mut kind = kind;
         for row in &conn
@@ -111,9 +103,7 @@ impl Kind {
         Ok(kind)
     }
 
-    pub fn update(conn: &Connection, id: i64, kind: Kind) -> Result<Kind, String> {
-        let mut kind = kind;
-        kind.id = id;
+    pub fn update(conn: &Connection, kind: Kind) -> Result<Kind, String> {
         match &conn.execute(
             "
                 UPDATE kinds SET
@@ -132,7 +122,7 @@ impl Kind {
                 &Local::now().naive_local(),
             ],
         ) {
-            Ok(0) => Err(format!("update kind id {}", id)),
+            Ok(0) => Err(format!("update kind id {}", kind.id)),
             _ => Ok(kind),
         }
     }

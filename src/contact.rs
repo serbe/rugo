@@ -132,14 +132,6 @@ impl Contact {
         }
     }
 
-    pub fn post(conn: &Connection, id: i64, contact: Contact) -> Result<Contact, String> {
-        if id == 0 {
-            Contact::insert(conn, contact)
-        } else {
-            Contact::update(conn, id, contact)
-        }
-    }
-
     pub fn insert(conn: &Connection, contact: Contact) -> Result<Contact, String> {
         let mut contact = contact;
         for row in &conn
@@ -203,9 +195,7 @@ impl Contact {
         Ok(contact)
     }
 
-    pub fn update(conn: &Connection, id: i64, contact: Contact) -> Result<Contact, String> {
-        let mut contact = contact;
-        contact.id = id;
+    pub fn update(conn: &Connection, contact: Contact) -> Result<Contact, String> {
         match &conn.execute(
             "
                 UPDATE contacts SET
@@ -234,7 +224,7 @@ impl Contact {
                 &Local::now().naive_local(),
             ],
         ) {
-            Ok(0) => Err(format!("update contact id {}", id)),
+            Ok(0) => Err(format!("update contact id {}", contact.id)),
             _ => {
                 if let Some(emails) = contact.emails.clone() {
                     let _ = Email::update_contacts(conn, contact.id, emails);

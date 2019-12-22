@@ -85,14 +85,6 @@ impl Practice {
         }
     }
 
-    pub fn post(conn: &Connection, id: i64, practice: Practice) -> Result<Practice, String> {
-        if id == 0 {
-            Practice::insert(conn, practice)
-        } else {
-            Practice::update(conn, id, practice)
-        }
-    }
-
     pub fn insert(conn: &Connection, practice: Practice) -> Result<Practice, String> {
         let mut practice = practice;
         for row in &conn
@@ -138,9 +130,7 @@ impl Practice {
         Ok(practice)
     }
 
-    pub fn update(conn: &Connection, id: i64, practice: Practice) -> Result<Practice, String> {
-        let mut practice = practice;
-        practice.id = id;
+    pub fn update(conn: &Connection, practice: Practice) -> Result<Practice, String> {
         match &conn.execute(
             "
                 UPDATE practices SET
@@ -163,7 +153,7 @@ impl Practice {
                 &Local::now().naive_local(),
             ],
         ) {
-            Ok(0) => Err(format!("update practice id {}", id)),
+            Ok(0) => Err(format!("update practice id {}", practice.id)),
             _ => Ok(practice),
         }
     }

@@ -60,14 +60,6 @@ impl Scope {
         }
     }
 
-    pub fn post(conn: &Connection, id: i64, scope: Scope) -> Result<Scope, String> {
-        if id == 0 {
-            Scope::insert(conn, scope)
-        } else {
-            Scope::update(conn, id, scope)
-        }
-    }
-
     pub fn insert(conn: &Connection, scope: Scope) -> Result<Scope, String> {
         let mut scope = scope;
         for row in &conn
@@ -104,9 +96,7 @@ impl Scope {
         Ok(scope)
     }
 
-    pub fn update(conn: &Connection, id: i64, scope: Scope) -> Result<Scope, String> {
-        let mut scope = scope;
-        scope.id = id;
+    pub fn update(conn: &Connection, scope: Scope) -> Result<Scope, String> {
         match &conn.execute(
             "
                 UPDATE scopes SET
@@ -123,7 +113,7 @@ impl Scope {
                 &Local::now().naive_local(),
             ],
         ) {
-            Ok(0) => Err(format!("update scope id {}", id)),
+            Ok(0) => Err(format!("update scope id {}", scope.id)),
             _ => Ok(scope),
         }
     }

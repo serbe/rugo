@@ -72,18 +72,6 @@ impl Certificate {
         }
     }
 
-    pub fn post(
-        conn: &Connection,
-        id: i64,
-        certificate: Certificate,
-    ) -> Result<Certificate, String> {
-        if id == 0 {
-            Certificate::insert(conn, certificate)
-        } else {
-            Certificate::update(conn, id, certificate)
-        }
-    }
-
     pub fn insert(conn: &Connection, certificate: Certificate) -> Result<Certificate, String> {
         let mut certificate = certificate;
         for row in &conn
@@ -129,13 +117,7 @@ impl Certificate {
         Ok(certificate)
     }
 
-    pub fn update(
-        conn: &Connection,
-        id: i64,
-        certificate: Certificate,
-    ) -> Result<Certificate, String> {
-        let mut certificate = certificate;
-        certificate.id = id;
+    pub fn update(conn: &Connection, certificate: Certificate) -> Result<Certificate, String> {
         match &conn.execute(
             "
                 UPDATE certificates SET
@@ -158,7 +140,7 @@ impl Certificate {
                 &Local::now().naive_local(),
             ],
         ) {
-            Ok(0) => Err(format!("update certificate id {}", id)),
+            Ok(0) => Err(format!("update certificate id {}", certificate.id)),
             _ => Ok(certificate),
         }
     }

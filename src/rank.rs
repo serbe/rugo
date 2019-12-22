@@ -60,14 +60,6 @@ impl Rank {
         }
     }
 
-    pub fn post(conn: &Connection, id: i64, rank: Rank) -> Result<Rank, String> {
-        if id == 0 {
-            Rank::insert(conn, rank)
-        } else {
-            Rank::update(conn, id, rank)
-        }
-    }
-
     pub fn insert(conn: &Connection, rank: Rank) -> Result<Rank, String> {
         let mut rank = rank;
         for row in &conn
@@ -104,9 +96,7 @@ impl Rank {
         Ok(rank)
     }
 
-    pub fn update(conn: &Connection, id: i64, rank: Rank) -> Result<Rank, String> {
-        let mut rank = rank;
-        rank.id = id;
+    pub fn update(conn: &Connection, rank: Rank) -> Result<Rank, String> {
         match &conn.execute(
             "
                 UPDATE ranks SET
@@ -123,7 +113,7 @@ impl Rank {
                 &Local::now().naive_local(),
             ],
         ) {
-            Ok(0) => Err(format!("update rank id {}", id)),
+            Ok(0) => Err(format!("update rank id {}", rank.id)),
             _ => Ok(rank),
         }
     }
