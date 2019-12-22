@@ -83,8 +83,8 @@ impl Handler for Server {
 
     fn on_error(&mut self, err: ws::Error) {
         // Shutdown on any error
-        println!("Shutting down server for error: {}", err);
-        self.out.shutdown().unwrap();
+        println!("server error: {}", err);
+        // self.out.shutdown().unwrap();
     }
 }
 
