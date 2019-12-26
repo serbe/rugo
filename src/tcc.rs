@@ -24,7 +24,7 @@
 // }
 
 // // GetTcc - get one tcc by id
-// pub fn GetTcc(conn: &Connection, id: i64) -> Result<Tcc, String> {
+// pub fn GetTcc(conn: &mut Client, id: i64) -> Result<Tcc, String> {
 // 	let mut tcc = Tcc::new();
 // 	if id == 0 {
 // 		Ok(tcc)
@@ -39,7 +39,7 @@
 // }
 
 // // GetTccList - get all tcc for list
-// pub fn GetTccList(conn: &Connection, id: i64) -> Result<TccList, String> {
+// pub fn GetTccList(conn: &mut Client, id: i64) -> Result<TccList, String> {
 // 	let mut tccs = TccList::new();
 // 	else { for row in &conn.query("
 // 		Column("id", "address", "contact_id", "note").
@@ -52,7 +52,7 @@
 // }
 
 // // GetTccListAll - get all tcc for list
-// pub fn GetTccListAll(conn: &Connection, id: i64) -> Result<Vec<TccList>, String> {
+// pub fn GetTccListAll(conn: &mut Client, id: i64) -> Result<Vec<TccList>, String> {
 // 	let mut tccs = Vec::new();
 // 	else { for row in &conn.query("
 // 		Column("id", "address", "contact_id", "note").

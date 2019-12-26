@@ -1,5 +1,5 @@
 use chrono::{Local, NaiveDateTime};
-use postgres::Connection;
+use postgres::Client;
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Deserialize, Serialize)]
@@ -26,7 +26,7 @@ impl Scope {
         Default::default()
     }
 
-    pub fn get(conn: &Connection, id: i64) -> Result<Scope, String> {
+    pub fn get(conn: &mut Client, id: i64) -> Result<Scope, String> {
         let mut scope = Scope::new();
         if id == 0 {
             Ok(scope)
@@ -60,7 +60,7 @@ impl Scope {
         }
     }
 
-    pub fn insert(conn: &Connection, scope: Scope) -> Result<Scope, String> {
+    pub fn insert(conn: &mut Client, scope: Scope) -> Result<Scope, String> {
         let mut scope = scope;
         for row in &conn
             .query(
@@ -96,7 +96,7 @@ impl Scope {
         Ok(scope)
     }
 
-    pub fn update(conn: &Connection, scope: Scope) -> Result<Scope, String> {
+    pub fn update(conn: &mut Client, scope: Scope) -> Result<Scope, String> {
         match &conn.execute(
             "
                 UPDATE scopes SET
@@ -118,7 +118,7 @@ impl Scope {
         }
     }
 
-    pub fn delete(conn: &Connection, id: i64) -> bool {
+    pub fn delete(conn: &mut Client, id: i64) -> bool {
         conn.execute(
             "
                 DELETE FROM
@@ -133,7 +133,7 @@ impl Scope {
 }
 
 impl ScopeList {
-    pub fn get_all(conn: &Connection) -> Result<Vec<ScopeList>, String> {
+    pub fn get_all(conn: &mut Client) -> Result<Vec<ScopeList>, String> {
         let mut scopes = Vec::new();
         for row in &conn
             .query(

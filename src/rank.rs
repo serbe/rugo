@@ -1,5 +1,5 @@
 use chrono::{Local, NaiveDateTime};
-use postgres::Connection;
+use postgres::Client;
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Deserialize, Serialize)]
@@ -26,7 +26,7 @@ impl Rank {
         Default::default()
     }
 
-    pub fn get(conn: &Connection, id: i64) -> Result<Rank, String> {
+    pub fn get(conn: &mut Client, id: i64) -> Result<Rank, String> {
         let mut rank = Rank::new();
         if id == 0 {
             Ok(rank)
@@ -60,7 +60,7 @@ impl Rank {
         }
     }
 
-    pub fn insert(conn: &Connection, rank: Rank) -> Result<Rank, String> {
+    pub fn insert(conn: &mut Client, rank: Rank) -> Result<Rank, String> {
         let mut rank = rank;
         for row in &conn
             .query(
@@ -96,7 +96,7 @@ impl Rank {
         Ok(rank)
     }
 
-    pub fn update(conn: &Connection, rank: Rank) -> Result<Rank, String> {
+    pub fn update(conn: &mut Client, rank: Rank) -> Result<Rank, String> {
         match &conn.execute(
             "
                 UPDATE ranks SET
@@ -118,7 +118,7 @@ impl Rank {
         }
     }
 
-    pub fn delete(conn: &Connection, id: i64) -> bool {
+    pub fn delete(conn: &mut Client, id: i64) -> bool {
         conn.execute(
             "
                 DELETE FROM
@@ -133,7 +133,7 @@ impl Rank {
 }
 
 impl RankList {
-    pub fn get_all(conn: &Connection) -> Result<Vec<RankList>, String> {
+    pub fn get_all(conn: &mut Client) -> Result<Vec<RankList>, String> {
         let mut ranks = Vec::new();
         for row in &conn
             .query(

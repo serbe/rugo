@@ -1,5 +1,5 @@
 use chrono::{Local, NaiveDate, NaiveDateTime};
-use postgres::Connection;
+use postgres::Client;
 use serde::{Deserialize, Serialize};
 
 use crate::email::Email;
@@ -52,7 +52,7 @@ impl Contact {
         Default::default()
     }
 
-    pub fn get(conn: &Connection, id: i64) -> Result<Contact, String> {
+    pub fn get(conn: &mut Client, id: i64) -> Result<Contact, String> {
         let mut contact = Contact::new();
         if id == 0 {
             Ok(contact)
@@ -94,22 +94,22 @@ impl Contact {
                 )
                 .map_err(|e| format!("contacts id {} {}", id, e.to_string()))?
             {
-                let emails = match row.get_opt(10) {
-                    Some(Ok(data)) => Some(data),
-                    _ => None,
-                };
-                let phones = match row.get_opt(11) {
-                    Some(Ok(data)) => Some(data),
-                    _ => None,
-                };
-                let faxes = match row.get_opt(12) {
-                    Some(Ok(data)) => Some(data),
-                    _ => None,
-                };
-                let educations = match row.get_opt(13) {
-                    Some(Ok(data)) => Some(data),
-                    _ => None,
-                };
+                // let emails = match row.get_opt(10) {
+                //     Some(Ok(data)) => Some(data),
+                //     _ => None,
+                // };
+                // let phones = match row.get_opt(11) {
+                //     Some(Ok(data)) => Some(data),
+                //     _ => None,
+                // };
+                // let faxes = match row.get_opt(12) {
+                //     Some(Ok(data)) => Some(data),
+                //     _ => None,
+                // };
+                // let educations = match row.get_opt(13) {
+                //     Some(Ok(data)) => Some(data),
+                //     _ => None,
+                // };
                 contact = Contact {
                     id,
                     name: row.get(0),
@@ -122,17 +122,17 @@ impl Contact {
                     note: row.get(7),
                     created_at: row.get(8),
                     updated_at: row.get(9),
-                    emails,
-                    phones,
-                    faxes,
-                    educations,
+                    emails: row.get(10),
+                    phones: row.get(11),
+                    faxes: row.get(12),
+                    educations: row.get(13),
                 };
             }
             Ok(contact)
         }
     }
 
-    pub fn insert(conn: &Connection, contact: Contact) -> Result<Contact, String> {
+    pub fn insert(conn: &mut Client, contact: Contact) -> Result<Contact, String> {
         let mut contact = contact;
         for row in &conn
             .query(
@@ -195,7 +195,7 @@ impl Contact {
         Ok(contact)
     }
 
-    pub fn update(conn: &Connection, contact: Contact) -> Result<Contact, String> {
+    pub fn update(conn: &mut Client, contact: Contact) -> Result<Contact, String> {
         match &conn.execute(
             "
                 UPDATE contacts SET
@@ -240,7 +240,7 @@ impl Contact {
         }
     }
 
-    pub fn delete(conn: &Connection, id: i64) -> bool {
+    pub fn delete(conn: &mut Client, id: i64) -> bool {
         Phone::delete_contacts(conn, id, true);
         Phone::delete_contacts(conn, id, false);
         Email::delete_contacts(conn, id);
@@ -258,7 +258,7 @@ impl Contact {
 }
 
 impl ContactList {
-    pub fn get_all(conn: &Connection) -> Result<Vec<ContactList>, String> {
+    pub fn get_all(conn: &mut Client) -> Result<Vec<ContactList>, String> {
         let mut contacts = Vec::new();
         for row in &conn
             .query(
@@ -292,22 +292,22 @@ impl ContactList {
             )
             .map_err(|e| format!("contact list {}", e.to_string()))?
         {
-            let phones = match row.get_opt(5) {
-                Some(Ok(data)) => Some(data),
-                _ => None,
-            };
-            let faxes = match row.get_opt(6) {
-                Some(Ok(data)) => Some(data),
-                _ => None,
-            };
+            // let phones = match row.get_opt(5) {
+            //     Some(Ok(data)) => Some(data),
+            //     _ => None,
+            // };
+            // let faxes = match row.get_opt(6) {
+            //     Some(Ok(data)) => Some(data),
+            //     _ => None,
+            // };
             contacts.push(ContactList {
                 id: row.get(0),
                 name: row.get(1),
                 company_id: row.get(2),
                 company_name: row.get(3),
                 post_name: row.get(4),
-                phones,
-                faxes,
+                phones: row.get(5),
+                faxes: row.get(6),
             });
         }
         Ok(contacts)
@@ -315,7 +315,7 @@ impl ContactList {
 }
 
 impl ContactShort {
-    pub fn get_by_company(conn: &Connection, company_id: i64) -> Result<Vec<ContactShort>, String> {
+    pub fn get_by_company(conn: &mut Client, company_id: i64) -> Result<Vec<ContactShort>, String> {
         let mut contacts = Vec::new();
         for row in &conn
             .query(

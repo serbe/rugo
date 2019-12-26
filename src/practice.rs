@@ -1,5 +1,5 @@
 use chrono::{Local, NaiveDate, NaiveDateTime};
-use postgres::Connection;
+use postgres::Client;
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Deserialize, Serialize)]
@@ -45,7 +45,7 @@ impl Practice {
         Default::default()
     }
 
-    pub fn get(conn: &Connection, id: i64) -> Result<Practice, String> {
+    pub fn get(conn: &mut Client, id: i64) -> Result<Practice, String> {
         let mut practice = Practice::new();
         if id == 0 {
             Ok(practice)
@@ -85,7 +85,7 @@ impl Practice {
         }
     }
 
-    pub fn insert(conn: &Connection, practice: Practice) -> Result<Practice, String> {
+    pub fn insert(conn: &mut Client, practice: Practice) -> Result<Practice, String> {
         let mut practice = practice;
         for row in &conn
             .query(
@@ -130,7 +130,7 @@ impl Practice {
         Ok(practice)
     }
 
-    pub fn update(conn: &Connection, practice: Practice) -> Result<Practice, String> {
+    pub fn update(conn: &mut Client, practice: Practice) -> Result<Practice, String> {
         match &conn.execute(
             "
                 UPDATE practices SET
@@ -158,7 +158,7 @@ impl Practice {
         }
     }
 
-    pub fn delete(conn: &Connection, id: i64) -> bool {
+    pub fn delete(conn: &mut Client, id: i64) -> bool {
         conn.execute(
             "
                 DELETE FROM
@@ -173,7 +173,7 @@ impl Practice {
 }
 
 impl PracticeList {
-    pub fn get_all(conn: &Connection) -> Result<Vec<PracticeList>, String> {
+    pub fn get_all(conn: &mut Client) -> Result<Vec<PracticeList>, String> {
         let mut practices = Vec::new();
         for row in &conn
             .query(
@@ -220,7 +220,7 @@ impl PracticeList {
         Ok(practices)
     }
 
-    pub fn get_by_company(conn: &Connection, company_id: i64) -> Result<Vec<PracticeList>, String> {
+    pub fn get_by_company(conn: &mut Client, company_id: i64) -> Result<Vec<PracticeList>, String> {
         let mut practices = Vec::new();
         for row in &conn
             .query(
@@ -271,7 +271,7 @@ impl PracticeList {
 }
 
 impl PracticeShort {
-    pub fn get_near(conn: &Connection) -> Result<Vec<PracticeShort>, String> {
+    pub fn get_near(conn: &mut Client) -> Result<Vec<PracticeShort>, String> {
         let mut practices = Vec::new();
         for row in &conn
             .query(

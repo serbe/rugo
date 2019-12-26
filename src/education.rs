@@ -1,5 +1,5 @@
 use chrono::{Local, NaiveDate, NaiveDateTime};
-use postgres::Connection;
+use postgres::Client;
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Deserialize, Serialize)]
@@ -44,7 +44,7 @@ impl Education {
         Default::default()
     }
 
-    pub fn get(conn: &Connection, id: i64) -> Result<Education, String> {
+    pub fn get(conn: &mut Client, id: i64) -> Result<Education, String> {
         let mut education = Education::new();
         if id == 0 {
             Ok(education)
@@ -84,7 +84,7 @@ impl Education {
         }
     }
 
-    pub fn insert(conn: &Connection, education: Education) -> Result<Education, String> {
+    pub fn insert(conn: &mut Client, education: Education) -> Result<Education, String> {
         let mut education = education;
         for row in &conn
             .query(
@@ -126,7 +126,7 @@ impl Education {
         Ok(education)
     }
 
-    pub fn update(conn: &Connection, education: Education) -> Result<Education, String> {
+    pub fn update(conn: &mut Client, education: Education) -> Result<Education, String> {
         match &conn.execute(
             "
                 UPDATE educations SET
@@ -154,7 +154,7 @@ impl Education {
         }
     }
 
-    pub fn delete(conn: &Connection, id: i64) -> bool {
+    pub fn delete(conn: &mut Client, id: i64) -> bool {
         conn.execute(
             "
                 DELETE FROM
@@ -169,7 +169,7 @@ impl Education {
 }
 
 impl EducationList {
-    pub fn get_all(conn: &Connection) -> Result<Vec<EducationList>, String> {
+    pub fn get_all(conn: &mut Client) -> Result<Vec<EducationList>, String> {
         let mut educations = Vec::new();
         for row in &conn
             .query(
@@ -224,7 +224,7 @@ impl EducationList {
 }
 
 impl EducationShort {
-    pub fn get_near(conn: &Connection) -> Result<Vec<EducationShort>, String> {
+    pub fn get_near(conn: &mut Client) -> Result<Vec<EducationShort>, String> {
         let mut educations = Vec::new();
         for row in &conn
             .query(

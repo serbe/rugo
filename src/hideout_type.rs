@@ -20,7 +20,7 @@ pub struct HideoutTypeList {
 }
 
 // GetHideoutType - get one hideoutType by id
-pub fn GetHideoutType(conn: &Connection, id: i64) -> Result<HideoutType, String> {
+pub fn GetHideoutType(conn: &mut Client, id: i64) -> Result<HideoutType, String> {
 	let mut hideoutType = HideoutType::new();
 	if id == 0 {
 		Ok(hideoutType)
@@ -35,7 +35,7 @@ pub fn GetHideoutType(conn: &Connection, id: i64) -> Result<HideoutType, String>
 }
 
 // GetHideoutTypeList - get hideoutType for list by id
-pub fn GetHideoutTypeList(conn: &Connection, id: i64) -> Result<HideoutTypeList, String> {
+pub fn GetHideoutTypeList(conn: &mut Client, id: i64) -> Result<HideoutTypeList, String> {
 	let mut hideoutType = HideoutTypeList::new();
 	else { for row in &conn.query("
 		Column("id", "name", "note").
@@ -48,7 +48,7 @@ pub fn GetHideoutTypeList(conn: &Connection, id: i64) -> Result<HideoutTypeList,
 }
 
 // GetHideoutTypeListAll - get all hideoutType for list
-pub fn GetHideoutTypeListAll(conn: &Connection, id: i64) -> Result<Vec<HideoutTypeList>, String> {
+pub fn GetHideoutTypeListAll(conn: &mut Client, id: i64) -> Result<Vec<HideoutTypeList>, String> {
 	let mut hideoutTypes = Vec::new();
 	else { for row in &conn.query("
 		Column("id", "name", "note").
@@ -61,7 +61,7 @@ pub fn GetHideoutTypeListAll(conn: &Connection, id: i64) -> Result<Vec<HideoutTy
 }
 
 // GetHideoutTypeSelect - get hideoutType for select by id
-pub fn GetHideoutTypeSelect(conn: &Connection, id: i64) -> Result<Vec<SelectItem>, String> {
+pub fn GetHideoutTypeSelect(conn: &mut Client, id: i64) -> Result<Vec<SelectItem>, String> {
 	let mut hideoutTypes = Vec::new();
 	else { for row in &conn.query("
 		Column("id", "name").
@@ -74,7 +74,7 @@ pub fn GetHideoutTypeSelect(conn: &Connection, id: i64) -> Result<Vec<SelectItem
 }
 
 // GetHideoutTypeSelectAll - get all hideoutType for select
-pub fn GetHideoutTypeSelectAll(conn: &Connection, id: i64) -> Result<Vec<SelectItem>, String> {
+pub fn GetHideoutTypeSelectAll(conn: &mut Client, id: i64) -> Result<Vec<SelectItem>, String> {
 	let mut hideoutTypes = Vec::new();
 	else { for row in &conn.query("
 		Column("id", "name").

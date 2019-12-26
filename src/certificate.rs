@@ -1,5 +1,5 @@
 use chrono::{Local, NaiveDate, NaiveDateTime};
-use postgres::Connection;
+use postgres::Client;
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Deserialize, Serialize)]
@@ -34,7 +34,7 @@ impl Certificate {
         Default::default()
     }
 
-    pub fn get(conn: &Connection, id: i64) -> Result<Certificate, String> {
+    pub fn get(conn: &mut Client, id: i64) -> Result<Certificate, String> {
         let mut certificate = Certificate::new();
         if id == 0 {
             Ok(certificate)
@@ -72,7 +72,7 @@ impl Certificate {
         }
     }
 
-    pub fn insert(conn: &Connection, certificate: Certificate) -> Result<Certificate, String> {
+    pub fn insert(conn: &mut Client, certificate: Certificate) -> Result<Certificate, String> {
         let mut certificate = certificate;
         for row in &conn
             .query(
@@ -117,7 +117,7 @@ impl Certificate {
         Ok(certificate)
     }
 
-    pub fn update(conn: &Connection, certificate: Certificate) -> Result<Certificate, String> {
+    pub fn update(conn: &mut Client, certificate: Certificate) -> Result<Certificate, String> {
         match &conn.execute(
             "
                 UPDATE certificates SET
@@ -145,7 +145,7 @@ impl Certificate {
         }
     }
 
-    pub fn delete(conn: &Connection, id: i64) -> bool {
+    pub fn delete(conn: &mut Client, id: i64) -> bool {
         conn.execute(
             "
                 DELETE FROM
@@ -160,7 +160,7 @@ impl Certificate {
 }
 
 impl CertificateList {
-    pub fn get_all(conn: &Connection) -> Result<Vec<CertificateList>, String> {
+    pub fn get_all(conn: &mut Client) -> Result<Vec<CertificateList>, String> {
         let mut certificates = Vec::new();
         for row in &conn
             .query(

@@ -1,7 +1,7 @@
 // use actix_identity::Identity;
 // use actix_web::{error::BlockingError, web, Error, HttpResponse};
 // use futures::Future;
-use postgres::Connection;
+use postgres::{Client, NoTls};
 use r2d2::Pool;
 use r2d2_postgres::PostgresConnectionManager;
 use serde::{Deserialize, Serialize};
@@ -72,20 +72,37 @@ pub enum DBItem {
 // }
 
 fn get_connurl() -> String {
-    dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set")
+    let dbname = dotenv::var("DB_NAME").expect("missing env DB_NAME");
+    let dbuser = dotenv::var("DB_USER");
+    let dbpassword = dotenv::var("DB_PASSWORD");
+    let dbhost = dotenv::var("DB_HOST");
+    let dbport = dotenv::var("DB_PORT");
+    let mut cfgstr = format!("dbname={}", dbname);
+    if let Ok(user) = dbuser {
+        cfgstr.push_str(format!(" user={}", user).as_str())
+    };
+    if let Ok(password) = dbpassword {
+        cfgstr.push_str(format!(" password={}", password).as_str())
+    };
+    if let Ok(host) = dbhost {
+        cfgstr.push_str(format!(" host={}", host).as_str())
+    };
+    if let Ok(port) = dbport {
+        cfgstr.push_str(format!(" port={}", port).as_str())
+    };
+    cfgstr
 }
 
-pub fn get_manager() -> PostgresConnectionManager {
+pub fn get_manager() -> PostgresConnectionManager<NoTls> {
     let conn_url = get_connurl();
-    PostgresConnectionManager::new(conn_url.clone(), r2d2_postgres::TlsMode::None)
-        .unwrap_or_else(|_| panic!("Error connection manager to {}", conn_url))
+    PostgresConnectionManager::new(conn_url.parse().unwrap(), NoTls)
 }
 
-pub fn get_pool() -> Pool<PostgresConnectionManager> {
+pub fn get_pool() -> Pool<PostgresConnectionManager<NoTls>> {
     r2d2::Pool::new(get_manager()).expect("error create r2d2 pool")
 }
 
-pub fn get_item(conn: &Connection, id: i64, name: String) -> Result<Value, String> {
+pub fn get_item(conn: &mut Client, id: i64, name: String) -> Result<Value, String> {
     match name.as_str() {
         "certificate" => Ok(json!(Certificate::get(conn, id)?)),
         "company" => Ok(json!(Company::get(conn, id)?)),
@@ -103,7 +120,7 @@ pub fn get_item(conn: &Connection, id: i64, name: String) -> Result<Value, Strin
     }
 }
 
-pub fn get_list(conn: &Connection, name: String) -> Result<Value, String> {
+pub fn get_list(conn: &mut Client, name: String) -> Result<Value, String> {
     match name.as_str() {
         "certificate" => Ok(json!(CertificateList::get_all(conn)?)),
         "company" => Ok(json!(CompanyList::get_all(conn)?)),
@@ -121,7 +138,7 @@ pub fn get_list(conn: &Connection, name: String) -> Result<Value, String> {
     }
 }
 
-pub fn get_near(conn: &Connection, name: String) -> Result<Value, String> {
+pub fn get_near(conn: &mut Client, name: String) -> Result<Value, String> {
     match name.as_str() {
         "education" => Ok(json!(EducationShort::get_near(conn)?)),
         "practice" => Ok(json!(PracticeShort::get_near(conn)?)),
@@ -129,7 +146,7 @@ pub fn get_near(conn: &Connection, name: String) -> Result<Value, String> {
     }
 }
 
-pub fn get_select(conn: &Connection, name: String) -> Result<Value, String> {
+pub fn get_select(conn: &mut Client, name: String) -> Result<Value, String> {
     match name.as_str() {
         "company" => Ok(json!(SelectItem::company_all(conn)?)),
         "contact" => Ok(json!(SelectItem::contact_all(conn)?)),
@@ -144,7 +161,7 @@ pub fn get_select(conn: &Connection, name: String) -> Result<Value, String> {
     }
 }
 
-pub fn insert_item(conn: &Connection, item: DBItem) -> Result<Value, String> {
+pub fn insert_item(conn: &mut Client, item: DBItem) -> Result<Value, String> {
     match item {
         DBItem::Certificate(item) => Ok(json!(Certificate::insert(conn, item)?)),
         DBItem::Company(item) => Ok(json!(Company::insert(conn, *item)?)),
@@ -161,7 +178,7 @@ pub fn insert_item(conn: &Connection, item: DBItem) -> Result<Value, String> {
     }
 }
 
-pub fn update_item(conn: &Connection, item: DBItem) -> Result<Value, String> {
+pub fn update_item(conn: &mut Client, item: DBItem) -> Result<Value, String> {
     match item {
         DBItem::Certificate(item) => Ok(json!(Certificate::update(conn, item)?)),
         DBItem::Company(item) => Ok(json!(Company::update(conn, *item)?)),
@@ -178,7 +195,7 @@ pub fn update_item(conn: &Connection, item: DBItem) -> Result<Value, String> {
     }
 }
 
-pub fn delete_item(conn: &Connection, id: i64, name: String) -> Result<Value, String> {
+pub fn delete_item(conn: &mut Client, id: i64, name: String) -> Result<Value, String> {
     match name.as_str() {
         "certificate" => Ok(json!(Certificate::delete(conn, id))),
         "company" => Ok(json!(Company::delete(conn, id))),
@@ -196,7 +213,7 @@ pub fn delete_item(conn: &Connection, id: i64, name: String) -> Result<Value, St
     }
 }
 
-// fn get_children(conn: &Connection, name: &str, children: &str, id: i64) -> Result<DBList, String> {
+// fn get_children(conn: &mut Client, name: &str, children: &str, id: i64) -> Result<DBList, String> {
 //     match (name, children) {
 //         ("company", "practice") => Ok(DBList::PracticeList(PracticeList::get_by_company(
 //             conn, id,

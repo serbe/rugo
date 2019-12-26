@@ -1,4 +1,4 @@
-use postgres::Connection;
+use postgres::Client;
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -8,7 +8,7 @@ pub struct SelectItem {
 }
 
 impl SelectItem {
-    pub fn company_all(conn: &Connection) -> Result<Vec<SelectItem>, String> {
+    pub fn company_all(conn: &mut Client) -> Result<Vec<SelectItem>, String> {
         let mut companies = Vec::new();
         for row in &conn
             .query(
@@ -33,7 +33,7 @@ impl SelectItem {
         Ok(companies)
     }
 
-    pub fn contact_all(conn: &Connection) -> Result<Vec<SelectItem>, String> {
+    pub fn contact_all(conn: &mut Client) -> Result<Vec<SelectItem>, String> {
         let mut contacts = Vec::new();
         for row in &conn
             .query(
@@ -58,7 +58,7 @@ impl SelectItem {
         Ok(contacts)
     }
 
-    pub fn department_all(conn: &Connection) -> Result<Vec<SelectItem>, String> {
+    pub fn department_all(conn: &mut Client) -> Result<Vec<SelectItem>, String> {
         let mut departments = Vec::new();
         for row in &conn
             .query(
@@ -83,7 +83,7 @@ impl SelectItem {
         Ok(departments)
     }
 
-    pub fn kind_all(conn: &Connection) -> Result<Vec<SelectItem>, String> {
+    pub fn kind_all(conn: &mut Client) -> Result<Vec<SelectItem>, String> {
         let mut kinds = Vec::new();
         for row in &conn
             .query(
@@ -108,7 +108,7 @@ impl SelectItem {
         Ok(kinds)
     }
 
-    pub fn post_all(conn: &Connection, go: bool) -> Result<Vec<SelectItem>, String> {
+    pub fn post_all(conn: &mut Client, go: bool) -> Result<Vec<SelectItem>, String> {
         let mut posts = Vec::new();
         for row in &conn
             .query(
@@ -135,7 +135,7 @@ impl SelectItem {
         Ok(posts)
     }
 
-    pub fn rank_all(conn: &Connection) -> Result<Vec<SelectItem>, String> {
+    pub fn rank_all(conn: &mut Client) -> Result<Vec<SelectItem>, String> {
         let mut ranks = Vec::new();
         for row in &conn
             .query(
@@ -160,7 +160,7 @@ impl SelectItem {
         Ok(ranks)
     }
 
-    pub fn scope_all(conn: &Connection) -> Result<Vec<SelectItem>, String> {
+    pub fn scope_all(conn: &mut Client) -> Result<Vec<SelectItem>, String> {
         let mut scopes = Vec::new();
         for row in &conn
             .query(
@@ -185,7 +185,7 @@ impl SelectItem {
         Ok(scopes)
     }
 
-    pub fn siren_type_all(conn: &Connection) -> Result<Vec<SelectItem>, String> {
+    pub fn siren_type_all(conn: &mut Client) -> Result<Vec<SelectItem>, String> {
         let mut siren_types = Vec::new();
         for row in &conn
             .query(

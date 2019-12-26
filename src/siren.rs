@@ -1,5 +1,5 @@
 use chrono::{Local, NaiveDateTime};
-use postgres::Connection;
+use postgres::Client;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -39,7 +39,7 @@ impl Siren {
         Default::default()
     }
 
-    pub fn get(conn: &Connection, id: i64) -> Result<Siren, String> {
+    pub fn get(conn: &mut Client, id: i64) -> Result<Siren, String> {
         let mut siren = Siren::new();
         if id == 0 {
             Ok(siren)
@@ -95,7 +95,7 @@ impl Siren {
         }
     }
 
-    pub fn insert(conn: &Connection, siren: Siren) -> Result<Siren, String> {
+    pub fn insert(conn: &mut Client, siren: Siren) -> Result<Siren, String> {
         let mut siren = siren;
         for row in &conn
             .query(
@@ -164,7 +164,7 @@ impl Siren {
         Ok(siren)
     }
 
-    pub fn update(conn: &Connection, siren: Siren) -> Result<Siren, String> {
+    pub fn update(conn: &mut Client, siren: Siren) -> Result<Siren, String> {
         match &conn.execute(
             "
                 UPDATE sirens SET
@@ -208,7 +208,7 @@ impl Siren {
         }
     }
 
-    pub fn delete(conn: &Connection, id: i64) -> bool {
+    pub fn delete(conn: &mut Client, id: i64) -> bool {
         conn.execute(
             "
                 DELETE FROM
@@ -223,7 +223,7 @@ impl Siren {
 }
 
 impl SirenList {
-    pub fn get_all(conn: &Connection) -> Result<Vec<SirenList>, String> {
+    pub fn get_all(conn: &mut Client) -> Result<Vec<SirenList>, String> {
         let mut sirens = Vec::new();
         for row in &conn
             .query(
@@ -253,16 +253,16 @@ impl SirenList {
             )
             .map_err(|e| format!("sirenList all {}", e.to_string()))?
         {
-            let phones = match row.get_opt(4) {
-                Some(Ok(data)) => Some(data),
-                _ => None,
-            };
+            // let phones = match row.get_opt(4) {
+            //     Some(Ok(data)) => Some(data),
+            //     _ => None,
+            // };
             sirens.push(SirenList {
                 id: row.get(0),
                 siren_type_name: row.get(1),
                 address: row.get(2),
                 contact_name: row.get(3),
-                phones,
+                phones: row.get(4),
             });
         }
         Ok(sirens)

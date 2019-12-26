@@ -1,5 +1,5 @@
 use chrono::{Local, NaiveDateTime};
-use postgres::Connection;
+use postgres::Client;
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Deserialize, Serialize)]
@@ -28,7 +28,7 @@ impl Kind {
         Default::default()
     }
 
-    pub fn get(conn: &Connection, id: i64) -> Result<Kind, String> {
+    pub fn get(conn: &mut Client, id: i64) -> Result<Kind, String> {
         let mut kind = Kind::new();
         if id == 0 {
             Ok(kind)
@@ -64,7 +64,7 @@ impl Kind {
         }
     }
 
-    pub fn insert(conn: &Connection, kind: Kind) -> Result<Kind, String> {
+    pub fn insert(conn: &mut Client, kind: Kind) -> Result<Kind, String> {
         let mut kind = kind;
         for row in &conn
             .query(
@@ -103,7 +103,7 @@ impl Kind {
         Ok(kind)
     }
 
-    pub fn update(conn: &Connection, kind: Kind) -> Result<Kind, String> {
+    pub fn update(conn: &mut Client, kind: Kind) -> Result<Kind, String> {
         match &conn.execute(
             "
                 UPDATE kinds SET
@@ -127,7 +127,7 @@ impl Kind {
         }
     }
 
-    pub fn delete(conn: &Connection, id: i64) -> bool {
+    pub fn delete(conn: &mut Client, id: i64) -> bool {
         conn.execute(
             "
                 DELETE FROM
@@ -142,7 +142,7 @@ impl Kind {
 }
 
 impl KindList {
-    pub fn get_all(conn: &Connection) -> Result<Vec<KindList>, String> {
+    pub fn get_all(conn: &mut Client) -> Result<Vec<KindList>, String> {
         let mut kinds = Vec::new();
         for row in &conn
             .query(

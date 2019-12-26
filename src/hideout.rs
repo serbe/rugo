@@ -90,7 +90,7 @@ pub struct HideoutList {
 }
 
 // GetHideout - get one hideout by id
-pub fn GetHideout(conn: &Connection, id: i64) -> Result<Hideout, String> {
+pub fn GetHideout(conn: &mut Client, id: i64) -> Result<Hideout, String> {
 	let mut hideout = Hideout::new();
 	if id == 0 {
 		Ok(hideout)
@@ -105,7 +105,7 @@ pub fn GetHideout(conn: &Connection, id: i64) -> Result<Hideout, String> {
 }
 
 // GetHideoutList - get all hideout for list
-pub fn GetHideoutList(conn: &Connection, id: i64) -> Result<Vec<HideoutList>, String> {
+pub fn GetHideoutList(conn: &mut Client, id: i64) -> Result<Vec<HideoutList>, String> {
 	let mut $1 = Vec::new();
 	for row in &conn.query("
 		SELECT

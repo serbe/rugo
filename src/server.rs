@@ -1,3 +1,4 @@
+use postgres::NoTls;
 use r2d2::Pool;
 use r2d2_postgres::PostgresConnectionManager;
 use serde::Deserialize;
@@ -38,7 +39,7 @@ enum ClientMessage {
 
 pub struct Server {
     pub out: Sender,
-    pub pool: Pool<PostgresConnectionManager>,
+    pub pool: Pool<PostgresConnectionManager<NoTls>>,
 }
 
 impl Handler for Server {
@@ -57,21 +58,21 @@ impl Handler for Server {
             serde_json::from_str(json_string).map_err(|err| ws::Error::from(Box::new(err)))?;
 
         // println!("Received {:?}", message);
-        let conn = self
+        let mut conn = self
             .pool
             .get()
             .map_err(|err| ws::Error::from(Box::new(err)))?;
 
         let db_result = match message {
             ClientMessage::Get(request) => match request.command {
-                Command::Item(id) => get_item(&conn, id, request.name),
-                Command::List => get_list(&conn, request.name),
-                Command::Near => get_near(&conn, request.name),
-                Command::Select => get_select(&conn, request.name),
+                Command::Item(id) => get_item(&mut conn, id, request.name),
+                Command::List => get_list(&mut conn, request.name),
+                Command::Near => get_near(&mut conn, request.name),
+                Command::Select => get_select(&mut conn, request.name),
             },
-            ClientMessage::Insert(item) => insert_item(&conn, item),
-            ClientMessage::Update(item) => update_item(&conn, item),
-            ClientMessage::Delete(item) => delete_item(&conn, item.id, item.name),
+            ClientMessage::Insert(item) => insert_item(&mut conn, item),
+            ClientMessage::Update(item) => update_item(&mut conn, item),
+            ClientMessage::Delete(item) => delete_item(&mut conn, item.id, item.name),
         }
         .map_err(|err| {
             // println!("error db {}", err);

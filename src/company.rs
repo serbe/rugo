@@ -1,5 +1,5 @@
 use chrono::{Local, NaiveDate, NaiveDateTime};
-use postgres::Connection;
+use postgres::Client;
 use serde::{Deserialize, Serialize};
 
 use crate::contact::ContactShort;
@@ -45,7 +45,7 @@ impl Company {
         Default::default()
     }
 
-    pub fn get(conn: &Connection, id: i64) -> Result<Company, String> {
+    pub fn get(conn: &mut Client, id: i64) -> Result<Company, String> {
         let mut company = Company::new();
         if id == 0 {
             Ok(company)
@@ -80,18 +80,18 @@ impl Company {
                 )
                 .map_err(|e| format!("contacts id {} {}", id, e.to_string()))?
             {
-                let emails = match row.get_opt(6) {
-                    Some(Ok(data)) => Some(data),
-                    _ => None,
-                };
-                let phones = match row.get_opt(7) {
-                    Some(Ok(data)) => Some(data),
-                    _ => None,
-                };
-                let faxes = match row.get_opt(8) {
-                    Some(Ok(data)) => Some(data),
-                    _ => None,
-                };
+                // let emails = match row.get_opt(6) {
+                //     Some(Ok(data)) => Some(data),
+                //     _ => None,
+                // };
+                // let phones = match row.get_opt(7) {
+                //     Some(Ok(data)) => Some(data),
+                //     _ => None,
+                // };
+                // let faxes = match row.get_opt(8) {
+                //     Some(Ok(data)) => Some(data),
+                //     _ => None,
+                // };
                 let practices = PracticeList::get_by_company(conn, id).ok();
                 let contacts = ContactShort::get_by_company(conn, id).ok();
                 company = Company {
@@ -102,9 +102,9 @@ impl Company {
                     note: row.get(3),
                     created_at: row.get(4),
                     updated_at: row.get(5),
-                    emails,
-                    phones,
-                    faxes,
+                    emails: row.get(6),
+                    phones: row.get(7),
+                    faxes: row.get(8),
                     practices,
                     contacts,
                 };
@@ -113,7 +113,7 @@ impl Company {
         }
     }
 
-    pub fn insert(conn: &Connection, company: Company) -> Result<Company, String> {
+    pub fn insert(conn: &mut Client, company: Company) -> Result<Company, String> {
         let mut company = company;
         for row in &conn
             .query(
@@ -164,7 +164,7 @@ impl Company {
         Ok(company)
     }
 
-    pub fn update(conn: &Connection, company: Company) -> Result<Company, String> {
+    pub fn update(conn: &mut Client, company: Company) -> Result<Company, String> {
         match &conn.execute(
             "
                 UPDATE companies SET
@@ -201,7 +201,7 @@ impl Company {
         }
     }
 
-    pub fn delete(conn: &Connection, id: i64) -> bool {
+    pub fn delete(conn: &mut Client, id: i64) -> bool {
         Phone::delete_companies(conn, id, true);
         Phone::delete_companies(conn, id, false);
         Email::delete_companies(conn, id);
@@ -219,7 +219,7 @@ impl Company {
 }
 
 impl CompanyList {
-    pub fn get_all(conn: &Connection) -> Result<Vec<CompanyList>, String> {
+    pub fn get_all(conn: &mut Client) -> Result<Vec<CompanyList>, String> {
         let mut companies = Vec::new();
         for row in &conn
             .query(
@@ -255,32 +255,32 @@ impl CompanyList {
             )
             .map_err(|e| format!("company list {}", e.to_string()))?
         {
-            let emails = match row.get_opt(4) {
-                Some(Ok(data)) => Some(data),
-                _ => None,
-            };
-            let phones = match row.get_opt(5) {
-                Some(Ok(data)) => Some(data),
-                _ => None,
-            };
-            let faxes = match row.get_opt(6) {
-                Some(Ok(data)) => Some(data),
-                _ => None,
-            };
-            let practices = match row.get_opt(7) {
-                Some(Ok(data)) => Some(data),
-                _ => None,
-            };
+            // let emails = match row.get_opt(4) {
+            //     Some(Ok(data)) => Some(data),
+            //     _ => None,
+            // };
+            // let phones = match row.get_opt(5) {
+            //     Some(Ok(data)) => Some(data),
+            //     _ => None,
+            // };
+            // let faxes = match row.get_opt(6) {
+            //     Some(Ok(data)) => Some(data),
+            //     _ => None,
+            // };
+            // let practices = match row.get_opt(7) {
+            //     Some(Ok(data)) => Some(data),
+            //     _ => None,
+            // };
 
             companies.push(CompanyList {
                 id: row.get(0),
                 name: row.get(1),
                 address: row.get(2),
                 scope_name: row.get(3),
-                emails,
-                phones,
-                faxes,
-                practices,
+                emails: row.get(4),
+                phones: row.get(5),
+                faxes: row.get(6),
+                practices: row.get(7),
             });
         }
         Ok(companies)

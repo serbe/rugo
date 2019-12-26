@@ -1,5 +1,5 @@
 use chrono::{Local, NaiveDateTime};
-use postgres::Connection;
+use postgres::Client;
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Deserialize, Serialize)]
@@ -26,7 +26,7 @@ impl Department {
         Default::default()
     }
 
-    pub fn get(conn: &Connection, id: i64) -> Result<Department, String> {
+    pub fn get(conn: &mut Client, id: i64) -> Result<Department, String> {
         let mut department = Department::new();
         if id == 0 {
             Ok(department)
@@ -60,7 +60,7 @@ impl Department {
         }
     }
 
-    pub fn insert(conn: &Connection, department: Department) -> Result<Department, String> {
+    pub fn insert(conn: &mut Client, department: Department) -> Result<Department, String> {
         let mut department = department;
         for row in &conn
             .query(
@@ -96,7 +96,7 @@ impl Department {
         Ok(department)
     }
 
-    pub fn update(conn: &Connection, department: Department) -> Result<Department, String> {
+    pub fn update(conn: &mut Client, department: Department) -> Result<Department, String> {
         match &conn.execute(
             "
                 UPDATE departments SET
@@ -118,7 +118,7 @@ impl Department {
         }
     }
 
-    pub fn delete(conn: &Connection, id: i64) -> bool {
+    pub fn delete(conn: &mut Client, id: i64) -> bool {
         conn.execute(
             "
                 DELETE FROM
@@ -133,7 +133,7 @@ impl Department {
 }
 
 impl DepartmentList {
-    pub fn get_all(conn: &Connection) -> Result<Vec<DepartmentList>, String> {
+    pub fn get_all(conn: &mut Client) -> Result<Vec<DepartmentList>, String> {
         let mut departments = Vec::new();
         for row in &conn
             .query(

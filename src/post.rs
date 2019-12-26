@@ -1,5 +1,5 @@
 use chrono::{Local, NaiveDateTime};
-use postgres::Connection;
+use postgres::Client;
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Deserialize, Serialize)]
@@ -28,7 +28,7 @@ impl Post {
         Default::default()
     }
 
-    pub fn get(conn: &Connection, id: i64) -> Result<Post, String> {
+    pub fn get(conn: &mut Client, id: i64) -> Result<Post, String> {
         let mut post = Post::new();
         if id == 0 {
             Ok(post)
@@ -64,7 +64,7 @@ impl Post {
         }
     }
 
-    pub fn insert(conn: &Connection, post: Post) -> Result<Post, String> {
+    pub fn insert(conn: &mut Client, post: Post) -> Result<Post, String> {
         let mut post = post;
         for row in &conn
             .query(
@@ -103,7 +103,7 @@ impl Post {
         Ok(post)
     }
 
-    pub fn update(conn: &Connection, post: Post) -> Result<Post, String> {
+    pub fn update(conn: &mut Client, post: Post) -> Result<Post, String> {
         match &conn.execute(
             "
                 UPDATE posts SET
@@ -127,7 +127,7 @@ impl Post {
         }
     }
 
-    pub fn delete(conn: &Connection, id: i64) -> bool {
+    pub fn delete(conn: &mut Client, id: i64) -> bool {
         conn.execute(
             "
                 DELETE FROM
@@ -142,7 +142,7 @@ impl Post {
 }
 
 impl PostList {
-    pub fn get_all(conn: &Connection) -> Result<Vec<PostList>, String> {
+    pub fn get_all(conn: &mut Client) -> Result<Vec<PostList>, String> {
         let mut posts = Vec::new();
         for row in &conn
             .query(

@@ -1,5 +1,5 @@
 use chrono::{Local, NaiveDateTime};
-use postgres::Connection;
+use postgres::Client;
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Deserialize, Serialize)]
@@ -28,7 +28,7 @@ impl SirenType {
         Default::default()
     }
 
-    pub fn get(conn: &Connection, id: i64) -> Result<SirenType, String> {
+    pub fn get(conn: &mut Client, id: i64) -> Result<SirenType, String> {
         let mut siren_type = SirenType::new();
         if id == 0 {
             Ok(siren_type)
@@ -64,7 +64,7 @@ impl SirenType {
         }
     }
 
-    pub fn insert(conn: &Connection, siren_type: SirenType) -> Result<SirenType, String> {
+    pub fn insert(conn: &mut Client, siren_type: SirenType) -> Result<SirenType, String> {
         let mut siren_type = siren_type;
         for row in &conn
             .query(
@@ -103,7 +103,7 @@ impl SirenType {
         Ok(siren_type)
     }
 
-    pub fn update(conn: &Connection, siren_type: SirenType) -> Result<SirenType, String> {
+    pub fn update(conn: &mut Client, siren_type: SirenType) -> Result<SirenType, String> {
         match &conn.execute(
             "
                 UPDATE siren_types SET
@@ -127,7 +127,7 @@ impl SirenType {
         }
     }
 
-    pub fn delete(conn: &Connection, id: i64) -> bool {
+    pub fn delete(conn: &mut Client, id: i64) -> bool {
         conn.execute(
             "
                 DELETE FROM
@@ -142,7 +142,7 @@ impl SirenType {
 }
 
 impl SirenTypeList {
-    pub fn get_all(conn: &Connection) -> Result<Vec<SirenTypeList>, String> {
+    pub fn get_all(conn: &mut Client) -> Result<Vec<SirenTypeList>, String> {
         let mut siren_types = Vec::new();
         for row in &conn
             .query(

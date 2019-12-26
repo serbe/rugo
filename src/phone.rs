@@ -1,5 +1,5 @@
 use chrono::{Local, NaiveDateTime};
-use postgres::Connection;
+use postgres::Client;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Deserialize, Serialize)]
@@ -20,7 +20,7 @@ impl Phone {
         Default::default()
     }
 
-    fn insert(conn: &Connection, phone: Phone) -> Result<u64, String> {
+    fn insert(conn: &mut Client, phone: Phone) -> Result<u64, String> {
         match &conn.execute(
             "
             INSERT INTO phones
@@ -57,7 +57,7 @@ impl Phone {
     }
 
     pub fn update_contacts(
-        conn: &Connection,
+        conn: &mut Client,
         id: i64,
         fax: bool,
         phones: Vec<i64>,
@@ -74,7 +74,7 @@ impl Phone {
     }
 
     pub fn update_companies(
-        conn: &Connection,
+        conn: &mut Client,
         id: i64,
         fax: bool,
         phones: Vec<i64>,
@@ -90,7 +90,7 @@ impl Phone {
         Ok(0)
     }
 
-    pub fn delete_contacts(conn: &Connection, id: i64, fax: bool) {
+    pub fn delete_contacts(conn: &mut Client, id: i64, fax: bool) {
         let _ = &conn.execute(
             "
             DELETE FROM
@@ -104,7 +104,7 @@ impl Phone {
         );
     }
 
-    pub fn delete_companies(conn: &Connection, id: i64, fax: bool) {
+    pub fn delete_companies(conn: &mut Client, id: i64, fax: bool) {
         let _ = &conn.execute(
             "
             DELETE FROM
