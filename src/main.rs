@@ -13,23 +13,7 @@ use db::{
 // use db::test_post_name_id;
 
 mod auth;
-mod certificate;
-mod company;
-mod contact;
 mod db;
-mod department;
-mod education;
-mod email;
-mod kind;
-mod phone;
-mod post;
-mod practice;
-mod rank;
-mod scope;
-mod select;
-mod siren;
-mod siren_type;
-mod tcc;
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 /// How long before lack of client response causes a timeout

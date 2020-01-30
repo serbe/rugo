@@ -2,26 +2,24 @@ use actix_identity::Identity;
 use actix_web::{error::BlockingError, web, Error, HttpResponse};
 use dotenv::dotenv;
 use futures::Future;
-use postgres::Connection;
-use r2d2::Pool;
-use r2d2_postgres::PostgresConnectionManager;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value, Value::Null};
 
+use rpel::certificate::{Certificate, CertificateList};
+use rpel::company::{Company, CompanyList};
+use rpel::contact::{Contact, ContactList};
+use rpel::department::{Department, DepartmentList};
+use rpel::education::{Education, EducationList, EducationShort};
+use rpel::kind::{Kind, KindList};
+use rpel::post::{Post, PostList};
+use rpel::practice::{Practice, PracticeList, PracticeShort};
+use rpel::rank::{Rank, RankList};
+use rpel::scope::{Scope, ScopeList};
+use rpel::select::SelectItem;
+use rpel::siren::{Siren, SirenList};
+use rpel::siren_type::{SirenType, SirenTypeList};
+
 use crate::auth::check_auth;
-use crate::certificate::{Certificate, CertificateList};
-use crate::company::{Company, CompanyList};
-use crate::contact::{Contact, ContactList};
-use crate::department::{Department, DepartmentList};
-use crate::education::{Education, EducationList, EducationShort};
-use crate::kind::{Kind, KindList};
-use crate::post::{Post, PostList};
-use crate::practice::{Practice, PracticeList, PracticeShort};
-use crate::rank::{Rank, RankList};
-use crate::scope::{Scope, ScopeList};
-use crate::select::SelectItem;
-use crate::siren::{Siren, SirenList};
-use crate::siren_type::{SirenType, SirenTypeList};
 
 #[derive(Deserialize, Serialize)]
 pub enum DBItem {
@@ -66,12 +64,6 @@ pub struct TestStruct {
 fn get_connurl() -> String {
     dotenv().ok();
     dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set")
-}
-
-pub fn get_manager() -> PostgresConnectionManager {
-    let conn_url = get_connurl();
-    PostgresConnectionManager::new(conn_url.clone(), r2d2_postgres::TlsMode::None)
-        .unwrap_or_else(|_| panic!("Error connection manager to {}", conn_url))
 }
 
 fn get_list(conn: &Connection, name: &str, command: &str) -> Result<DBList, String> {
