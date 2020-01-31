@@ -2,6 +2,7 @@ use actix_identity::Identity;
 use actix_web::{web, HttpResponse};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value::Null};
+use anyhow::Error;
 
 #[derive(Deserialize, Serialize)]
 pub struct Auth {
@@ -43,7 +44,7 @@ pub fn check(id: Identity) -> HttpResponse {
     }
 }
 
-pub fn check_auth(id: Identity) -> Result<String, String> {
+pub fn check_auth(id: Identity) -> Result<String, Error> {
     match id.identity() {
         Some(i) => Ok(i),
         None => Err("Not auth".to_owned()),
