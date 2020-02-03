@@ -1,10 +1,6 @@
-use std::io;
-use std::time::{Duration, Instant};
+// use std::io;
+// use std::time::{Duration, Instant};
 
-use actix::{Actor, AsyncContext, StreamHandler};
-// use actix_identity::{CookieIdentityPolicy, IdentityService};
-use actix_web::{middleware, web, App, HttpServer, HttpRequest, HttpResponse};
-use actix_web_actors::ws;
 use anyhow::Error;
 
 // use auth::{check, login, logout};
@@ -17,134 +13,97 @@ use anyhow::Error;
 // };
 // use db::test_post_name_id;
 
-use rpel::get_pool;
+// use rpel::get_pool;
+
+use std::{
+    collections::HashMap,
+    // env,
+    // io::Error as IoError,
+    net::SocketAddr,
+    sync::{Arc, Mutex},
+};
+
+use futures::{
+    channel::mpsc::{unbounded, UnboundedSender},
+    future, pin_mut,
+    stream::TryStreamExt,
+    StreamExt,
+};
+
+use tokio::net::{TcpListener, TcpStream};
+use tungstenite::protocol::Message;
+
+type Tx = UnboundedSender<Message>;
+type PeerMap = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
 
 // mod auth;
 // mod db;
 
-const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
-/// How long before lack of client response causes a timeout
-const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
+async fn handle_connection(peer_map: PeerMap, raw_stream: TcpStream, addr: SocketAddr) {
+    println!("Incoming TCP connection from: {}", addr);
 
-async fn ws_index(r: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
-    println!("{:?}", r);
-    let res = ws::start(MyWebSocket::new(), &r, stream);
-    println!("{:?}", res);
-    res
-}
+    let ws_stream = tokio_tungstenite::accept_async(raw_stream)
+        .await
+        .expect("Error during the websocket handshake occurred");
+    println!("WebSocket connection established: {}", addr);
 
-struct MyWebSocket {
-    /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT),
-    /// otherwise we drop connection.
-    hb: Instant,
-}
+    // Insert the write part of this peer to the peer map.
+    let (tx, rx) = unbounded();
+    peer_map.lock().unwrap().insert(addr, tx);
 
-impl Actor for MyWebSocket {
-    type Context = ws::WebsocketContext<Self>;
+    let (outgoing, incoming) = ws_stream.split();
 
-    /// Method is called on actor start. We start the heartbeat process here.
-    fn started(&mut self, ctx: &mut Self::Context) {
-        self.hb(ctx);
-    }
-}
+    let broadcast_incoming = incoming.try_for_each(|msg| {
+        println!(
+            "Received a message from {}: {}",
+            addr,
+            msg.to_text().unwrap()
+        );
+        let peers = peer_map.lock().unwrap();
 
-/// Handler for `ws::Message`
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
-    fn handle(
-        &mut self,
-        msg: Result<ws::Message, ws::ProtocolError>,
-        ctx: &mut Self::Context,
-    ) {
-        // process websocket messages
-        println!("WS: {:?}", msg);
-        match msg {
-            Ok(ws::Message::Ping(msg)) => {
-                self.hb = Instant::now();
-                ctx.pong(&msg);
-            }
-            Ok(ws::Message::Pong(_)) => {
-                self.hb = Instant::now();
-            }
-            Ok(ws::Message::Text(text)) => ctx.text(text),
-            Ok(ws::Message::Binary(bin)) => ctx.binary(bin),
-            Ok(ws::Message::Close(_)) => {
-                ctx.stop();
-            }
-            _ => ctx.stop(),
+        // We want to broadcast the message to everyone except ourselves.
+        let broadcast_recipients = peers
+            .iter()
+            .filter(|(peer_addr, _)| peer_addr != &&addr)
+            .map(|(_, ws_sink)| ws_sink);
+
+        for recp in broadcast_recipients {
+            recp.unbounded_send(msg.clone()).unwrap();
         }
-    }
+
+        future::ok(())
+    });
+
+    let receive_from_others = rx.map(Ok).forward(outgoing);
+
+    pin_mut!(broadcast_incoming, receive_from_others);
+    future::select(broadcast_incoming, receive_from_others).await;
+
+    println!("{} disconnected", &addr);
+    peer_map.lock().unwrap().remove(&addr);
 }
 
-impl MyWebSocket {
-    fn new() -> Self {
-        Self { hb: Instant::now() }
-    }
-
-    /// helper method that sends ping to client every second.
-    ///
-    /// also this method checks heartbeats from client
-    fn hb(&self, ctx: &mut <Self as Actor>::Context) {
-        ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
-            // check client heartbeats
-            if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
-                // heartbeat timed out
-                println!("Websocket Client heartbeat failed, disconnecting!");
-
-                // stop actor
-                ctx.stop();
-
-                // don't try to send a ping
-                return;
-            }
-
-            ctx.ping(b"");
-        });
-    }
-}
-
-#[actix_rt::main]
-async fn main() -> io::Result<()> {
-    let _secret_key = dotenv::var("SECRET_KEY").expect("SECRET_KEY must be set");
-    let pool = get_pool();
-    let sys = actix_rt::System::new("rugo");
+#[tokio::main]
+async fn main() -> Result<(), Error> {
+    // let _secret_key = dotenv::var("SECRET_KEY").expect("SECRET_KEY must be set");
+    // let pool = get_pool();
 
     std::env::set_var("RUST_LOG", "actix_web=info,actix_server=info");
     env_logger::init();
 
-    let server = HttpServer::new(move || {
-        App::new()
-            .data(pool.clone())
-            .wrap(middleware::Logger::default())
-            .service(web::resource("/ws/").route(web::get().to(ws_index)))
-            // .wrap(IdentityService::new(
-            //     CookieIdentityPolicy::new(&[0; 32])
-            //         .name("auth-example")
-            //         .secure(false),
-            // ))
-            // .data(web::JsonConfig::default().limit(4096))
-            // .service(web::resource("/ws/").route(web::get().to(ws_index)))
-            // .service(web::resource("/api/go/check").route(web::get().to(check)))
-            // .service(web::resource("/api/go/login").route(web::post().to(login)))
-            // .service(web::resource("/api/go/logout").route(web::to(logout)))
-            // .service(
-            //     web::resource("/api/go/{name}/{command}").route(web::get().to(get_name_command)),
-            // )
-            // .service(
-            //     web::resource("/api/go/{name}/item/{id}")
-            //         .route(web::get().to(get_name_id))
-            //         // .route(web::post().to(post_name_id))
-            //         .route(web::delete().to(delete_name_id)),
-            // )
-            // .service(
-            //     web::resource("/api/go/{name}/list/{children}/{id}")
-            //         .route(web::get().to(get_name_children)),
-            // )
-        // .service(
-        //     web::resource("/api/go/{name}/test/{id}").route(web::post().to(test_post_name_id)),
-        // )
-    })
-    .bind("127.0.0.1:9090")?
-    .run();
+    let addr = "127.0.0.1:8080".to_string();
 
-    server.await
+    let state = PeerMap::new(Mutex::new(HashMap::new()));
+
+    // Create the event loop and TCP listener we'll accept connections on.
+    let try_socket = TcpListener::bind(&addr).await;
+    let mut listener = try_socket.expect("Failed to bind");
+    println!("Listening on: {}", addr);
+
+    // Let's spawn the handling of each connection in a separate task.
+    while let Ok((stream, addr)) = listener.accept().await {
+        tokio::spawn(handle_connection(state.clone(), stream, addr));
+    }
+
+    Ok(())
 }
