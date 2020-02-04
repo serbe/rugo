@@ -49,11 +49,12 @@ impl Handler for Server {
         // self.out.timeout(5_000, PING)?;
         // schedule a timeout to close the connection if there is no activity for 30 seconds
         // self.out.timeout(30_000, EXPIRE)
-        Ok(())
+        self.out.send(Message::Text(format!("{:?}", shake.remote_addr())))
     }
 
     fn on_message(&mut self, msg: Message) -> WSResult<()> {
         let json_string = msg.as_text()?;
+        println!("{}", json_string);
         let message: ClientMessage =
             serde_json::from_str(json_string).map_err(|err| ws::Error::from(Box::new(err)))?;
 
