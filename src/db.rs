@@ -73,20 +73,14 @@ pub enum DBItem {
 
 fn get_connurl() -> String {
     let dbname = dotenv::var("DB_NAME").expect("missing env DB_NAME");
-    let dbuser = dotenv::var("DB_USER");
-    let dbpassword = dotenv::var("DB_PASSWORD");
-    let dbhost = dotenv::var("DB_HOST");
+    let dbuser = dotenv::var("DB_USER").expect("missing env DB_USER");
+    let dbpassword = dotenv::var("DB_PASSWORD").expect("missing env DB_PASSWORD");
+    let dbhost = dotenv::var("DB_HOST").expect("missing env DB_HOST");
     let dbport = dotenv::var("DB_PORT");
     let mut cfgstr = format!("dbname={}", dbname);
-    if let Ok(user) = dbuser {
-        cfgstr.push_str(format!(" user={}", user).as_str())
-    };
-    if let Ok(password) = dbpassword {
-        cfgstr.push_str(format!(" password={}", password).as_str())
-    };
-    if let Ok(host) = dbhost {
-        cfgstr.push_str(format!(" host={}", host).as_str())
-    };
+    cfgstr.push_str(format!(" user={}", dbuser).as_str());
+    cfgstr.push_str(format!(" password={}", dbpassword).as_str());
+    cfgstr.push_str(format!(" host={}", dbhost).as_str());
     if let Ok(port) = dbport {
         cfgstr.push_str(format!(" port={}", port).as_str())
     };

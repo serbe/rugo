@@ -33,7 +33,7 @@ mod tcc;
 
 fn main() {
     dotenv().ok();
-    let _secret_key = dotenv::var("SECRET_KEY").expect("SECRET_KEY must be set");
+    // let _secret_key = dotenv::var("SECRET_KEY").expect("SECRET_KEY must be set");
     let ws_addr = dotenv::var("WS_ADDR").expect("WS_ADDR must be set");
     let pool = get_pool();
 

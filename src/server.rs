@@ -49,7 +49,8 @@ impl Handler for Server {
         // self.out.timeout(5_000, PING)?;
         // schedule a timeout to close the connection if there is no activity for 30 seconds
         // self.out.timeout(30_000, EXPIRE)
-        self.out.send(Message::Text(format!("{:?}", shake.remote_addr())))
+        self.out
+            .send(Message::Text(format!("{:?}", shake.remote_addr())))
     }
 
     fn on_message(&mut self, msg: Message) -> WSResult<()> {
