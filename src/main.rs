@@ -31,7 +31,7 @@ use futures::{
     StreamExt,
 };
 use futures_util::{SinkExt};
-// use log::{error, info};
+use log::{info};
 use tokio_tungstenite::{accept_async, tungstenite::Error as ttError};
 use tokio::net::{TcpListener, TcpStream};
 // use tungstenite::{protocol::Message};
@@ -115,19 +115,19 @@ async fn main() -> Result<(), Error> {
     // let _secret_key = dotenv::var("SECRET_KEY").expect("SECRET_KEY must be set");
     // let pool = get_pool();
 
-    // std::env::set_var("RUST_LOG", "actix_web=info,actix_server=info");
-    // env_logger::init();
+    std::env::set_var("RUST_LOG", "rugo=info");
+    env_logger::init();
 
     let addr = "127.0.0.1:8080".to_string();
 
     let mut listener = TcpListener::bind(&addr).await.expect("Can't listen");
-    println!("Listening on: {}", addr);
+    info!("Listening on: {}", addr);
 
     while let Ok((stream, _addr)) = listener.accept().await {
         let peer = stream
             .peer_addr()
             .expect("connected streams should have a peer address");
-            println!("Peer address: {}", peer);
+            info!("Peer address: {}", peer);
 
         tokio::spawn(accept_connection(peer, stream));
     }
@@ -143,5 +143,3 @@ async fn main() -> Result<(), Error> {
 
     Ok(())
 }
-
-//64475  94
