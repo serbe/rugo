@@ -102,6 +102,7 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream) -> Result<(), tu
 
     while let Some(msg) = ws_stream.next().await {
         let msg = msg?;
+        info!("{:?}", &msg);
         if msg.is_text() || msg.is_binary() {
             ws_stream.send(msg).await?;
         }
