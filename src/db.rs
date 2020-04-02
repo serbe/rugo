@@ -1,7 +1,6 @@
 use anyhow::{anyhow, Result};
 use deadpool_postgres::Pool;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use rpel::certificate::{Certificate, CertificateList};
 use rpel::company::{Company, CompanyList};
@@ -17,21 +16,22 @@ use rpel::select::SelectItem;
 use rpel::siren::{Siren, SirenList};
 use rpel::siren_type::{SirenType, SirenTypeList};
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Item {
     pub name: String,
-    pub id: Option<i64>,
+    pub id: i64,
+}
+
+#[derive(Debug, Deserialize)]
+pub enum Object {
+    Item(Item),
+    List(String),
 }
 
 #[derive(Deserialize)]
 pub enum Command {
-    Get(Item),
+    Get(Object),
     Set(DBObject),
-}
-
-#[derive(Deserialize)]
-pub struct Msg {
-    pub command: Command,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -65,85 +65,94 @@ pub enum DBObject {
     SirenTypeList(Vec<SirenTypeList>),
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct TestStruct {
-    value: Value,
+pub async fn get_object(object: Object, pool: Pool) -> Result<DBObject> {
+    match object {
+        Object::Item(item) => get_item(item, pool).await,
+        Object::List(obj) => get_list(obj, pool).await,
+    }
 }
 
-pub async fn get_object(object: Item, pool: Pool) -> Result<DBObject> {
+async fn get_item(item: Item, pool: Pool) -> Result<DBObject> {
     let client = pool.get().await?;
-    match (object.name.as_str(), object.id) {
-        ("Certificate", Some(id)) => {
+    match (item.name.as_str(), item.id) {
+        ("Certificate", id) => {
             Ok(DBObject::Certificate(Certificate::get(&client, id).await?))
-        }
-        ("CertificateList", _) => Ok(DBObject::CertificateList(
-            CertificateList::get_all(&client).await?,
-        )),
-        ("Company", Some(id)) => Ok(DBObject::Company(Box::new(
+        },
+        ("Company", id) => Ok(DBObject::Company(Box::new(
             Company::get(&client, id).await?,
         ))),
-        ("CompanyList", _) => Ok(DBObject::CompanyList(CompanyList::get_all(&client).await?)),
-        ("CompanySelect", _) => Ok(DBObject::SelectItem(
+        ("Contact", id) => Ok(DBObject::Contact(Box::new(
+            Contact::get(&client, id).await.map_err(|e| anyhow!("contact get: {}", e))?,
+        ))),
+        ("Department", id) => Ok(DBObject::Department(Department::get(&client, id).await?)),
+        ("Education", id) => Ok(DBObject::Education(Education::get(&client, id).await?)),
+        ("Kind", id) => Ok(DBObject::Kind(Kind::get(&client, id).await?)),
+        ("Post", id) => Ok(DBObject::Post(Post::get(&client, id).await?)),
+        ("Practice", id) => Ok(DBObject::Practice(Practice::get(&client, id).await?)),
+        ("Rank", id) => Ok(DBObject::Rank(Rank::get(&client, id).await?)),
+        ("Scope", id) => Ok(DBObject::Scope(Scope::get(&client, id).await?)),
+        ("Siren", id) => Ok(DBObject::Siren(Box::new(Siren::get(&client, id).await?))),
+        ("SirenType", id) => Ok(DBObject::SirenType(SirenType::get(&client, id).await?)),
+        (e, id) => Err(anyhow!("bad item object: {} {}", e, id)),
+    }
+}
+
+async fn get_list(object: String, pool: Pool) -> Result<DBObject> {
+    let client = pool.get().await?;
+    match object.as_str() {
+        "CertificateList" => Ok(DBObject::CertificateList(
+            CertificateList::get_all(&client).await?,
+        )),
+        "CompanyList" => Ok(DBObject::CompanyList(CompanyList::get_all(&client).await?)),
+        "CompanySelect" => Ok(DBObject::SelectItem(
             SelectItem::company_all(&client).await?,
         )),
-        ("Contact", Some(id)) => Ok(DBObject::Contact(Box::new(
-            Contact::get(&client, id).await?,
-        ))),
-        ("ContactList", _) => Ok(DBObject::ContactList(ContactList::get_all(&client).await?)),
-        ("ContactSelect", _) => Ok(DBObject::SelectItem(
+        "ContactList" => Ok(DBObject::ContactList(ContactList::get_all(&client).await?)),
+        "ContactSelect" => Ok(DBObject::SelectItem(
             SelectItem::contact_all(&client).await?,
         )),
-        ("Department", Some(id)) => Ok(DBObject::Department(Department::get(&client, id).await?)),
-        ("DepartmentList", _) => Ok(DBObject::DepartmentList(
+        "DepartmentList" => Ok(DBObject::DepartmentList(
             DepartmentList::get_all(&client).await?,
         )),
-        ("DepartmentSelect", _) => Ok(DBObject::SelectItem(
+        "DepartmentSelect" => Ok(DBObject::SelectItem(
             SelectItem::department_all(&client).await?,
         )),
-        ("Education", Some(id)) => Ok(DBObject::Education(Education::get(&client, id).await?)),
-        ("EducationList", _) => Ok(DBObject::EducationList(
+        "EducationList" => Ok(DBObject::EducationList(
             EducationList::get_all(&client).await?,
         )),
-        ("EducationNear", _) => Ok(DBObject::EducationShort(
+        "EducationNear" => Ok(DBObject::EducationShort(
             EducationShort::get_near(&client).await?,
         )),
-        // ("EducationShort", _) =>
-        ("Kind", Some(id)) => Ok(DBObject::Kind(Kind::get(&client, id).await?)),
-        ("KindList", _) => Ok(DBObject::KindList(KindList::get_all(&client).await?)),
-        ("KindSelect", _) => Ok(DBObject::SelectItem(SelectItem::kind_all(&client).await?)),
-        ("Post", Some(id)) => Ok(DBObject::Post(Post::get(&client, id).await?)),
-        ("PostList", _) => Ok(DBObject::PostList(PostList::get_all(&client).await?)),
-        ("PostSelect", _) => Ok(DBObject::SelectItem(
+        // "EducationShort" =>
+        "KindList" => Ok(DBObject::KindList(KindList::get_all(&client).await?)),
+        "KindSelect" => Ok(DBObject::SelectItem(SelectItem::kind_all(&client).await?)),
+        "PostList" => Ok(DBObject::PostList(PostList::get_all(&client).await?)),
+        "PostSelect" => Ok(DBObject::SelectItem(
             SelectItem::post_all(&client, false).await?,
         )),
-        ("PostGoSelect", _) => Ok(DBObject::SelectItem(
+        "PostGoSelect" => Ok(DBObject::SelectItem(
             SelectItem::post_all(&client, true).await?,
         )),
-        ("Practice", Some(id)) => Ok(DBObject::Practice(Practice::get(&client, id).await?)),
-        ("PracticeList", _) => Ok(DBObject::PracticeList(
+        "PracticeList" => Ok(DBObject::PracticeList(
             PracticeList::get_all(&client).await?,
         )),
-        ("PracticeNear", _) => Ok(DBObject::PracticeShort(
+        "PracticeNear" => Ok(DBObject::PracticeShort(
             PracticeShort::get_near(&client).await?,
         )),
-        // ("PracticeShort", _) =>
-        ("Rank", Some(id)) => Ok(DBObject::Rank(Rank::get(&client, id).await?)),
-        ("RankList", _) => Ok(DBObject::RankList(RankList::get_all(&client).await?)),
-        ("RankSelect", _) => Ok(DBObject::SelectItem(SelectItem::rank_all(&client).await?)),
-        ("Scope", Some(id)) => Ok(DBObject::Scope(Scope::get(&client, id).await?)),
-        ("ScopeList", _) => Ok(DBObject::ScopeList(ScopeList::get_all(&client).await?)),
-        ("ScopeSelect", _) => Ok(DBObject::SelectItem(SelectItem::scope_all(&client).await?)),
-        // ("SelectItem", _) =>
-        ("Siren", Some(id)) => Ok(DBObject::Siren(Box::new(Siren::get(&client, id).await?))),
-        ("SirenList", _) => Ok(DBObject::SirenList(SirenList::get_all(&client).await?)),
-        ("SirenType", Some(id)) => Ok(DBObject::SirenType(SirenType::get(&client, id).await?)),
-        ("SirenTypeList", _) => Ok(DBObject::SirenTypeList(
+        // "PracticeShort" =>
+        "RankList" => Ok(DBObject::RankList(RankList::get_all(&client).await?)),
+        "RankSelect" => Ok(DBObject::SelectItem(SelectItem::rank_all(&client).await?)),
+        "ScopeList" => Ok(DBObject::ScopeList(ScopeList::get_all(&client).await?)),
+        "ScopeSelect" => Ok(DBObject::SelectItem(SelectItem::scope_all(&client).await?)),
+        // "SelectItem" =>
+        "SirenList" => Ok(DBObject::SirenList(SirenList::get_all(&client).await?)),
+        "SirenTypeList" => Ok(DBObject::SirenTypeList(
             SirenTypeList::get_all(&client).await?,
         )),
-        ("SirenTypeSelect", _) => Ok(DBObject::SelectItem(
+        "SirenTypeSelect" => Ok(DBObject::SelectItem(
             SelectItem::siren_type_all(&client).await?,
         )),
-        _ => Err(anyhow!("bad object")),
+        e => Err(anyhow!("bad list object: {}", e)),
     }
 }
 

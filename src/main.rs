@@ -4,7 +4,7 @@ use anyhow::{Error, Result};
 use deadpool_postgres::Pool;
 use futures::StreamExt;
 use futures_util::SinkExt;
-use log::info;
+use log::{error, info};
 use serde_json;
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::accept_async;
@@ -12,7 +12,7 @@ use tungstenite::protocol::Message;
 
 use rpel::get_pool;
 
-use db::{Command, Msg};
+use db::{Command};
 
 // type Tx = UnboundedSender<Message>;
 // type PeerMap = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
@@ -70,7 +70,7 @@ async fn accept_connection(peer: SocketAddr, stream: TcpStream, pool: Pool) {
         //  ttError::ConnectionClosed | ttError::Protocol(_) | ttError::Utf8 => (),
         //  err => println!("Error processing connection: {}", err),
         // }
-        println!("Error processing connection: {}", e);
+        error!("Error processing connection: {}", e);
     }
 }
 
@@ -80,9 +80,10 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream, pool: Pool) -> R
     println!("New WebSocket connection: {}", peer);
 
     while let Some(msg) = ws_stream.next().await {
-        let msg: Msg = serde_json::from_str(msg?.to_text()?)?;
-        match msg.command {
+        let cmd: Command = serde_json::from_str(msg?.to_text()?)?;
+        match cmd {
             Command::Get(object) => {
+                info!("get {:?}", object);
                 let msg = serde_json::to_string(&db::get_object(object, pool.clone()).await?)?;
                 ws_stream.send(Message::Text(msg)).await?;
             }
