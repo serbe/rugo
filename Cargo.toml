@@ -14,7 +14,8 @@ env_logger = "0.7"
 futures = "0.3"
 futures-util = { version = "0.3", features = ["sink"] }
 log = { version = "0.4", features = ["std"] }
-rpel = { git = "https://github.com/serbe/rpel", version = "0.2.1" }
+# rpel = { path = "./rpel", version = "0.2.4" }
+rpel = { git = "https://github.com/serbe/rpel", version = "0.2.4" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "0.2", features = ["io-util", "sync", "macros"] }
