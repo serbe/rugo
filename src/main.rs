@@ -83,9 +83,11 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream, pool: Pool) -> R
         let cmd: Command = serde_json::from_str(msg?.to_text()?)?;
         match cmd {
             Command::Get(object) => {
-                if let Ok(msg) = db::get_object(object, pool.clone()).await {
+                if let Ok(msg) = db::get_object(&object, pool.clone()).await {
                     let msg = serde_json::to_string(&msg)?;
                     ws_stream.send(Message::Text(msg)).await?;
+                } else {
+                    error!("get {}", object);
                 }
             }
             Command::Set(_db_object) => (),

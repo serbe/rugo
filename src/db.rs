@@ -1,3 +1,5 @@
+use std::fmt;
+
 use anyhow::{anyhow, Result};
 use deadpool_postgres::Pool;
 use serde::{Deserialize, Serialize};
@@ -22,7 +24,7 @@ pub struct Item {
     pub id: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 pub enum Object {
     Item(Item),
     List(String),
@@ -65,14 +67,23 @@ pub enum DBObject {
     SirenTypeList(Vec<SirenTypeList>),
 }
 
-pub async fn get_object(object: Object, pool: Pool) -> Result<DBObject> {
+impl fmt::Display for Object {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Object::Item(i) => write!(f, "Item {} {}", i.id, i.name),
+            Object::List(s) => write!(f, "List {}", s),
+        }
+    }
+}
+
+pub async fn get_object(object: &Object, pool: Pool) -> Result<DBObject> {
     match object {
         Object::Item(item) => get_item(item, pool).await,
         Object::List(obj) => get_list(obj, pool).await,
     }
 }
 
-async fn get_item(item: Item, pool: Pool) -> Result<DBObject> {
+async fn get_item(item: &Item, pool: Pool) -> Result<DBObject> {
     let client = pool.get().await?;
     match (item.name.as_str(), item.id) {
         ("Certificate", id) => {
@@ -97,7 +108,7 @@ async fn get_item(item: Item, pool: Pool) -> Result<DBObject> {
     }
 }
 
-async fn get_list(object: String, pool: Pool) -> Result<DBObject> {
+async fn get_list(object: &String, pool: Pool) -> Result<DBObject> {
     let client = pool.get().await?;
     match object.as_str() {
         "CertificateList" => Ok(DBObject::CertificateList(
