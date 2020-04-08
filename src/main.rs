@@ -12,7 +12,7 @@ use tungstenite::protocol::Message;
 
 use rpel::get_pool;
 
-use db::{Command};
+use db::Command;
 
 // type Tx = UnboundedSender<Message>;
 // type PeerMap = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
@@ -83,12 +83,9 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream, pool: Pool) -> R
         let cmd: Command = serde_json::from_str(msg?.to_text()?)?;
         match cmd {
             Command::Get(object) => {
-                if let Ok(msg) = db::get_object(&object, pool.clone()).await {
-                    let msg = serde_json::to_string(&msg)?;
-                    ws_stream.send(Message::Text(msg)).await?;
-                } else {
-                    error!("get {}", object);
-                }
+                let msg = db::get_object(&object, pool.clone()).await;
+                let js = serde_json::to_string(&msg)?;
+                ws_stream.send(Message::Text(js)).await?;
             }
             Command::Set(_db_object) => (),
         }

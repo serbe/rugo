@@ -18,6 +18,13 @@ use rpel::select::SelectItem;
 use rpel::siren::{Siren, SirenList};
 use rpel::siren_type::{SirenType, SirenTypeList};
 
+#[derive(Serialize)]
+pub struct Msg {
+    pub name: String,
+    pub object: DBObject,
+    pub error: String,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct Item {
     pub name: String,
@@ -38,6 +45,7 @@ pub enum Command {
 
 #[derive(Deserialize, Serialize)]
 pub enum DBObject {
+    Null,
     Certificate(Certificate),
     CertificateList(Vec<CertificateList>),
     Company(Box<Company>),
@@ -76,24 +84,44 @@ impl fmt::Display for Object {
     }
 }
 
-pub async fn get_object(object: &Object, pool: Pool) -> Result<DBObject> {
+pub async fn get_object(object: &Object, pool: Pool) -> Msg {
     match object {
-        Object::Item(item) => get_item(item, pool).await,
-        Object::List(obj) => get_list(obj, pool).await,
+        Object::Item(item) => match get_item(item, pool).await {
+            Ok(db_object) => Msg {
+                name: item.name.clone(),
+                object: db_object,
+                error: String::new(),
+            },
+            Err(err) => Msg {
+                name: item.name.clone(),
+                object: DBObject::Null,
+                error: err.to_string(),
+            },
+        },
+        Object::List(obj) => match get_list(obj, pool).await {
+            Ok(db_object) => Msg {
+                name: obj.clone(),
+                object: db_object,
+                error: String::new(),
+            },
+            Err(err) => Msg {
+                name: obj.clone(),
+                object: DBObject::Null,
+                error: err.to_string(),
+            },
+        },
     }
 }
 
 async fn get_item(item: &Item, pool: Pool) -> Result<DBObject> {
     let client = pool.get().await?;
     match (item.name.as_str(), item.id) {
-        ("Certificate", id) => {
-            Ok(DBObject::Certificate(Certificate::get(&client, id).await?))
-        },
+        ("Certificate", id) => Ok(DBObject::Certificate(Certificate::get(&client, id).await?)),
         ("Company", id) => Ok(DBObject::Company(Box::new(
             Company::get(&client, id).await?,
         ))),
         ("Contact", id) => Ok(DBObject::Contact(Box::new(
-            Contact::get(&client, id).await.map_err(|e| anyhow!("contact get: {}", e))?,
+            Contact::get(&client, id).await?,
         ))),
         ("Department", id) => Ok(DBObject::Department(Department::get(&client, id).await?)),
         ("Education", id) => Ok(DBObject::Education(Education::get(&client, id).await?)),
