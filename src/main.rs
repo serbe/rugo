@@ -12,7 +12,7 @@ use tungstenite::protocol::Message;
 
 use rpel::get_pool;
 
-use db::{Command};
+use db::{Command, Object, Response, get_item, get_list};
 
 // type Tx = UnboundedSender<Message>;
 // type PeerMap = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
@@ -80,15 +80,26 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream, pool: Pool) -> R
     println!("New WebSocket connection: {}", peer);
 
     while let Some(msg) = ws_stream.next().await {
+        let mut resp = Response::new();
         let cmd: Command = serde_json::from_str(msg?.to_text()?)?;
         match cmd {
-            Command::Get(object) => {
-                if let Ok(msg) = db::get_object(&object, pool.clone()).await {
-                    let msg = serde_json::to_string(&msg)?;
-                    ws_stream.send(Message::Text(msg)).await?;
-                } else {
-                    error!("get {}", object);
-                }
+            Command::Get(Object::Item(item)) => {
+                resp.name = item.name.clone();
+                match get_item(&item, pool.clone()).await {
+                    Ok(dbo) => resp.object = dbo,
+                    Err(err) => resp.error = err.to_string(),
+                } 
+                let msg = serde_json::to_string(&resp)?;
+                ws_stream.send(Message::Text(msg)).await?;
+            }
+            Command::Get(Object::List(list)) => {
+                resp.name = list.clone();
+                match get_list(&list, pool.clone()).await {
+                    Ok(dbo) => resp.object = dbo,
+                    Err(err) => resp.error = err.to_string(),
+                } 
+                let msg = serde_json::to_string(&resp)?;
+                ws_stream.send(Message::Text(msg)).await?;
             }
             Command::Set(_db_object) => (),
         }
@@ -105,7 +116,7 @@ async fn main() -> Result<(), Error> {
     std::env::set_var("RUST_LOG", "rugo=info");
     env_logger::init();
 
-    let addr = "127.0.0.1:8080".to_string();
+    let addr = "127.0.0.1:9090".to_string();
 
     let mut listener = TcpListener::bind(&addr).await.expect("Can't listen");
     info!("Listening on: {}", addr);

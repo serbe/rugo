@@ -37,6 +37,13 @@ pub enum Command {
 }
 
 #[derive(Deserialize, Serialize)]
+pub struct Response {
+    pub name: String,
+    pub object: DBObject,
+    pub error: String,
+}
+
+#[derive(Deserialize, Serialize)]
 pub enum DBObject {
     Certificate(Certificate),
     CertificateList(Vec<CertificateList>),
@@ -65,6 +72,7 @@ pub enum DBObject {
     SirenList(Vec<SirenList>),
     SirenType(SirenType),
     SirenTypeList(Vec<SirenTypeList>),
+    None,
 }
 
 impl fmt::Display for Object {
@@ -76,14 +84,24 @@ impl fmt::Display for Object {
     }
 }
 
-pub async fn get_object(object: &Object, pool: Pool) -> Result<DBObject> {
-    match object {
-        Object::Item(item) => get_item(item, pool).await,
-        Object::List(obj) => get_list(obj, pool).await,
+impl Response {
+    pub fn new() -> Response {
+        Response{
+            name: String::new(),
+            object: DBObject::None,
+            error: String::new(),
+        }
     }
 }
 
-async fn get_item(item: &Item, pool: Pool) -> Result<DBObject> {
+// pub async fn get_object(object: &Object, pool: Pool) -> Result<DBObject> {
+//     match object {
+//         Object::Item(item) => get_item(item, pool).await,
+//         Object::List(obj) => get_list(obj, pool).await,
+//     }
+// }
+
+pub async fn get_item(item: &Item, pool: Pool) -> Result<DBObject> {
     let client = pool.get().await?;
     match (item.name.as_str(), item.id) {
         ("Certificate", id) => {
@@ -108,7 +126,7 @@ async fn get_item(item: &Item, pool: Pool) -> Result<DBObject> {
     }
 }
 
-async fn get_list(object: &String, pool: Pool) -> Result<DBObject> {
+pub async fn get_list(object: &String, pool: Pool) -> Result<DBObject> {
     let client = pool.get().await?;
     match object.as_str() {
         "CertificateList" => Ok(DBObject::CertificateList(
