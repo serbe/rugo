@@ -102,7 +102,7 @@ async fn main() -> Result<(), Error> {
     std::env::set_var("RUST_LOG", "rugo=info");
     env_logger::init();
 
-    let addr = "127.0.0.1:8080".to_string();
+    let addr = "127.0.0.1:9090".to_string();
 
     let mut listener = TcpListener::bind(&addr).await.expect("Can't listen");
     info!("Listening on: {}", addr);
