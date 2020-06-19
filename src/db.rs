@@ -1,8 +1,8 @@
 use std::fmt;
 
-use actix_web::{error::BlockingError, web, Error, HttpResponse};
+use actix_web::{error::BlockingError, web, HttpResponse};
 use anyhow::{anyhow, Result};
-use deadpool_postgres::Pool;
+use deadpool_postgres::{Pool, Client};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value, Value::Null};
 
@@ -86,37 +86,36 @@ impl fmt::Display for Object {
     }
 }
 
-pub async fn get_object(object: &Object, pool: Pool) -> Msg {
-    match object {
-        Object::Item(item) => match get_item(item, pool).await {
-            Ok(db_object) => Msg {
-                name: item.name.clone(),
-                object: db_object,
-                error: String::new(),
-            },
-            Err(err) => Msg {
-                name: item.name.clone(),
-                object: DBObject::Null,
-                error: err.to_string(),
-            },
-        },
-        Object::List(obj) => match get_list(obj, pool).await {
-            Ok(db_object) => Msg {
-                name: obj.clone(),
-                object: db_object,
-                error: String::new(),
-            },
-            Err(err) => Msg {
-                name: obj.clone(),
-                object: DBObject::Null,
-                error: err.to_string(),
-            },
-        },
-    }
-}
+// pub async fn get_object(object: &Object, pool: Pool) -> Msg {
+//     match object {
+//         Object::Item(item) => match get_item(item, pool).await {
+//             Ok(db_object) => Msg {
+//                 name: item.name.clone(),
+//                 object: db_object,
+//                 error: String::new(),
+//             },
+//             Err(err) => Msg {
+//                 name: item.name.clone(),
+//                 object: DBObject::Null,
+//                 error: err.to_string(),
+//             },
+//         },
+//         Object::List(obj) => match get_list(obj, pool).await {
+//             Ok(db_object) => Msg {
+//                 name: obj.clone(),
+//                 object: db_object,
+//                 error: String::new(),
+//             },
+//             Err(err) => Msg {
+//                 name: obj.clone(),
+//                 object: DBObject::Null,
+//                 error: err.to_string(),
+//             },
+//         },
+//     }
+// }
 
-async fn get_item(item: &Item, pool: Pool) -> Result<DBObject> {
-    let client = pool.get().await?;
+async fn get_item(item: &Item, client: &Client) -> Result<DBObject> {
     match (item.name.as_str(), item.id) {
         ("Certificate", id) => Ok(DBObject::Certificate(Certificate::get(&client, id).await?)),
         ("Company", id) => Ok(DBObject::Company(Box::new(
@@ -202,54 +201,54 @@ async fn post_item(
     name: &str,
     id: i64,
     params: web::Json<DBObject>,
-) -> Result<DBObject, Error> {
+) -> Result<DBObject> {
     match (name, params.into_inner()) {
         ("certificate", DBObject::Certificate(item)) => Ok(DBObject::Certificate(
-            Certificate::post(client, id, item).await?,
+            Certificate::insert(client, item).await?,
         )),
         ("company", DBObject::Company(item)) => Ok(DBObject::Company(Box::new(
-            Company::post(client, id, *item).await?,
+            Company::insert(client, *item).await?,
         ))),
         ("contact", DBObject::Contact(item)) => Ok(DBObject::Contact(Box::new(
-            Contact::post(client, id, *item).await?,
+            Contact::insert(client, *item).await?,
         ))),
         ("department", DBObject::Department(item)) => Ok(DBObject::Department(
-            Department::post(client, id, item).await?,
+            Department::insert(client, item).await?,
         )),
         ("education", DBObject::Education(item)) => Ok(DBObject::Education(
-            Education::post(client, id, item).await?,
+            Education::insert(client, item).await?,
         )),
-        ("kind", DBObject::Kind(item)) => Ok(DBObject::Kind(Kind::post(client, id, item).await?)),
-        ("post", DBObject::Post(item)) => Ok(DBObject::Post(Post::post(client, id, item).await?)),
+        ("kind", DBObject::Kind(item)) => Ok(DBObject::Kind(Kind::insert(client, item).await?)),
+        ("post", DBObject::Post(item)) => Ok(DBObject::Post(Post::insert(client, item).await?)),
         ("practice", DBObject::Practice(item)) => {
-            Ok(DBObject::Practice(Practice::post(client, id, item)?))
+            Ok(DBObject::Practice(Practice::insert(client, item).await?))
         }
-        ("rank", DBObject::Rank(item)) => Ok(DBObject::Rank(Rank::post(client, id, item)?)),
-        ("scope", DBObject::Scope(item)) => Ok(DBObject::Scope(Scope::post(client, id, item)?)),
+        ("rank", DBObject::Rank(item)) => Ok(DBObject::Rank(Rank::insert(client, item).await?)),
+        ("scope", DBObject::Scope(item)) => Ok(DBObject::Scope(Scope::insert(client, item).await?)),
         ("siren", DBObject::Siren(item)) => {
-            Ok(DBObject::Siren(Box::new(Siren::post(client, id, *item)?)))
+            Ok(DBObject::Siren(Box::new(Siren::insert(client, *item).await?)))
         }
         ("siren_type", DBObject::SirenType(item)) => {
-            Ok(DBObject::SirenType(SirenType::post(client, id, item)?))
+            Ok(DBObject::SirenType(SirenType::insert(client, item).await?))
         }
-        _ => Err(format!("bad path {}", name)),
+        _ => Err(anyhow!("bad path {}", name)),
     }
 }
 
-fn delete_item(client: &Client, name: &str, id: i64) -> Result<bool, Error> {
+async fn delete_item(client: &Client, name: &str, id: i64) -> Result<u64> {
     match name {
-        "certificate" => Ok(Certificate::delete(client, id)),
-        "company" => Ok(Company::delete(client, id)),
-        "contact" => Ok(Contact::delete(client, id)),
-        "department" => Ok(Department::delete(client, id)),
-        "education" => Ok(Education::delete(client, id)),
-        "kind" => Ok(Kind::delete(client, id)),
-        "post" => Ok(Post::delete(client, id)),
-        "practice" => Ok(Practice::delete(client, id)),
-        "rank" => Ok(Rank::delete(client, id)),
-        "scope" => Ok(Scope::delete(client, id)),
-        "siren" => Ok(Siren::delete(client, id)),
-        "siren_type" => Ok(SirenType::delete(client, id)),
+        "certificate" => Ok(Certificate::delete(client, id).await?),
+        "company" => Ok(Company::delete(client, id).await?),
+        "contact" => Ok(Contact::delete(client, id).await?),
+        "department" => Ok(Department::delete(client, id).await?),
+        "education" => Ok(Education::delete(client, id).await?),
+        "kind" => Ok(Kind::delete(client, id).await?),
+        "post" => Ok(Post::delete(client, id).await?),
+        "practice" => Ok(Practice::delete(client, id).await?),
+        "rank" => Ok(Rank::delete(client, id).await?),
+        "scope" => Ok(Scope::delete(client, id).await?),
+        "siren" => Ok(Siren::delete(client, id).await?),
+        "siren_type" => Ok(SirenType::delete(client, id).await?),
         _ => Err(anyhow!("bad path {:?}", name)),
     }
 }
@@ -283,7 +282,7 @@ fn delete_item(client: &Client, name: &str, id: i64) -> Result<bool, Error> {
 //     }
 // }
 
-fn http_result_item(res: Result<DBObject, Error>) -> HttpResponse {
+fn http_result_item(res: Result<DBObject>) -> HttpResponse {
     match res {
         Ok(db_result) => HttpResponse::Ok().json(json!({
             "data": db_result,
@@ -298,17 +297,17 @@ fn http_result_item(res: Result<DBObject, Error>) -> HttpResponse {
     }
 }
 
-// pub async fn get_name_children(
-//     // id: Identity,
-//     db: web::Data<Pool>,
-//     path: web::Path<(String, String, i64)>,
-// ) -> Result<HttpResponse, Error> {
-//     // let a = check_auth(id);
-//     // a?;
-//     let client = db.get().await?;
-//     let res = get_children(&client, &path.0, &path.1, path.2).await;
-//     Ok(http_result_list(res))
-// }
+pub async fn get_name_list_children_id(
+    // id: Identity,
+    db: web::Data<Pool>,
+    path: web::Path<(String, String, i64)>,
+) -> Result<HttpResponse> {
+    // let a = check_auth(id);
+    // a?;
+    let client = db.get().await?;
+    let res = get_children(&client, &path.0, &path.1, path.2).await;
+    Ok(http_result_list(res))
+}
 
 // pub async fn get_name_command(
 //     // id: Identity,
@@ -326,22 +325,22 @@ pub async fn get_name_id(
     // id: Identity,
     db: web::Data<Pool>,
     path: web::Path<(String, i64)>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     // let a = check_auth(id);
     // a?;
     let client = db.get().await?;
-    let res = get_item(&client, &path.0, path.1).await;
+    let res = get_item(&Item{name: path.0, id: path.1}, &client).await;
     Ok(http_result_item(res))
 }
 
 pub async fn post_name_id(
-    id: Identity,
+    // id: Identity,
     db: web::Data<Pool>,
     path: web::Path<(String, i64)>,
     params: web::Json<DBObject>,
-) -> Result<HttpResponse, Error> {
-    let a = check_auth(id);
-    a?;
+) -> Result<HttpResponse> {
+    // let a = check_auth(id);
+    // a?;
     let client = db.get().await?;
     let res = post_item(&client, &path.0, path.1, params);
     Ok(http_result_item(res))
@@ -351,7 +350,7 @@ pub async fn delete_name_id(
     // id: Identity,
     db: web::Data<Pool>,
     path: web::Path<(String, i64)>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     // let a = check_auth(id);
     //     a?;
     let client = db.get().await?;
@@ -370,18 +369,3 @@ pub async fn delete_name_id(
     })
 }
 
-// pub fn test_post_name_id(
-//     id: Identity,
-//     _db: web::Data<Pool<PostgresConnectionManager>>,
-//     path: web::Path<(String, i64)>,
-//     params: web::Json<TestStruct>,
-// ) -> HttpResponse {
-//     let a = check_auth(id);
-//     let values = params.into_inner();
-//     println!("{} {} {:?} {:?}", path.0, path.1, a, values);
-//     HttpResponse::Ok().json(json!({
-//         "data": values,
-//         "error": Null,
-//         "ok": true
-//     }))
-// }

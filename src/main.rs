@@ -1,24 +1,16 @@
-use std::net::SocketAddr;
-
 use actix_cors::Cors;
 use actix_web::{
     http::header,
     middleware::{Compress, Logger},
     web, App, HttpServer,
 };
-use anyhow::{Error, Result};
-use deadpool_postgres::Pool;
 use dotenv::dotenv;
-use futures::StreamExt;
-use futures_util::SinkExt;
-use log::{error, info};
-use serde_json;
-use tokio::net::{TcpListener, TcpStream};
+use log::{info};
 
 use rpel::get_pool;
 
 // use auth::{check, login, logout};
-use db::{get_name_children, get_name_command, get_name_id, post_name_id, Command};
+use db::{get_name_list_children_id, get_name_id, post_name_id, delete_name_id};
 
 // mod auth;
 mod db;
@@ -54,9 +46,9 @@ async fn main() -> std::io::Result<()> {
             // .service(web::resource("/api/go/check").route(web::get().to(check)))
             // .service(web::resource("/api/go/login").route(web::post().to(login)))
             // .service(web::resource("/api/go/logout").route(web::to(logout)))
-            .service(
-                web::resource("/api/go/{name}/{command}").route(web::get().to(get_name_command)),
-            )
+            // .service(
+            //     web::resource("/api/go/{name}/{command}").route(web::get().to(get_name_command)),
+            // )
             .service(
                 web::resource("/api/go/{name}/item/{id}")
                     .route(web::get().to(get_name_id))
@@ -65,7 +57,7 @@ async fn main() -> std::io::Result<()> {
             )
             .service(
                 web::resource("/api/go/{name}/list/{children}/{id}")
-                    .route(web::get().to(get_name_children)),
+                    .route(web::get().to(get_name_list_children_id)),
             )
     })
     .bind(&addr)?
