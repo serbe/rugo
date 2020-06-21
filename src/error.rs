@@ -1,6 +1,7 @@
 use actix_web::{error::ResponseError, HttpResponse};
 use deadpool_postgres::PoolError;
 use rpel::error::RpelError;
+use serde_json::error::Error as SJError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -18,6 +19,9 @@ pub enum ServiceError {
 
     #[error("DB Error: {0}")]
     DBError(RpelError),
+
+    #[error("Serde JSON error: {0}")]
+    SJError(SJError),
 }
 
 impl From<RpelError> for ServiceError {
@@ -46,6 +50,15 @@ impl ResponseError for ServiceError {
                 .reason("unable to connect to the database")
                 .finish(),
             ServiceError::DBError(_) => HttpResponse::BadRequest().reason("db error").finish(),
+            ServiceError::SJError(_) => HttpResponse::BadRequest()
+                .reason("serde json error")
+                .finish(),
         }
+    }
+}
+
+impl From<SJError> for ServiceError {
+    fn from(error: SJError) -> Self {
+        Self::SJError(error)
     }
 }

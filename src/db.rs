@@ -1,7 +1,6 @@
 use std::fmt;
 
 use actix_web::{web, HttpResponse};
-// use anyhow::{anyhow, Result};
 use deadpool_postgres::{Client, Pool};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value::Null};
@@ -166,8 +165,8 @@ async fn get_item(item: &Item, client: &Client) -> Result<DBObject, ServiceError
     }
 }
 
-async fn get_list(object: &String, client: &Client) -> Result<DBObject, ServiceError> {
-    match object.as_str() {
+async fn get_list(name: &String, client: &Client) -> Result<DBObject, ServiceError> {
+    match name.as_str() {
         "CertificateList" => Ok(DBObject::CertificateList(
             CertificateList::get_all(&client).await?,
         )),

@@ -43,7 +43,7 @@ async fn main() -> std::io::Result<()> {
             )
             .wrap(Logger::default())
             .wrap(Compress::default())
-            .data(web::JsonConfig::default().limit(4096))
+            // .data(web::JsonConfig::default().limit(4096))
             // .service(web::resource("/api/go/check").route(web::get().to(check)))
             // .service(web::resource("/api/go/login").route(web::post().to(login)))
             // .service(web::resource("/api/go/logout").route(web::to(logout)))
