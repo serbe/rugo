@@ -10,10 +10,11 @@ use log::{info};
 use rpel::get_pool;
 
 // use auth::{check, login, logout};
-use db::{get_name_list_children_id, get_name_id, post_name_id, delete_name_id};
+use db::{get_list_name, get_name_id, post_name_id, delete_name_id, jsonpost};
 
 // mod auth;
 mod db;
+mod error;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -28,7 +29,7 @@ async fn main() -> std::io::Result<()> {
 
     info!("Listening on: {}", addr);
 
-    HttpServer::new(|| {
+    HttpServer::new(move || {
         App::new()
             .data(pool.clone())
             .wrap(
@@ -49,15 +50,16 @@ async fn main() -> std::io::Result<()> {
             // .service(
             //     web::resource("/api/go/{name}/{command}").route(web::get().to(get_name_command)),
             // )
+            .service(web::resource("/api/go/json").route(web::post().to(jsonpost)))
             .service(
-                web::resource("/api/go/{name}/item/{id}")
+                web::resource("/api/go/item/{name}/{id}")
                     .route(web::get().to(get_name_id))
                     .route(web::post().to(post_name_id))
                     .route(web::delete().to(delete_name_id)),
             )
             .service(
-                web::resource("/api/go/{name}/list/{children}/{id}")
-                    .route(web::get().to(get_name_list_children_id)),
+                web::resource("/api/go/list/{name}")
+                    .route(web::get().to(get_list_name)),
             )
     })
     .bind(&addr)?
