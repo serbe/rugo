@@ -2,7 +2,7 @@ use std::fmt;
 
 use actix_web::{web, HttpResponse};
 // use anyhow::{anyhow, Result};
-use deadpool_postgres::{Pool, Client};
+use deadpool_postgres::{Client, Pool};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value::Null};
 
@@ -37,7 +37,10 @@ pub struct Item {
 
 impl Item {
     pub fn from(path: (String, i64)) -> Self {
-        Item{name: path.0.clone(), id: path.1}
+        Item {
+            name: path.0.clone(),
+            id: path.1,
+        }
     }
 }
 
@@ -94,29 +97,29 @@ impl fmt::Display for Object {
     }
 }
 
-pub async fn jsonpost(db: web::Data<Pool>,
-    params: web::Json<Command>) -> Result<HttpResponse, ServiceError> {
+pub async fn jsonpost(
+    db: web::Data<Pool>,
+    params: web::Json<Command>,
+) -> Result<HttpResponse, ServiceError> {
     let cmd: Command = params.into_inner();
-        match cmd {
-            Command::Get(object) => {
-                get_object(&object, &db.get().await?).await
-            }
-            Command::Set(_object) => {
-                // set_object(&object, &db.get().await?).await
-                Err(ServiceError::InternalServerError)
-            },
+    match cmd {
+        Command::Get(object) => get_object(&object, &db.get().await?).await,
+        Command::Set(_object) => {
+            // set_object(&object, &db.get().await?).await
+            Err(ServiceError::InternalServerError)
         }
+    }
 }
 
 pub async fn get_object(object: &Object, client: &Client) -> Result<HttpResponse, ServiceError> {
     let msg = match object {
         Object::Item(item) => match get_item(item, client).await {
-            Ok(db_object) => Msg{
+            Ok(db_object) => Msg {
                 name: item.name.clone(),
                 object: db_object,
                 error: String::new(),
             },
-            Err(err) => Msg{
+            Err(err) => Msg {
                 name: item.name.clone(),
                 object: DBObject::Null,
                 error: err.to_string(),
@@ -156,7 +159,10 @@ async fn get_item(item: &Item, client: &Client) -> Result<DBObject, ServiceError
         ("Scope", id) => Ok(DBObject::Scope(Scope::get(&client, id).await?)),
         ("Siren", id) => Ok(DBObject::Siren(Box::new(Siren::get(&client, id).await?))),
         ("SirenType", id) => Ok(DBObject::SirenType(SirenType::get(&client, id).await?)),
-        (e, id) => Err(ServiceError::BadRequest(format!("bad item object: {} {}", e, id))),
+        (e, id) => Err(ServiceError::BadRequest(format!(
+            "bad item object: {} {}",
+            e, id
+        ))),
     }
 }
 
@@ -236,9 +242,9 @@ async fn post_item(
         ("department", DBObject::Department(item)) => Ok(DBObject::Department(
             Department::insert(client, item).await?,
         )),
-        ("education", DBObject::Education(item)) => Ok(DBObject::Education(
-            Education::insert(client, item).await?,
-        )),
+        ("education", DBObject::Education(item)) => {
+            Ok(DBObject::Education(Education::insert(client, item).await?))
+        }
         ("kind", DBObject::Kind(item)) => Ok(DBObject::Kind(Kind::insert(client, item).await?)),
         ("post", DBObject::Post(item)) => Ok(DBObject::Post(Post::insert(client, item).await?)),
         ("practice", DBObject::Practice(item)) => {
@@ -246,9 +252,9 @@ async fn post_item(
         }
         ("rank", DBObject::Rank(item)) => Ok(DBObject::Rank(Rank::insert(client, item).await?)),
         ("scope", DBObject::Scope(item)) => Ok(DBObject::Scope(Scope::insert(client, item).await?)),
-        ("siren", DBObject::Siren(item)) => {
-            Ok(DBObject::Siren(Box::new(Siren::insert(client, *item).await?)))
-        }
+        ("siren", DBObject::Siren(item)) => Ok(DBObject::Siren(Box::new(
+            Siren::insert(client, *item).await?,
+        ))),
         ("siren_type", DBObject::SirenType(item)) => {
             Ok(DBObject::SirenType(SirenType::insert(client, item).await?))
         }
@@ -337,7 +343,7 @@ pub async fn post_name_id(
     // let a = check_auth(id);
     // a?;
     let client = db.get().await?;
-    let res = post_item( &path.0, params, &client).await;
+    let res = post_item(&path.0, params, &client).await;
     Ok(http_result_item(res))
 }
 
@@ -363,4 +369,3 @@ pub async fn delete_name_id(
         })),
     })
 }
-

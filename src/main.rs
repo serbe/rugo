@@ -5,12 +5,12 @@ use actix_web::{
     web, App, HttpServer,
 };
 use dotenv::dotenv;
-use log::{info};
+use log::info;
 
 use rpel::get_pool;
 
 // use auth::{check, login, logout};
-use db::{get_list_name, get_name_id, post_name_id, delete_name_id, jsonpost};
+use db::{delete_name_id, get_list_name, get_name_id, jsonpost, post_name_id};
 
 // mod auth;
 mod db;
@@ -57,10 +57,7 @@ async fn main() -> std::io::Result<()> {
                     .route(web::post().to(post_name_id))
                     .route(web::delete().to(delete_name_id)),
             )
-            .service(
-                web::resource("/api/go/list/{name}")
-                    .route(web::get().to(get_list_name)),
-            )
+            .service(web::resource("/api/go/list/{name}").route(web::get().to(get_list_name)))
     })
     .bind(&addr)?
     .run()

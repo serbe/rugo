@@ -1,7 +1,7 @@
-use thiserror::Error;
 use actix_web::{error::ResponseError, HttpResponse};
 use deadpool_postgres::PoolError;
 use rpel::error::RpelError;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ServiceError {
@@ -13,12 +13,11 @@ pub enum ServiceError {
 
     // #[error("IO Error: {0}")]
     // IOError(std::io::Error),
-
     #[error("Unable to connect to the database")]
     PoolError(PoolError),
 
     #[error("DB Error: {0}")]
-    DBError(RpelError)
+    DBError(RpelError),
 }
 
 impl From<RpelError> for ServiceError {
@@ -36,14 +35,16 @@ impl From<PoolError> for ServiceError {
 impl ResponseError for ServiceError {
     fn error_response(&self) -> HttpResponse {
         match self {
-            ServiceError::InternalServerError => {
-                HttpResponse::BadRequest().reason("Internal server error. Please try again later").finish()
+            ServiceError::InternalServerError => HttpResponse::BadRequest()
+                .reason("Internal server error. Please try again later")
+                .finish(),
+            ServiceError::BadRequest(_) => {
+                HttpResponse::BadRequest().reason("bad request").finish()
             }
-            ServiceError::BadRequest(_) => HttpResponse::BadRequest().reason("bad request").finish(),
             // ServiceError::IOError(_) => HttpResponse::BadRequest().reason("io error").finish(),
-            ServiceError::PoolError(_) => {
-                HttpResponse::BadRequest().reason("unable to connect to the database").finish()
-            }
+            ServiceError::PoolError(_) => HttpResponse::BadRequest()
+                .reason("unable to connect to the database")
+                .finish(),
             ServiceError::DBError(_) => HttpResponse::BadRequest().reason("db error").finish(),
         }
     }
