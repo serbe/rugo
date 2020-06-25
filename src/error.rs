@@ -22,6 +22,9 @@ pub enum ServiceError {
 
     #[error("Serde JSON error: {0}")]
     SJError(SJError),
+
+    #[error("Not auth")]
+    NotAuth,
 }
 
 impl From<RpelError> for ServiceError {
@@ -52,6 +55,9 @@ impl ResponseError for ServiceError {
             ServiceError::DBError(_) => HttpResponse::BadRequest().reason("db error").finish(),
             ServiceError::SJError(_) => HttpResponse::BadRequest()
                 .reason("serde json error")
+                .finish(),
+                ServiceError::NotAuth => HttpResponse::BadRequest()
+                .reason("Internal server error. Please try again later")
                 .finish(),
         }
     }

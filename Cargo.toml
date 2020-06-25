@@ -5,13 +5,13 @@ authors = ["Serbe <mkoctuk@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+# anyhow = "1.0"
 # futures = "0.3"
 # futures-util = { version = "0.3", features = ["sink"] }
 # tokio = { version = "0.2", features = ["io-util", "sync", "macros"] }
 actix-cors = "0.2"
 actix-rt = "1.1"
 actix-web = "2.0"
-anyhow = "1.0"
 base64 = "0.12"
 chrono = { version = "0.4", features = ["serde"] }
 deadpool-postgres = "0.5"
