@@ -52,7 +52,8 @@ pub enum Object {
 #[derive(Deserialize)]
 pub enum Command {
     Get(Object),
-    Set(DBObject),
+    Insert(DBObject),
+    Update(DBObject),
 }
 
 #[derive(Deserialize, Serialize)]
@@ -103,10 +104,8 @@ pub async fn jsonpost(
     let cmd: Command = params.into_inner();
     match cmd {
         Command::Get(object) => get_object(&object, &db.get().await?).await,
-        Command::Set(_object) => {
-            // set_object(&object, &db.get().await?).await
-            Err(ServiceError::InternalServerError)
-        }
+        Command::Insert(dbobject) => insert_object(dbobject, &db.get().await?).await,
+        Command::Update(dbobject) => update_object(dbobject, &db.get().await?).await,
     }
 }
 
@@ -135,6 +134,44 @@ pub async fn get_object(object: &Object, client: &Client) -> Result<HttpResponse
                 object: DBObject::Null,
                 error: err.to_string(),
             },
+        },
+    };
+    Ok(HttpResponse::Ok().json(msg))
+}
+
+pub async fn insert_object(
+    dbobject: DBObject,
+    client: &Client,
+) -> Result<HttpResponse, ServiceError> {
+    let msg = match insert_item(dbobject, &client).await {
+        Ok(db_object) => Msg {
+            name: String::new(),
+            object: db_object,
+            error: String::new(),
+        },
+        Err(err) => Msg {
+            name: String::new(),
+            object: DBObject::Null,
+            error: err.to_string(),
+        },
+    };
+    Ok(HttpResponse::Ok().json(msg))
+}
+
+pub async fn update_object(
+    dbobject: DBObject,
+    client: &Client,
+) -> Result<HttpResponse, ServiceError> {
+    let msg = match update_item(dbobject, &client).await {
+        Ok(_) => Msg {
+            name: String::new(),
+            object: DBObject::Null,
+            error: String::new(),
+        },
+        Err(err) => Msg {
+            name: String::new(),
+            object: DBObject::Null,
+            error: err.to_string(),
         },
     };
     Ok(HttpResponse::Ok().json(msg))
@@ -220,6 +257,56 @@ async fn get_list(name: &String, client: &Client) -> Result<DBObject, ServiceErr
             SelectItem::siren_type_all(&client).await?,
         )),
         e => Err(ServiceError::BadRequest(format!("bad list object: {}", e))),
+    }
+}
+
+async fn insert_item(object: DBObject, client: &Client) -> Result<DBObject, ServiceError> {
+    match object {
+        DBObject::Certificate(item) => Ok(DBObject::Certificate(
+            Certificate::insert(&client, item).await?,
+        )),
+        DBObject::Company(item) => Ok(DBObject::Company(Box::new(
+            Company::insert(&client, *item).await?,
+        ))),
+        DBObject::Contact(item) => Ok(DBObject::Contact(Box::new(
+            Contact::insert(&client, *item).await?,
+        ))),
+        DBObject::Department(item) => Ok(DBObject::Department(
+            Department::insert(&client, item).await?,
+        )),
+        DBObject::Education(item) => {
+            Ok(DBObject::Education(Education::insert(&client, item).await?))
+        }
+        DBObject::Kind(item) => Ok(DBObject::Kind(Kind::insert(&client, item).await?)),
+        DBObject::Post(item) => Ok(DBObject::Post(Post::insert(&client, item).await?)),
+        DBObject::Practice(item) => Ok(DBObject::Practice(Practice::insert(&client, item).await?)),
+        DBObject::Rank(item) => Ok(DBObject::Rank(Rank::insert(&client, item).await?)),
+        DBObject::Scope(item) => Ok(DBObject::Scope(Scope::insert(&client, item).await?)),
+        DBObject::Siren(item) => Ok(DBObject::Siren(Box::new(
+            Siren::insert(&client, *item).await?,
+        ))),
+        DBObject::SirenType(item) => {
+            Ok(DBObject::SirenType(SirenType::insert(&client, item).await?))
+        }
+        _ => Err(ServiceError::BadRequest("bad item object".to_string())),
+    }
+}
+
+async fn update_item(object: DBObject, client: &Client) -> Result<u64, ServiceError> {
+    match object {
+        DBObject::Certificate(item) => Ok(Certificate::update(&client, item).await?),
+        DBObject::Company(item) => Ok(Company::update(&client, *item).await?),
+        DBObject::Contact(item) => Ok(Contact::update(&client, *item).await?),
+        DBObject::Department(item) => Ok(Department::update(&client, item).await?),
+        DBObject::Education(item) => Ok(Education::update(&client, item).await?),
+        DBObject::Kind(item) => Ok(Kind::update(&client, item).await?),
+        DBObject::Post(item) => Ok(Post::update(&client, item).await?),
+        DBObject::Practice(item) => Ok(Practice::update(&client, item).await?),
+        DBObject::Rank(item) => Ok(Rank::update(&client, item).await?),
+        DBObject::Scope(item) => Ok(Scope::update(&client, item).await?),
+        DBObject::Siren(item) => Ok(Siren::update(&client, *item).await?),
+        DBObject::SirenType(item) => Ok(SirenType::update(&client, item).await?),
+        _ => Err(ServiceError::BadRequest("bad item object".to_string())),
     }
 }
 
