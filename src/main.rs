@@ -4,15 +4,16 @@ use actix_web::{
     middleware::{Compress, Logger},
     web, App, HttpServer,
 };
+use actix_web_httpauth::middleware::HttpAuthentication;
 use dotenv::dotenv;
 use log::info;
 
 use rpel::get_pool;
 
-// use auth::{check, login, logout};
+use auth::auth_validator;
 use db::{delete_name_id, get_list_name, get_name_id, jsonpost, post_name_id};
 
-// mod auth;
+mod auth;
 mod db;
 mod error;
 
@@ -30,8 +31,10 @@ async fn main() -> std::io::Result<()> {
     info!("Listening on: {}", addr);
 
     HttpServer::new(move || {
+        let auth = HttpAuthentication::basic(auth_validator);
         App::new()
             .data(pool.clone())
+            .wrap(auth)
             .wrap(
                 Cors::new()
                     .allowed_origin("http://localhost:3000")
