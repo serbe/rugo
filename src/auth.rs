@@ -1,43 +1,42 @@
 use actix_web::{dev::ServiceRequest, Error};
-use serde::{Deserialize, Serialize};
-use actix_web_httpauth::extractors::basic::BasicAuth;
-use actix_web_httpauth::middleware::HttpAuthentication;
+use actix_web_httpauth::extractors::bearer::{BearerAuth, Config};
+use actix_web_httpauth::extractors::AuthenticationError;
+// use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
-pub struct Auth {
-    username: String,
-    password: String,
-}
+use crate::error::ServiceError;
 
-pub async fn auth_validator(
-    req: ServiceRequest,
-    _credentials: BasicAuth,
-) -> Result<ServiceRequest, Error> {
-    Ok(req)
-}
-
-// pub async fn auth_validator(
-//     req: ServiceRequest,
-//     credentials: BasicAuth,
-// ) -> Result<ServiceRequest, Error> {
-//     let config = req
-//         .app_data::<Config>()
-//         .map(|data| data.get_ref().clone())
-//         .unwrap_or_else(Default::default);
-//     match validate_credentials(
-//         credentials.user_id(),
-//         credentials.password().unwrap().trim(),
-//     ) {
-//         Ok(res) => {
-//             if res == true {
-//                 Ok(req)
-//             } else {
-//                 Err(AuthenticationError::from(config).into())
-//             }
-//         }
-//         Err(_) => Err(AuthenticationError::from(config).into()),
-//     }
+// #[derive(Deserialize, Serialize)]
+// pub struct Auth {
+//     username: String,
+//     password: String,
 // }
+
+pub async fn bearer_auth_validator(
+    req: ServiceRequest,
+    credentials: BearerAuth,
+) -> Result<ServiceRequest, Error> {
+    let config = req
+        .app_data::<Config>()
+        .map(|data| data.get_ref().clone())
+        .unwrap_or_else(Default::default);
+    match validate_token(credentials.token()) {
+        Ok(res) => {
+            if res == true {
+                Ok(req)
+            } else {
+                Err(AuthenticationError::from(config).into())
+            }
+        }
+        Err(_) => Err(AuthenticationError::from(config).into()),
+    }
+}
+
+fn validate_token(str: &str) -> Result<bool, ServiceError> {
+    if str.eq("a-secure-token") {
+        return Ok(true);
+    }
+    return Err(ServiceError::FailedAuth);
+}
 
 // fn validate_credentials(user_id: &str, user_password: &str) -> Result<bool, std::io::Error> {
 //     if user_id.eq("karl") && user_password.eq("password") {

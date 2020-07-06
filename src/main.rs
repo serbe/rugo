@@ -10,7 +10,7 @@ use log::info;
 
 use rpel::get_pool;
 
-use auth::auth_validator;
+use auth::bearer_auth_validator;
 use db::{delete_name_id, get_list_name, get_name_id, jsonpost, post_name_id};
 
 mod auth;
@@ -31,7 +31,7 @@ async fn main() -> std::io::Result<()> {
     info!("Listening on: {}", addr);
 
     HttpServer::new(move || {
-        let auth = HttpAuthentication::basic(auth_validator);
+        let auth = HttpAuthentication::bearer(bearer_auth_validator);
         App::new()
             .data(pool.clone())
             .wrap(auth)

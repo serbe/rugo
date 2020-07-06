@@ -6,9 +6,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ServiceError {
-    #[error("Internal Server Error")]
-    InternalServerError,
-
+    // #[error("Internal Server Error")]
+    // InternalServerError,
     #[error("Bad request: {0}")]
     BadRequest(String),
 
@@ -23,8 +22,10 @@ pub enum ServiceError {
     #[error("Serde JSON error: {0}")]
     SJError(SJError),
 
-    #[error("Not auth")]
-    NotAuth,
+    // #[error("Not auth")]
+    // NotAuth,
+    #[error("Authentication failed")]
+    FailedAuth,
 }
 
 impl From<RpelError> for ServiceError {
@@ -42,9 +43,9 @@ impl From<PoolError> for ServiceError {
 impl ResponseError for ServiceError {
     fn error_response(&self) -> HttpResponse {
         match self {
-            ServiceError::InternalServerError => HttpResponse::BadRequest()
-                .reason("Internal server error. Please try again later")
-                .finish(),
+            // ServiceError::InternalServerError => HttpResponse::BadRequest()
+            //     .reason("Internal server error. Please try again later")
+            //     .finish(),
             ServiceError::BadRequest(_) => {
                 HttpResponse::BadRequest().reason("bad request").finish()
             }
@@ -56,7 +57,10 @@ impl ResponseError for ServiceError {
             ServiceError::SJError(_) => HttpResponse::BadRequest()
                 .reason("serde json error")
                 .finish(),
-            ServiceError::NotAuth => HttpResponse::BadRequest()
+            // ServiceError::NotAuth => HttpResponse::BadRequest()
+            //     .reason("Internal server error. Please try again later")
+            //     .finish(),
+            ServiceError::FailedAuth => HttpResponse::BadRequest()
                 .reason("Internal server error. Please try again later")
                 .finish(),
         }
