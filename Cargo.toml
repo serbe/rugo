@@ -1,23 +1,23 @@
 [package]
-name = "rugo"
-version = "0.6.0"
 authors = ["Serbe <mkoctuk@gmail.com>"]
 edition = "2018"
+name = "rugo"
+version = "0.6.0"
 
 [dependencies]
 anyhow = "1.0"
 base64 = "0.12"
-chrono = { version = "0.4", features = ["serde"] }
+chrono = {version = "0.4", features = ["serde"]}
 deadpool-postgres = "0.5"
 dotenv = "0.15"
 env_logger = "0.7"
 futures = "0.3"
-futures-util = { version = "0.3", features = ["sink"] }
-log = { version = "0.4", features = ["std"] }
+futures-util = {version = "0.3", features = ["sink"]}
+log = {version = "0.4", features = ["std"]}
 # rpel = { path = "./rpel", version = "0.2.5" }
-rpel = { git = "https://github.com/serbe/rpel", version = "0.2.5" }
-serde = { version = "1.0", features = ["derive"] }
+rpel = {git = "https://github.com/serbe/rpel", version = "0.3.1"}
+serde = {version = "1.0", features = ["derive"]}
 serde_json = "1.0"
-tokio = { version = "0.2", features = ["io-util", "sync", "macros"] }
+tokio = {version = "0.2", features = ["io-util", "sync", "macros"]}
 tokio-tungstenite = "0.10"
-tungstenite = "0.10"
+tungstenite = "0.11"
