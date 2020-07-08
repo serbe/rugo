@@ -1,68 +1,73 @@
-use actix_cors::Cors;
-use actix_web::{
-    http::header,
-    middleware::{Compress, Logger},
-    web, App, HttpServer,
-};
-use actix_web_httpauth::middleware::HttpAuthentication;
-use dotenv::dotenv;
-use log::info;
+use std::io;
+use std::time::{Duration, Instant};
+
+use actix::{Actor, AsyncContext, StreamHandler};
+// use actix_identity::{CookieIdentityPolicy, IdentityService};
+use actix_web::{middleware, web, App, HttpRequest, HttpResponse, HttpServer};
+use actix_web_actors::ws;
+use anyhow::{anyhow, Error};
+
+// use auth::{check, login, logout};
+// use db::{
+//     delete_name_id,
+//     get_name_children,
+//     get_name_command,
+//     get_name_id,
+//     //post_name_id,
+// };
+// use db::test_post_name_id;
 
 use rpel::get_pool;
 
-use auth::bearer_auth_validator;
-use db::{delete_name_id, get_list_name, get_name_id, jsonpost, post_name_id};
-
-mod auth;
-mod db;
-mod error;
+// mod auth;
+// mod db;
+mod server;
 
 #[actix_rt::main]
-async fn main() -> std::io::Result<()> {
-    dotenv().ok();
+async fn main() -> io::Result<()> {
+    env_logger::init();
 
     let _secret_key = dotenv::var("SECRET_KEY").expect("SECRET_KEY must be set");
     let addr = dotenv::var("BIND_ADDR").expect("BIND_ADDR must be set");
     let pool = get_pool();
 
-    std::env::set_var("RUST_LOG", "rugo=info");
-    env_logger::init();
+    std::env::set_var("RUST_LOG", "actix_web=info,actix_server=info");
 
-    info!("Listening on: {}", addr);
+    // let server = WsServer::new(move || {
+    //     App::new()
+    //         .data(pool.clone())
+    //         .wrap(middleware::Logger::default())
+    //         .service(web::resource("/ws/").route(web::get().to(ws_index)))
+    //         // .wrap(IdentityService::new(
+    //         //     CookieIdentityPolicy::new(&[0; 32])
+    //         //         .name("auth-example")
+    //         //         .secure(false),
+    //         // ))
+    //         // .data(web::JsonConfig::default().limit(4096))
+    //         // .service(web::resource("/ws/").route(web::get().to(ws_index)))
+    //         // .service(web::resource("/api/go/check").route(web::get().to(check)))
+    //         // .service(web::resource("/api/go/login").route(web::post().to(login)))
+    //         // .service(web::resource("/api/go/logout").route(web::to(logout)))
+    //         // .service(
+    //         //     web::resource("/api/go/{name}/{command}").route(web::get().to(get_name_command)),
+    //         // )
+    //         // .service(
+    //         //     web::resource("/api/go/{name}/item/{id}")
+    //         //         .route(web::get().to(get_name_id))
+    //         //         // .route(web::post().to(post_name_id))
+    //         //         .route(web::delete().to(delete_name_id)),
+    //         // )
+    //         // .service(
+    //         //     web::resource("/api/go/{name}/list/{children}/{id}")
+    //         //         .route(web::get().to(get_name_children)),
+    //         // )
+    //     // .service(
+    //     //     web::resource("/api/go/{name}/test/{id}").route(web::post().to(test_post_name_id)),
+    //     // )
+    // })
+    // .bind("127.0.0.1:9090")?
+    // .run();
 
-    HttpServer::new(move || {
-        let auth = HttpAuthentication::bearer(bearer_auth_validator);
-        App::new()
-            .data(pool.clone())
-            .wrap(auth)
-            .wrap(
-                Cors::new()
-                    .allowed_origin("http://localhost:3000")
-                    .allowed_methods(vec!["GET", "POST", "OPTION"])
-                    .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
-                    .allowed_header(header::CONTENT_TYPE)
-                    .max_age(3600)
-                    .finish(),
-            )
-            .wrap(Logger::default())
-            .wrap(Compress::default())
-            // .data(web::JsonConfig::default().limit(4096))
-            // .service(web::resource("/api/go/check").route(web::get().to(check)))
-            // .service(web::resource("/api/go/login").route(web::post().to(login)))
-            // .service(web::resource("/api/go/logout").route(web::to(logout)))
-            // .service(
-            //     web::resource("/api/go/{name}/{command}").route(web::get().to(get_name_command)),
-            // )
-            .service(web::resource("/api/go/json").route(web::post().to(jsonpost)))
-            .service(
-                web::resource("/api/go/item/{name}/{id}")
-                    .route(web::get().to(get_name_id))
-                    .route(web::post().to(post_name_id))
-                    .route(web::delete().to(delete_name_id)),
-            )
-            .service(web::resource("/api/go/list/{name}").route(web::get().to(get_list_name)))
-    })
-    .bind(&addr)?
-    .run()
-    .await
+    // server.await
+    Ok(())
 }
