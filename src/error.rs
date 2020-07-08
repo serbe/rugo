@@ -8,8 +8,8 @@ use thiserror::Error;
 pub enum ServiceError {
     // #[error("Internal Server Error")]
     // InternalServerError,
-    #[error("Bad request: {0}")]
-    BadRequest(String),
+    // #[error("Bad request: {0}")]
+    // BadRequest(String),
 
     // #[error("IO Error: {0}")]
     // IOError(std::io::Error),
@@ -21,11 +21,10 @@ pub enum ServiceError {
 
     #[error("Serde JSON error: {0}")]
     SJError(SJError),
-
     // #[error("Not auth")]
     // NotAuth,
-    #[error("Authentication failed")]
-    FailedAuth,
+    // #[error("Authentication failed")]
+    // FailedAuth,
 }
 
 impl From<RpelError> for ServiceError {
@@ -46,9 +45,9 @@ impl ResponseError for ServiceError {
             // ServiceError::InternalServerError => HttpResponse::BadRequest()
             //     .reason("Internal server error. Please try again later")
             //     .finish(),
-            ServiceError::BadRequest(_) => {
-                HttpResponse::BadRequest().reason("bad request").finish()
-            }
+            // ServiceError::BadRequest(_) => {
+            //     HttpResponse::BadRequest().reason("bad request").finish()
+            // }
             // ServiceError::IOError(_) => HttpResponse::BadRequest().reason("io error").finish(),
             ServiceError::PoolError(_) => HttpResponse::BadRequest()
                 .reason("unable to connect to the database")
@@ -60,9 +59,9 @@ impl ResponseError for ServiceError {
             // ServiceError::NotAuth => HttpResponse::BadRequest()
             //     .reason("Internal server error. Please try again later")
             //     .finish(),
-            ServiceError::FailedAuth => HttpResponse::BadRequest()
-                .reason("Internal server error. Please try again later")
-                .finish(),
+            // ServiceError::FailedAuth => HttpResponse::BadRequest()
+            //     .reason("Internal server error. Please try again later")
+            //     .finish(),
         }
     }
 }

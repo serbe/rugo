@@ -97,15 +97,12 @@ impl fmt::Display for Object {
     }
 }
 
-pub async fn jsonpost(
-    db: web::Data<Pool>,
-    params: web::Json<Command>,
-) -> Result<HttpResponse, ServiceError> {
-    let cmd: Command = params.into_inner();
+pub async fn ws_text(pool: Pool, text: String) -> Result<HttpResponse, ServiceError> {
+    let cmd: Command = serde_json::from_str(&text)?;
     match cmd {
-        Command::Get(object) => get_object(&object, &db.get().await?).await,
-        Command::Insert(dbobject) => insert_object(dbobject, &db.get().await?).await,
-        Command::Update(dbobject) => update_object(dbobject, &db.get().await?).await,
+        Command::Get(object) => get_object(&object, &pool.get().await?).await,
+        Command::Insert(dbobject) => insert_object(dbobject, &pool.get().await?).await,
+        Command::Update(dbobject) => update_object(dbobject, &pool.get().await?).await,
     }
 }
 
