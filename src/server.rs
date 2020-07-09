@@ -1,7 +1,8 @@
-use actix::{Actor, StreamHandler};
+use actix::{spawn, Actor, StreamHandler};
 use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
 use deadpool_postgres::Pool;
+use serde_json::json;
 // use log::info;
 
 use crate::db::ws_text;
@@ -19,10 +20,24 @@ impl Actor for MyWs {
 }
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
-    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
+    async fn handle(
+        &mut self,
+        msg: Result<ws::Message, ws::ProtocolError>,
+        ctx: &mut Self::Context,
+    ) {
         match msg {
             Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
-            Ok(ws::Message::Text(text)) => ctx.text(text),
+            Ok(ws::Message::Text(text)) => {
+                let fut = async move {
+                    let msg = ws_text(self.pool.clone(), text).await;
+                    match serde_json::to_string(&msg) {
+                        Ok(txt) => ctx.text(txt),
+                        Err(err) => (),
+                    }
+                };
+                spawn(fut);
+            }
+            // ctx.text(text),
             Ok(ws::Message::Binary(bin)) => ctx.binary(bin),
             _ => (),
         }
@@ -34,13 +49,11 @@ pub async fn ws_index(
     req: HttpRequest,
     stream: web::Payload,
 ) -> Result<HttpResponse, Error> {
-    let resp = ws::start(
+    ws::start(
         MyWs {
             pool: data.pool.clone(),
         },
         &req,
         stream,
-    );
-    // info!("{:?}", resp);
-    resp
+    )
 }
