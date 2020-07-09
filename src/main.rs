@@ -1,24 +1,23 @@
 use std::net::SocketAddr;
 
 use anyhow::{Error, Result};
+use async_tungstenite::{tokio::connect_async, tungstenite::Message};
 use deadpool_postgres::Pool;
 use futures::StreamExt;
 use futures_util::SinkExt;
 use log::{error, info};
 use serde_json;
 use tokio::net::{TcpListener, TcpStream};
-use tokio_tungstenite::accept_async;
-use tungstenite::protocol::Message;
 
 use rpel::get_pool;
 
-use db::{Command, Object, Response, get_item, get_list};
+// use db::{get_item, get_list, Command, Object, Response};
 
 // type Tx = UnboundedSender<Message>;
 // type PeerMap = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
 
 // mod auth;
-mod db;
+// mod db;
 
 // async fn handle_connection(peer_map: PeerMap, raw_stream: TcpStream, addr: SocketAddr) {
 //     println!("Incoming TCP connection from: {}", addr);
@@ -88,7 +87,7 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream, pool: Pool) -> R
                 match get_item(&item, pool.clone()).await {
                     Ok(dbo) => resp.object = dbo,
                     Err(err) => resp.error = err.to_string(),
-                } 
+                }
                 let msg = serde_json::to_string(&resp)?;
                 ws_stream.send(Message::Text(msg)).await?;
             }
@@ -97,7 +96,7 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream, pool: Pool) -> R
                 match get_list(&list, pool.clone()).await {
                     Ok(dbo) => resp.object = dbo,
                     Err(err) => resp.error = err.to_string(),
-                } 
+                }
                 let msg = serde_json::to_string(&resp)?;
                 ws_stream.send(Message::Text(msg)).await?;
             }
@@ -108,15 +107,13 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream, pool: Pool) -> R
     Ok(())
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Error> {
+async fn run() -> Result<(), Error> {
     // let _secret_key = dotenv::var("SECRET_KEY").expect("SECRET_KEY must be set");
-    let pool = get_pool();
-
+    let addr = dotenv::var("BIND_ADDR").expect("BIND_ADDR must be set");
     std::env::set_var("RUST_LOG", "rugo=info");
     env_logger::init();
 
-    let addr = "127.0.0.1:9090".to_string();
+    let pool = get_pool();
 
     let mut listener = TcpListener::bind(&addr).await.expect("Can't listen");
     info!("Listening on: {}", addr);
@@ -140,4 +137,9 @@ async fn main() -> Result<(), Error> {
     // }
 
     Ok(())
+}
+
+fn main() -> Result<(), Error> {
+    let mut rt = tokio::runtime::Runtime::new()?;
+    rt.block_on(run())
 }
