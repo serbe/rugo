@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 use actix::{Actor, Context, Handler, Message, Recipient, StreamHandler};
-use actix_web::{web, Error, HttpRequest, HttpResponse};
+// use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
-use deadpool_postgres::Pool;
+// use deadpool_postgres::Pool;
 use log::info;
 use rand::{self, rngs::ThreadRng, Rng};
 // use serde_json::json;
@@ -112,12 +112,12 @@ impl Handler<Join> for Server {
 }
 
 struct MyWs {
-    pool: Pool,
+    // pool: Pool,
 }
 
-pub struct WebData {
-    pub pool: Pool,
-}
+// pub struct WebData {
+//     pub pool: Pool,
+// }
 
 impl Actor for MyWs {
     type Context = ws::WebsocketContext<Self>;
@@ -126,7 +126,7 @@ impl Actor for MyWs {
 impl Handler<Msg> for MyWs {
     type Result = Result<DBObject, ServiceError>;
 
-    fn handle(&mut self, msg: Msg, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, _msg: Msg, _ctx: &mut Self::Context) -> Self::Result {
         Ok(DBObject::Null)
     }
 }
@@ -151,16 +151,16 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
     }
 }
 
-pub async fn ws_index(
-    data: web::Data<WebData>,
-    req: HttpRequest,
-    stream: web::Payload,
-) -> Result<HttpResponse, Error> {
-    ws::start(
-        MyWs {
-            pool: data.pool.clone(),
-        },
-        &req,
-        stream,
-    )
-}
+// pub async fn ws_index(
+//     // data: web::Data<WebData>,
+//     req: HttpRequest,
+//     stream: web::Payload,
+// ) -> Result<HttpResponse, Error> {
+//     ws::start(
+//         MyWs {
+//             pool: data.pool.clone(),
+//         },
+//         &req,
+//         stream,
+//     )
+// }

@@ -6,6 +6,7 @@ use actix::{
 };
 use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
+use log::info;
 
 use crate::error::ServiceError;
 use crate::server::{ClientMessage, Connect, Disconnect, Join, Msg, Server};
@@ -78,7 +79,7 @@ impl Actor for Session {
 impl Handler<Msg> for Session {
     type Result = Result<DBObject, ServiceError>;
 
-    fn handle(&mut self, msg: Msg, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, _msg: Msg, _ctx: &mut Self::Context) -> Self::Result {
         Ok(DBObject::Null)
     }
 }
@@ -94,7 +95,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Session {
             Ok(msg) => msg,
         };
 
-        println!("WEBSOCKET MESSAGE: {:?}", msg);
+        info!("WEBSOCKET MESSAGE: {:?}", msg);
         match msg {
             ws::Message::Ping(msg) => {
                 self.hb = Instant::now();
@@ -112,7 +113,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Session {
                         "/list" => {
                             // Send ListRooms message to chat server and wait for
                             // response
-                            println!("List rooms");
+                            info!("List rooms");
                             // self.addr
                             //     .send(server::ListRooms)
                             //     .into_actor(self)
@@ -149,7 +150,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Session {
                     self.addr.do_send(ClientMessage { id: self.id, msg })
                 }
             }
-            ws::Message::Binary(_) => println!("Unexpected binary"),
+            ws::Message::Binary(_) => info!("Unexpected binary"),
             ws::Message::Close(reason) => {
                 ctx.close(reason);
                 ctx.stop();
@@ -166,7 +167,7 @@ impl Session {
     fn hb(&self, ctx: &mut ws::WebsocketContext<Self>) {
         ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
             if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
-                println!("Websocket Client heartbeat failed, disconnecting!");
+                info!("Websocket Client heartbeat failed, disconnecting!");
                 act.addr.do_send(Disconnect { id: act.id });
                 ctx.stop();
                 return;

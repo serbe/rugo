@@ -1,6 +1,7 @@
 use std::fmt;
+use std::clone::Clone;
 
-use actix::{spawn, Actor, Addr, Context, Handler, ResponseActFuture, WrapFuture};
+use actix::{spawn, Actor, Addr, Context, Handler, ResponseActFuture, fut::wrap_future};
 use actix_web::web;
 use deadpool_postgres::{Client, Pool};
 use serde::{Deserialize, Serialize};
@@ -32,6 +33,7 @@ pub struct WsMsg {
     pub error: String,
 }
 
+#[derive(Clone)]
 pub struct DB {
     pool: Pool,
     server: Addr<Server>,
@@ -55,7 +57,7 @@ impl DB {
         Ok(self.pool.get().await?)
     }
 
-    async fn get_reply(&self, message: String) -> Result<DBObject, ServiceError> {
+    async fn get_reply(self, message: String) -> Result<DBObject, ServiceError> {
         let cmd: Command = serde_json::from_str(&message)?;
         let client = self.client().await?;
         let dbo = match cmd {
@@ -78,8 +80,8 @@ impl Handler<Msg> for DB {
 
     fn handle(&mut self, msg: Msg, _: &mut Context<Self>) -> Self::Result {
         let message = msg.0;
-        let fut = self.get_reply(message);
-        Box::new(fut.into_actor(self))
+        let this = self.clone();
+        Box::new(wrap_future(this.get_reply(message)))
     }
 }
 
