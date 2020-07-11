@@ -1,7 +1,7 @@
-use std::fmt;
 use std::clone::Clone;
+use std::fmt;
 
-use actix::{spawn, Actor, Addr, Context, Handler, ResponseActFuture, fut::wrap_future};
+use actix::{fut, spawn, Actor, Addr, Context, Handler, ResponseActFuture};
 use actix_web::web;
 use deadpool_postgres::{Client, Pool};
 use serde::{Deserialize, Serialize};
@@ -44,7 +44,7 @@ impl Actor for DB {
 }
 
 impl DB {
-    fn new(server: Addr<Server>) -> DB {
+    pub fn new(server: Addr<Server>) -> DB {
         let pool = get_pool();
         let fut = async move {
             get_pool().get().await.expect("DB connection failed");
@@ -81,7 +81,7 @@ impl Handler<Msg> for DB {
     fn handle(&mut self, msg: Msg, _: &mut Context<Self>) -> Self::Result {
         let message = msg.0;
         let this = self.clone();
-        Box::new(wrap_future(this.get_reply(message)))
+        Box::new(fut::wrap_future(this.get_reply(message)))
     }
 }
 

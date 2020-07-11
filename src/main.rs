@@ -31,6 +31,7 @@ async fn main() -> io::Result<()> {
     // let _secret_key = dotenv::var("SECRET_KEY").expect("SECRET_KEY must be set");
     let addr = dotenv::var("BIND_ADDR").expect("BIND_ADDR must be set");
     // let pool = get_pool();
+    
     let server = Server::default().start();
 
     HttpServer::new(move || {

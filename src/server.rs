@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use actix::{Actor, Context, Handler, Message, Recipient, StreamHandler};
+use actix::{Actor, Addr, Context, Handler, Message, Recipient, ResponseActFuture, StreamHandler};
 // use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
 // use deadpool_postgres::Pool;
@@ -8,7 +8,7 @@ use log::info;
 use rand::{self, rngs::ThreadRng, Rng};
 // use serde_json::json;
 
-use crate::db::DBObject;
+use crate::db::{DBObject, DB};
 use crate::error::ServiceError;
 
 pub struct Msg(pub String);
@@ -29,11 +29,13 @@ pub struct Disconnect {
     pub id: usize,
 }
 
-#[derive(Message)]
-#[rtype(result = "()")]
 pub struct ClientMessage {
     pub id: usize,
     pub msg: String,
+}
+
+impl Message for ClientMessage {
+    type Result = Result<String, ServiceError>;
 }
 
 #[derive(Message)]
@@ -45,6 +47,7 @@ pub struct Join {
 pub struct Server {
     sessions: HashMap<usize, Recipient<Msg>>,
     rng: ThreadRng,
+    // db: Addr<DB>,
 }
 
 impl Default for Server {
@@ -52,6 +55,7 @@ impl Default for Server {
         Server {
             sessions: HashMap::new(),
             rng: rand::thread_rng(),
+            // db,
         }
     }
 }
@@ -93,13 +97,14 @@ impl Handler<Disconnect> for Server {
     }
 }
 
-impl Handler<ClientMessage> for Server {
-    type Result = ();
+// impl Handler<ClientMessage> for Server {
+//     type Result = ResponseActFuture<Self, Result<String, ServiceError>>;
 
-    fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) {
-        self.send_message(msg.msg.as_str(), msg.id);
-    }
-}
+//     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) -> Self::Result {
+//         self.send_message(msg.msg.as_str(), msg.id);
+
+//     }
+// }
 
 impl Handler<Join> for Server {
     type Result = ();
