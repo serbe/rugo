@@ -7,7 +7,9 @@ use actix::{
 use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
 
+use crate::error::ServiceError;
 use crate::server::{ClientMessage, Connect, Disconnect, Join, Msg, Server};
+use crate::db::DBObject;
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
@@ -74,10 +76,10 @@ impl Actor for Session {
 
 /// Handle messages from chat server, we simply send it to peer websocket
 impl Handler<Msg> for Session {
-    type Result = ();
+    type Result = Result<DBObject, ServiceError>;
 
-    fn handle(&mut self, msg: Msg, ctx: &mut Self::Context) {
-        ctx.text(msg.0);
+    fn handle(&mut self, msg: Msg, ctx: &mut Self::Context) -> Self::Result {
+        Ok(DBObject::Null)
     }
 }
 

@@ -1,8 +1,8 @@
 use std::io;
 
-use actix::{Actor, Addr};
+use actix::Actor;
 use actix_web::{middleware, web, App, HttpServer};
-use deadpool_postgres::Pool;
+// use deadpool_postgres::Pool;
 
 // use auth::{check, login, logout};
 // use db::{
@@ -15,7 +15,7 @@ use deadpool_postgres::Pool;
 use server::Server;
 use session::route;
 
-use rpel::get_pool;
+// use rpel::get_pool;
 
 mod db;
 mod error;

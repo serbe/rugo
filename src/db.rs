@@ -1,14 +1,18 @@
 use std::fmt;
 
+use actix::{spawn, Actor, Addr, Context, Handler, ResponseActFuture, WrapFuture};
 use actix_web::web;
 use deadpool_postgres::{Client, Pool};
 use serde::{Deserialize, Serialize};
+// use log::info;
+// use serde_json::json;
 
 use rpel::certificate::{Certificate, CertificateList};
 use rpel::company::{Company, CompanyList};
 use rpel::contact::{Contact, ContactList};
 use rpel::department::{Department, DepartmentList};
 use rpel::education::{Education, EducationList, EducationShort};
+use rpel::get_pool;
 use rpel::kind::{Kind, KindList};
 use rpel::post::{Post, PostList};
 use rpel::practice::{Practice, PracticeList, PracticeShort};
@@ -19,30 +23,82 @@ use rpel::siren::{Siren, SirenList};
 use rpel::siren_type::{SirenType, SirenTypeList};
 
 use crate::error::ServiceError;
+use crate::server::{Msg, Server};
 
 #[derive(Serialize)]
-pub struct Msg {
+pub struct WsMsg {
     pub name: String,
     pub object: DBObject,
     pub error: String,
 }
 
-impl Msg {
-    pub fn from_obj(name: String, obj: Result<DBObject, ServiceError>) -> Msg {
-        match obj {
-            Ok(object) => Msg {
-                name,
-                object: object,
-                error: String::new(),
+pub struct DB {
+    pool: Pool,
+    server: Addr<Server>,
+}
+
+impl Actor for DB {
+    type Context = Context<Self>;
+}
+
+impl DB {
+    fn new(server: Addr<Server>) -> DB {
+        let pool = get_pool();
+        let fut = async move {
+            get_pool().get().await.expect("DB connection failed");
+        };
+        spawn(fut);
+        DB { pool, server }
+    }
+
+    async fn client(&self) -> Result<Client, ServiceError> {
+        Ok(self.pool.get().await?)
+    }
+
+    async fn get_reply(&self, message: String) -> Result<DBObject, ServiceError> {
+        let cmd: Command = serde_json::from_str(&message)?;
+        let client = self.client().await?;
+        let dbo = match cmd {
+            Command::Get(object) => match object {
+                Object::Item(item) => get_item(&item, &client).await,
+                Object::List(obj) => get_list(&obj, &client).await,
             },
-            Err(err) => Msg {
-                name,
-                object: DBObject::Null,
-                error: err.to_string(),
-            },
-        }
+            Command::Insert(dbobject) => insert_item(dbobject, &client).await,
+            Command::Update(dbobject) => {
+                update_item(dbobject, &client).await.map(|_| DBObject::Null)
+            }
+            Command::Delete(item) => delete_item(&item, &client).await.map(|_| DBObject::Null),
+        };
+        dbo
     }
 }
+
+impl Handler<Msg> for DB {
+    type Result = ResponseActFuture<Self, Result<DBObject, ServiceError>>;
+
+    fn handle(&mut self, msg: Msg, _: &mut Context<Self>) -> Self::Result {
+        let message = msg.0;
+        let fut = self.get_reply(message);
+        Box::new(fut.into_actor(self))
+    }
+}
+
+// impl Msg {
+//     pub fn from_obj(name: String, obj: Result<DBObject, ServiceError>) -> Msg {
+//         match obj {
+//             Ok(object) => Msg {
+//                 name,
+//                 object: object,
+//                 error: String::new(),
+//             },
+//             Err(err) => Msg {
+//                 name,
+//                 object: DBObject::Null,
+//                 error: err.to_string(),
+//             },
+//         }
+//     }
+// }
 
 #[derive(Debug, Deserialize)]
 pub struct Item {
@@ -114,9 +170,9 @@ impl fmt::Display for Object {
     }
 }
 
-pub async fn ws_text(pool: Pool, text: String) -> Msg {
-    Msg::from_obj(text.clone(), get_msg(pool, text).await)
-}
+// pub async fn ws_text(pool: Pool, text: String) -> Msg {
+//     Msg::from_obj(text.clone(), get_msg(pool, text).await)
+// }
 
 async fn get_msg(pool: Pool, text: String) -> Result<DBObject, ServiceError> {
     let cmd: Command = serde_json::from_str(&text)?;

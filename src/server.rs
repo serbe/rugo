@@ -1,18 +1,21 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
-use actix::{spawn, Actor, Context, Handler, Message, Recipient, StreamHandler};
+use actix::{Actor, Context, Handler, Message, Recipient, StreamHandler};
 use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
 use deadpool_postgres::Pool;
 use log::info;
 use rand::{self, rngs::ThreadRng, Rng};
-use serde_json::json;
+// use serde_json::json;
 
-use crate::db::ws_text;
+use crate::db::DBObject;
+use crate::error::ServiceError;
 
-#[derive(Message)]
-#[rtype(result = "()")]
 pub struct Msg(pub String);
+
+impl Message for Msg {
+    type Result = Result<DBObject, ServiceError>;
+}
 
 #[derive(Message)]
 #[rtype(usize)]
@@ -121,9 +124,11 @@ impl Actor for MyWs {
 }
 
 impl Handler<Msg> for MyWs {
-    type Result = ();
+    type Result = Result<DBObject, ServiceError>;
 
-    fn handle(&mut self, msg: Msg, ctx: &mut Self::Context) -> Self::Result {}
+    fn handle(&mut self, msg: Msg, ctx: &mut Self::Context) -> Self::Result {
+        Ok(DBObject::Null)
+    }
 }
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
