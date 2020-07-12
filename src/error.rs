@@ -25,8 +25,8 @@ pub enum ServiceError {
     // NotAuth,
     // #[error("Authentication failed")]
     // FailedAuth,
-    #[error("Error get client")]
-    ClientGet,
+    // #[error("Error get client")]
+    // ClientGet,
 }
 
 impl From<RpelError> for ServiceError {
@@ -64,9 +64,9 @@ impl ResponseError for ServiceError {
             // ServiceError::FailedAuth => HttpResponse::BadRequest()
             //     .reason("Internal server error. Please try again later")
             //     .finish(),
-            ServiceError::ClientGet => HttpResponse::BadRequest()
-                .reason("Internal server error. Please try again later")
-                .finish(),
+            // ServiceError::ClientGet => HttpResponse::BadRequest()
+            //     .reason("Internal server error. Please try again later")
+            //     .finish(),
         }
     }
 }

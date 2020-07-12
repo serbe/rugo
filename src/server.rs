@@ -1,20 +1,20 @@
 use std::collections::HashMap;
 
-use actix::{Actor, Addr, Context, Handler, Message, Recipient, ResponseActFuture, StreamHandler};
+use actix::{Actor, Context, Handler, Message, Recipient, StreamHandler};
 // use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
 // use deadpool_postgres::Pool;
-use log::info;
+// use log::info;
 use rand::{self, rngs::ThreadRng, Rng};
 // use serde_json::json;
 
-use crate::db::{DBObject, DB};
+// use crate::db::WsMsg;
 use crate::error::ServiceError;
 
 pub struct Msg(pub String);
 
 impl Message for Msg {
-    type Result = Result<DBObject, ServiceError>;
+    type Result = Result<String, ServiceError>;
 }
 
 #[derive(Message)]
@@ -29,20 +29,20 @@ pub struct Disconnect {
     pub id: usize,
 }
 
-pub struct ClientMessage {
-    pub id: usize,
-    pub msg: String,
-}
+// pub struct ClientMessage {
+//     pub id: usize,
+//     pub msg: String,
+// }
 
-impl Message for ClientMessage {
-    type Result = Result<String, ServiceError>;
-}
+// impl Message for ClientMessage {
+//     type Result = ();
+// }
 
-#[derive(Message)]
-#[rtype(result = "()")]
-pub struct Join {
-    pub id: usize,
-}
+// #[derive(Message)]
+// #[rtype(result = "()")]
+// pub struct Join {
+//     pub id: usize,
+// }
 
 pub struct Server {
     sessions: HashMap<usize, Recipient<Msg>>,
@@ -60,13 +60,13 @@ impl Default for Server {
     }
 }
 
-impl Server {
-    fn send_message(&self, message: &str, id: usize) {
-        if let Some(addr) = self.sessions.get(&id) {
-            let _ = addr.do_send(Msg(message.to_owned()));
-        }
-    }
-}
+// impl Server {
+//     fn send_message(&self, message: &str, id: usize) {
+//         if let Some(addr) = self.sessions.get(&id) {
+//             let _ = addr.do_send(Msg(message.to_owned()));
+//         }
+//     }
+// }
 
 impl Actor for Server {
     type Context = Context<Self>;
@@ -76,7 +76,7 @@ impl Handler<Connect> for Server {
     type Result = usize;
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
-        info!("Someone joined");
+        println!("Someone joined");
 
         // self.send_message(&"Main".to_owned(), "Someone joined", 0);
 
@@ -91,30 +91,29 @@ impl Handler<Disconnect> for Server {
     type Result = ();
 
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
-        info!("Someone disconnected");
+        println!("Someone disconnected");
 
         self.sessions.remove(&msg.id);
     }
 }
 
 // impl Handler<ClientMessage> for Server {
-//     type Result = ResponseActFuture<Self, Result<String, ServiceError>>;
+//     type Result = ();
 
 //     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) -> Self::Result {
 //         self.send_message(msg.msg.as_str(), msg.id);
-
 //     }
 // }
 
-impl Handler<Join> for Server {
-    type Result = ();
+// impl Handler<Join> for Server {
+//     type Result = ();
 
-    fn handle(&mut self, msg: Join, _: &mut Context<Self>) {
-        let Join { id } = msg;
+//     fn handle(&mut self, msg: Join, _: &mut Context<Self>) {
+//         let Join { id } = msg;
 
-        self.send_message("Someone connected", id);
-    }
-}
+//         self.send_message("Someone connected", id);
+//     }
+// }
 
 struct MyWs {
     // pool: Pool,
@@ -128,13 +127,13 @@ impl Actor for MyWs {
     type Context = ws::WebsocketContext<Self>;
 }
 
-impl Handler<Msg> for MyWs {
-    type Result = Result<DBObject, ServiceError>;
+// impl Handler<Msg> for MyWs {
+//     type Result = Result<WsMsg, ServiceError>;
 
-    fn handle(&mut self, _msg: Msg, _ctx: &mut Self::Context) -> Self::Result {
-        Ok(DBObject::Null)
-    }
-}
+//     fn handle(&mut self, _msg: Msg, _ctx: &mut Self::Context) -> Self::Result {
+//         Ok(WsMsg::new())
+//     }
+// }
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {

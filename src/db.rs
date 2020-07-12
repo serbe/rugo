@@ -2,7 +2,6 @@ use std::clone::Clone;
 use std::fmt;
 
 use actix::{fut, spawn, Actor, Addr, Context, Handler, ResponseActFuture};
-use actix_web::web;
 use deadpool_postgres::{Client, Pool};
 use serde::{Deserialize, Serialize};
 // use log::info;
@@ -33,6 +32,31 @@ pub struct WsMsg {
     pub error: String,
 }
 
+impl WsMsg {
+    // pub fn new() -> WsMsg {
+    //     WsMsg {
+    //         name: String::new(),
+    //         object: DBObject::Null,
+    //         error: String::new(),
+    //     }
+    // }
+
+    pub fn from_dbo(name: String, dbo: Result<DBObject, ServiceError>) -> WsMsg {
+        match dbo {
+            Ok(object) => WsMsg {
+                name,
+                object: object,
+                error: String::new(),
+            },
+            Err(err) => WsMsg {
+                name,
+                object: DBObject::Null,
+                error: err.to_string(),
+            },
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct DB {
     pool: Pool,
@@ -57,28 +81,37 @@ impl DB {
         Ok(self.pool.get().await?)
     }
 
-    async fn get_reply(self, message: String) -> Result<DBObject, ServiceError> {
+    async fn get_reply(self, message: String) -> Result<String, ServiceError> {
         let cmd: Command = serde_json::from_str(&message)?;
         let client = self.client().await?;
-        let dbo = match cmd {
+        let msg = match cmd {
             Command::Get(object) => match object {
-                Object::Item(item) => get_item(&item, &client).await,
-                Object::List(obj) => get_list(&obj, &client).await,
+                Object::Item(item) => {
+                    WsMsg::from_dbo(item.name.clone(), get_item(&item, &client).await)
+                }
+                Object::List(obj) => WsMsg::from_dbo(obj.clone(), get_list(&obj, &client).await),
             },
-            Command::Insert(dbobject) => insert_item(dbobject, &client).await,
-            Command::Update(dbobject) => {
-                update_item(dbobject, &client).await.map(|_| DBObject::Null)
+            Command::Insert(dbobject) => {
+                WsMsg::from_dbo(dbobject.name(), insert_item(dbobject, &client).await)
             }
-            Command::Delete(item) => delete_item(&item, &client).await.map(|_| DBObject::Null),
+            Command::Update(dbobject) => WsMsg::from_dbo(
+                dbobject.name(),
+                update_item(dbobject, &client).await.map(|_| DBObject::Null),
+            ),
+            Command::Delete(item) => WsMsg::from_dbo(
+                item.name.clone(),
+                delete_item(&item, &client).await.map(|_| DBObject::Null),
+            ),
         };
-        dbo
+        Ok(serde_json::to_string(&msg)?)
     }
 }
 
 impl Handler<Msg> for DB {
-    type Result = ResponseActFuture<Self, Result<DBObject, ServiceError>>;
+    type Result = ResponseActFuture<Self, Result<String, ServiceError>>;
 
     fn handle(&mut self, msg: Msg, _: &mut Context<Self>) -> Self::Result {
+        println!("DB MESSAGE: {:?}", msg.0);
         let message = msg.0;
         let this = self.clone();
         Box::new(fut::wrap_future(this.get_reply(message)))
@@ -108,14 +141,14 @@ pub struct Item {
     pub id: i64,
 }
 
-impl Item {
-    pub fn from(path: (String, i64)) -> Self {
-        Item {
-            name: path.0.clone(),
-            id: path.1,
-        }
-    }
-}
+// impl Item {
+//     pub fn from(path: (String, i64)) -> Self {
+//         Item {
+//             name: path.0.clone(),
+//             id: path.1,
+//         }
+//     }
+// }
 
 #[derive(Deserialize)]
 pub enum Object {
@@ -163,6 +196,41 @@ pub enum DBObject {
     SirenTypeList(Vec<SirenTypeList>),
 }
 
+impl DBObject {
+    fn name(&self) -> String {
+        match self {
+            DBObject::Null => String::new(),
+            DBObject::Certificate(_) => String::from("Certificate"),
+            DBObject::CertificateList(_) => String::from("CertificateList"),
+            DBObject::Company(_) => String::from("Company"),
+            DBObject::CompanyList(_) => String::from("CompanyList"),
+            DBObject::Contact(_) => String::from("Contact"),
+            DBObject::ContactList(_) => String::from("ContactList"),
+            DBObject::Department(_) => String::from("Department"),
+            DBObject::DepartmentList(_) => String::from("DepartmentList"),
+            DBObject::Education(_) => String::from("Education"),
+            DBObject::EducationList(_) => String::from("EducationList"),
+            DBObject::EducationShort(_) => String::from("EducationShort"),
+            DBObject::Kind(_) => String::from("Kind"),
+            DBObject::KindList(_) => String::from("KindList"),
+            DBObject::Post(_) => String::from("Post"),
+            DBObject::PostList(_) => String::from("PostList"),
+            DBObject::Practice(_) => String::from("Practice"),
+            DBObject::PracticeList(_) => String::from("PracticeList"),
+            DBObject::PracticeShort(_) => String::from("PracticeShort"),
+            DBObject::Rank(_) => String::from("Rank"),
+            DBObject::RankList(_) => String::from("RankList"),
+            DBObject::Scope(_) => String::from("Scope"),
+            DBObject::ScopeList(_) => String::from("ScopeList"),
+            DBObject::SelectItem(_) => String::from("SelectItem"),
+            DBObject::Siren(_) => String::from("Siren"),
+            DBObject::SirenList(_) => String::from("SirenList"),
+            DBObject::SirenType(_) => String::from("SirenType"),
+            DBObject::SirenTypeList(_) => String::from("SirenTypeList"),
+        }
+    }
+}
+
 impl fmt::Display for Object {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -175,20 +243,6 @@ impl fmt::Display for Object {
 // pub async fn ws_text(pool: Pool, text: String) -> Msg {
 //     Msg::from_obj(text.clone(), get_msg(pool, text).await)
 // }
-
-async fn get_msg(pool: Pool, text: String) -> Result<DBObject, ServiceError> {
-    let cmd: Command = serde_json::from_str(&text)?;
-    let client = &pool.get().await?;
-    match cmd {
-        Command::Get(object) => match object {
-            Object::Item(item) => get_item(&item, client).await,
-            Object::List(obj) => get_list(&obj, client).await,
-        },
-        Command::Insert(dbobject) => insert_item(dbobject, &client).await,
-        Command::Update(dbobject) => update_item(dbobject, &client).await.map(|_| DBObject::Null),
-        Command::Delete(item) => delete_item(&item, &client).await.map(|_| DBObject::Null),
-    }
-}
 
 async fn get_item(item: &Item, client: &Client) -> Result<DBObject, ServiceError> {
     match (item.name.as_str(), item.id) {
@@ -320,44 +374,6 @@ async fn update_item(object: DBObject, client: &Client) -> Result<u64, ServiceEr
         DBObject::Siren(item) => Ok(Siren::update(&client, *item).await?),
         DBObject::SirenType(item) => Ok(SirenType::update(&client, item).await?),
         _ => Err(ServiceError::BadRequest("bad item object".to_string())),
-    }
-}
-
-async fn post_item(
-    name: &str,
-    params: web::Json<DBObject>,
-    client: &Client,
-) -> Result<DBObject, ServiceError> {
-    match (name, params.into_inner()) {
-        ("certificate", DBObject::Certificate(item)) => Ok(DBObject::Certificate(
-            Certificate::insert(client, item).await?,
-        )),
-        ("company", DBObject::Company(item)) => Ok(DBObject::Company(Box::new(
-            Company::insert(client, *item).await?,
-        ))),
-        ("contact", DBObject::Contact(item)) => Ok(DBObject::Contact(Box::new(
-            Contact::insert(client, *item).await?,
-        ))),
-        ("department", DBObject::Department(item)) => Ok(DBObject::Department(
-            Department::insert(client, item).await?,
-        )),
-        ("education", DBObject::Education(item)) => {
-            Ok(DBObject::Education(Education::insert(client, item).await?))
-        }
-        ("kind", DBObject::Kind(item)) => Ok(DBObject::Kind(Kind::insert(client, item).await?)),
-        ("post", DBObject::Post(item)) => Ok(DBObject::Post(Post::insert(client, item).await?)),
-        ("practice", DBObject::Practice(item)) => {
-            Ok(DBObject::Practice(Practice::insert(client, item).await?))
-        }
-        ("rank", DBObject::Rank(item)) => Ok(DBObject::Rank(Rank::insert(client, item).await?)),
-        ("scope", DBObject::Scope(item)) => Ok(DBObject::Scope(Scope::insert(client, item).await?)),
-        ("siren", DBObject::Siren(item)) => Ok(DBObject::Siren(Box::new(
-            Siren::insert(client, *item).await?,
-        ))),
-        ("siren_type", DBObject::SirenType(item)) => {
-            Ok(DBObject::SirenType(SirenType::insert(client, item).await?))
-        }
-        _ => Err(ServiceError::BadRequest(format!("bad path {}", name))),
     }
 }
 
