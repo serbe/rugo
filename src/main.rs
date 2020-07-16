@@ -2,20 +2,10 @@ use std::io;
 
 use actix::Actor;
 use actix_web::{middleware, web, App, HttpServer};
-// use deadpool_postgres::Pool;
 
 // use auth::{check, login, logout};
-// use db::{
-//     delete_name_id,
-//     get_name_children,
-//     get_name_command,
-//     get_name_id,
-//     //post_name_id,
-// };
 use server::Server;
 use session::route;
-
-// use rpel::get_pool;
 
 mod db;
 mod error;
@@ -30,7 +20,7 @@ async fn main() -> io::Result<()> {
 
     // let _secret_key = dotenv::var("SECRET_KEY").expect("SECRET_KEY must be set");
     let addr = dotenv::var("BIND_ADDR").expect("BIND_ADDR must be set");
-    // let pool = get_pool();
+    let path = dotenv::var("WS_PATH").expect("WS_PATH must be set");
 
     let server = Server::default().start();
 
@@ -39,7 +29,7 @@ async fn main() -> io::Result<()> {
             .data(server.clone())
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
-            .service(web::resource("/api/go/").route(web::get().to(route)))
+            .service(web::resource(path).route(web::get().to(route)))
     })
     .bind(addr)?
     .run()
