@@ -4,8 +4,6 @@ use std::fmt;
 use actix::{fut, spawn, Actor, Addr, Context, Handler, ResponseActFuture};
 use deadpool_postgres::{Client, Pool};
 use serde::{Deserialize, Serialize};
-// use log::info;
-// use serde_json::json;
 
 use rpel::certificate::{Certificate, CertificateList};
 use rpel::company::{Company, CompanyList};
@@ -33,14 +31,6 @@ pub struct WsMsg {
 }
 
 impl WsMsg {
-    // pub fn new() -> WsMsg {
-    //     WsMsg {
-    //         name: String::new(),
-    //         object: DBObject::Null,
-    //         error: String::new(),
-    //     }
-    // }
-
     pub fn from_dbo(name: String, dbo: Result<DBObject, ServiceError>) -> WsMsg {
         match dbo {
             Ok(object) => WsMsg {
@@ -91,16 +81,17 @@ impl DB {
                 }
                 Object::List(obj) => WsMsg::from_dbo(obj.clone(), get_list(&obj, &client).await),
             },
-            Command::Insert(dbobject) => {
-                WsMsg::from_dbo(dbobject.name(), insert_item(dbobject, &client).await)
-            }
+            Command::Insert(dbobject) => WsMsg::from_dbo(
+                dbobject.name(),
+                Ok(DBObject::Res(insert_item(dbobject, &client).await?)),
+            ),
             Command::Update(dbobject) => WsMsg::from_dbo(
                 dbobject.name(),
-                update_item(dbobject, &client).await.map(|_| DBObject::Null),
+                Ok(DBObject::Res(update_item(dbobject, &client).await?)),
             ),
             Command::Delete(item) => WsMsg::from_dbo(
                 item.name.clone(),
-                delete_item(&item, &client).await.map(|_| DBObject::Null),
+                Ok(DBObject::Res(delete_item(&item, &client).await?)),
             ),
         };
         Ok(serde_json::to_string(&msg)?)
@@ -111,44 +102,18 @@ impl Handler<Msg> for DB {
     type Result = ResponseActFuture<Self, Result<String, ServiceError>>;
 
     fn handle(&mut self, msg: Msg, _: &mut Context<Self>) -> Self::Result {
-        println!("DB MESSAGE: {:?}", msg.0);
+        // println!("DB MESSAGE: {:?}", msg.0);
         let message = msg.0;
         let this = self.clone();
         Box::new(fut::wrap_future(this.get_reply(message)))
     }
 }
 
-// impl Msg {
-//     pub fn from_obj(name: String, obj: Result<DBObject, ServiceError>) -> Msg {
-//         match obj {
-//             Ok(object) => Msg {
-//                 name,
-//                 object: object,
-//                 error: String::new(),
-//             },
-//             Err(err) => Msg {
-//                 name,
-//                 object: DBObject::Null,
-//                 error: err.to_string(),
-//             },
-//         }
-//     }
-// }
-
 #[derive(Debug, Deserialize)]
 pub struct Item {
     pub name: String,
     pub id: i64,
 }
-
-// impl Item {
-//     pub fn from(path: (String, i64)) -> Self {
-//         Item {
-//             name: path.0.clone(),
-//             id: path.1,
-//         }
-//     }
-// }
 
 #[derive(Deserialize)]
 pub enum Object {
@@ -167,6 +132,7 @@ pub enum Command {
 #[derive(Deserialize, Serialize)]
 pub enum DBObject {
     Null,
+    Res(i64),
     Certificate(Certificate),
     CertificateList(Vec<CertificateList>),
     Company(Box<Company>),
@@ -199,6 +165,7 @@ pub enum DBObject {
 impl DBObject {
     fn name(&self) -> String {
         match self {
+            DBObject::Res(_) => String::new(),
             DBObject::Null => String::new(),
             DBObject::Certificate(_) => String::from("Certificate"),
             DBObject::CertificateList(_) => String::from("CertificateList"),
@@ -239,10 +206,6 @@ impl fmt::Display for Object {
         }
     }
 }
-
-// pub async fn ws_text(pool: Pool, text: String) -> Msg {
-//     Msg::from_obj(text.clone(), get_msg(pool, text).await)
-// }
 
 async fn get_item(item: &Item, client: &Client) -> Result<DBObject, ServiceError> {
     match (item.name.as_str(), item.id) {
@@ -327,73 +290,61 @@ async fn get_list(name: &String, client: &Client) -> Result<DBObject, ServiceErr
     }
 }
 
-async fn insert_item(object: DBObject, client: &Client) -> Result<DBObject, ServiceError> {
+async fn insert_item(object: DBObject, client: &Client) -> Result<i64, ServiceError> {
     match object {
-        DBObject::Certificate(item) => Ok(DBObject::Certificate(
-            Certificate::insert(&client, item).await?,
-        )),
-        DBObject::Company(item) => Ok(DBObject::Company(Box::new(
-            Company::insert(&client, *item).await?,
-        ))),
-        DBObject::Contact(item) => Ok(DBObject::Contact(Box::new(
-            Contact::insert(&client, *item).await?,
-        ))),
-        DBObject::Department(item) => Ok(DBObject::Department(
-            Department::insert(&client, item).await?,
-        )),
-        DBObject::Education(item) => {
-            Ok(DBObject::Education(Education::insert(&client, item).await?))
-        }
-        DBObject::Kind(item) => Ok(DBObject::Kind(Kind::insert(&client, item).await?)),
-        DBObject::Post(item) => Ok(DBObject::Post(Post::insert(&client, item).await?)),
-        DBObject::Practice(item) => Ok(DBObject::Practice(Practice::insert(&client, item).await?)),
-        DBObject::Rank(item) => Ok(DBObject::Rank(Rank::insert(&client, item).await?)),
-        DBObject::Scope(item) => Ok(DBObject::Scope(Scope::insert(&client, item).await?)),
-        DBObject::Siren(item) => Ok(DBObject::Siren(Box::new(
-            Siren::insert(&client, *item).await?,
-        ))),
-        DBObject::SirenType(item) => {
-            Ok(DBObject::SirenType(SirenType::insert(&client, item).await?))
-        }
+        DBObject::Certificate(item) => Ok(Certificate::insert(&client, item).await?.id),
+        DBObject::Company(item) => Ok(Company::insert(&client, *item).await?.id),
+        DBObject::Contact(item) => Ok(Contact::insert(&client, *item).await?.id),
+        DBObject::Department(item) => Ok(Department::insert(&client, item).await?.id),
+        DBObject::Education(item) => Ok(Education::insert(&client, item).await?.id),
+        DBObject::Kind(item) => Ok(Kind::insert(&client, item).await?.id),
+        DBObject::Post(item) => Ok(Post::insert(&client, item).await?.id),
+        DBObject::Practice(item) => Ok(Practice::insert(&client, item).await?.id),
+        DBObject::Rank(item) => Ok(Rank::insert(&client, item).await?.id),
+        DBObject::Scope(item) => Ok(Scope::insert(&client, item).await?.id),
+        DBObject::Siren(item) => Ok(Siren::insert(&client, *item).await?.id),
+        DBObject::SirenType(item) => Ok(SirenType::insert(&client, item).await?.id),
         _ => Err(ServiceError::BadRequest("bad item object".to_string())),
     }
 }
 
-async fn update_item(object: DBObject, client: &Client) -> Result<u64, ServiceError> {
-    match object {
-        DBObject::Certificate(item) => Ok(Certificate::update(&client, item).await?),
-        DBObject::Company(item) => Ok(Company::update(&client, *item).await?),
-        DBObject::Contact(item) => Ok(Contact::update(&client, *item).await?),
-        DBObject::Department(item) => Ok(Department::update(&client, item).await?),
-        DBObject::Education(item) => Ok(Education::update(&client, item).await?),
-        DBObject::Kind(item) => Ok(Kind::update(&client, item).await?),
-        DBObject::Post(item) => Ok(Post::update(&client, item).await?),
-        DBObject::Practice(item) => Ok(Practice::update(&client, item).await?),
-        DBObject::Rank(item) => Ok(Rank::update(&client, item).await?),
-        DBObject::Scope(item) => Ok(Scope::update(&client, item).await?),
-        DBObject::Siren(item) => Ok(Siren::update(&client, *item).await?),
-        DBObject::SirenType(item) => Ok(SirenType::update(&client, item).await?),
-        _ => Err(ServiceError::BadRequest("bad item object".to_string())),
-    }
+async fn update_item(object: DBObject, client: &Client) -> Result<i64, ServiceError> {
+    let res = match object {
+        DBObject::Certificate(item) => Certificate::update(&client, item).await,
+        DBObject::Company(item) => Company::update(&client, *item).await,
+        DBObject::Contact(item) => Contact::update(&client, *item).await,
+        DBObject::Department(item) => Department::update(&client, item).await,
+        DBObject::Education(item) => Education::update(&client, item).await,
+        DBObject::Kind(item) => Kind::update(&client, item).await,
+        DBObject::Post(item) => Post::update(&client, item).await,
+        DBObject::Practice(item) => Practice::update(&client, item).await,
+        DBObject::Rank(item) => Rank::update(&client, item).await,
+        DBObject::Scope(item) => Scope::update(&client, item).await,
+        DBObject::Siren(item) => Siren::update(&client, *item).await,
+        DBObject::SirenType(item) => SirenType::update(&client, item).await,
+        _ => Err(ServiceError::BadRequest("bad item object".to_string()))?,
+    }?;
+    Ok(res as i64)
 }
 
-async fn delete_item(item: &Item, client: &Client) -> Result<u64, ServiceError> {
-    match item.name.as_str() {
-        "certificate" => Ok(Certificate::delete(client, item.id).await?),
-        "company" => Ok(Company::delete(client, item.id).await?),
-        "contact" => Ok(Contact::delete(client, item.id).await?),
-        "department" => Ok(Department::delete(client, item.id).await?),
-        "education" => Ok(Education::delete(client, item.id).await?),
-        "kind" => Ok(Kind::delete(client, item.id).await?),
-        "post" => Ok(Post::delete(client, item.id).await?),
-        "practice" => Ok(Practice::delete(client, item.id).await?),
-        "rank" => Ok(Rank::delete(client, item.id).await?),
-        "scope" => Ok(Scope::delete(client, item.id).await?),
-        "siren" => Ok(Siren::delete(client, item.id).await?),
-        "siren_type" => Ok(SirenType::delete(client, item.id).await?),
+async fn delete_item(item: &Item, client: &Client) -> Result<i64, ServiceError> {
+    let res = match item.name.as_str() {
+        "certificate" => Certificate::delete(client, item.id).await,
+        "company" => Company::delete(client, item.id).await,
+        "contact" => Contact::delete(client, item.id).await,
+        "department" => Department::delete(client, item.id).await,
+        "education" => Education::delete(client, item.id).await,
+        "kind" => Kind::delete(client, item.id).await,
+        "post" => Post::delete(client, item.id).await,
+        "practice" => Practice::delete(client, item.id).await,
+        "rank" => Rank::delete(client, item.id).await,
+        "scope" => Scope::delete(client, item.id).await,
+        "siren" => Siren::delete(client, item.id).await,
+        "siren_type" => SirenType::delete(client, item.id).await,
         _ => Err(ServiceError::BadRequest(format!(
             "bad path {:?}",
             item.name
-        ))),
-    }
+        )))?,
+    }?;
+    Ok(res as i64)
 }

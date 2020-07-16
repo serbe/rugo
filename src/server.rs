@@ -76,7 +76,7 @@ impl Handler<Connect> for Server {
     type Result = usize;
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
-        println!("Someone joined");
+        // println!("Someone joined");
 
         // self.send_message(&"Main".to_owned(), "Someone joined", 0);
 
@@ -91,7 +91,7 @@ impl Handler<Disconnect> for Server {
     type Result = ();
 
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
-        println!("Someone disconnected");
+        // println!("Someone disconnected");
 
         self.sessions.remove(&msg.id);
     }
