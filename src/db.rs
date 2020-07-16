@@ -82,15 +82,15 @@ impl DB {
                 Object::List(obj) => WsMsg::from_dbo(obj.clone(), get_list(&obj, &client).await),
             },
             Command::Insert(dbobject) => WsMsg::from_dbo(
-                dbobject.name(),
+                String::new(),
                 Ok(DBObject::Res(insert_item(dbobject, &client).await?)),
             ),
             Command::Update(dbobject) => WsMsg::from_dbo(
-                dbobject.name(),
+                String::new(),
                 Ok(DBObject::Res(update_item(dbobject, &client).await?)),
             ),
             Command::Delete(item) => WsMsg::from_dbo(
-                item.name.clone(),
+                String::new(),
                 Ok(DBObject::Res(delete_item(&item, &client).await?)),
             ),
         };
