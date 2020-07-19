@@ -162,41 +162,41 @@ pub enum DBObject {
     SirenTypeList(Vec<SirenTypeList>),
 }
 
-impl DBObject {
-    fn name(&self) -> String {
-        match self {
-            DBObject::Res(_) => String::new(),
-            DBObject::Null => String::new(),
-            DBObject::Certificate(_) => String::from("Certificate"),
-            DBObject::CertificateList(_) => String::from("CertificateList"),
-            DBObject::Company(_) => String::from("Company"),
-            DBObject::CompanyList(_) => String::from("CompanyList"),
-            DBObject::Contact(_) => String::from("Contact"),
-            DBObject::ContactList(_) => String::from("ContactList"),
-            DBObject::Department(_) => String::from("Department"),
-            DBObject::DepartmentList(_) => String::from("DepartmentList"),
-            DBObject::Education(_) => String::from("Education"),
-            DBObject::EducationList(_) => String::from("EducationList"),
-            DBObject::EducationShort(_) => String::from("EducationShort"),
-            DBObject::Kind(_) => String::from("Kind"),
-            DBObject::KindList(_) => String::from("KindList"),
-            DBObject::Post(_) => String::from("Post"),
-            DBObject::PostList(_) => String::from("PostList"),
-            DBObject::Practice(_) => String::from("Practice"),
-            DBObject::PracticeList(_) => String::from("PracticeList"),
-            DBObject::PracticeShort(_) => String::from("PracticeShort"),
-            DBObject::Rank(_) => String::from("Rank"),
-            DBObject::RankList(_) => String::from("RankList"),
-            DBObject::Scope(_) => String::from("Scope"),
-            DBObject::ScopeList(_) => String::from("ScopeList"),
-            DBObject::SelectItem(_) => String::from("SelectItem"),
-            DBObject::Siren(_) => String::from("Siren"),
-            DBObject::SirenList(_) => String::from("SirenList"),
-            DBObject::SirenType(_) => String::from("SirenType"),
-            DBObject::SirenTypeList(_) => String::from("SirenTypeList"),
-        }
-    }
-}
+// impl DBObject {
+//     fn name(&self) -> String {
+//         match self {
+//             DBObject::Res(_) => String::new(),
+//             DBObject::Null => String::new(),
+//             DBObject::Certificate(_) => String::from("Certificate"),
+//             DBObject::CertificateList(_) => String::from("CertificateList"),
+//             DBObject::Company(_) => String::from("Company"),
+//             DBObject::CompanyList(_) => String::from("CompanyList"),
+//             DBObject::Contact(_) => String::from("Contact"),
+//             DBObject::ContactList(_) => String::from("ContactList"),
+//             DBObject::Department(_) => String::from("Department"),
+//             DBObject::DepartmentList(_) => String::from("DepartmentList"),
+//             DBObject::Education(_) => String::from("Education"),
+//             DBObject::EducationList(_) => String::from("EducationList"),
+//             DBObject::EducationShort(_) => String::from("EducationShort"),
+//             DBObject::Kind(_) => String::from("Kind"),
+//             DBObject::KindList(_) => String::from("KindList"),
+//             DBObject::Post(_) => String::from("Post"),
+//             DBObject::PostList(_) => String::from("PostList"),
+//             DBObject::Practice(_) => String::from("Practice"),
+//             DBObject::PracticeList(_) => String::from("PracticeList"),
+//             DBObject::PracticeShort(_) => String::from("PracticeShort"),
+//             DBObject::Rank(_) => String::from("Rank"),
+//             DBObject::RankList(_) => String::from("RankList"),
+//             DBObject::Scope(_) => String::from("Scope"),
+//             DBObject::ScopeList(_) => String::from("ScopeList"),
+//             DBObject::SelectItem(_) => String::from("SelectItem"),
+//             DBObject::Siren(_) => String::from("Siren"),
+//             DBObject::SirenList(_) => String::from("SirenList"),
+//             DBObject::SirenType(_) => String::from("SirenType"),
+//             DBObject::SirenTypeList(_) => String::from("SirenTypeList"),
+//         }
+//     }
+// }
 
 impl fmt::Display for Object {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

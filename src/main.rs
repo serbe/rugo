@@ -29,7 +29,7 @@ async fn main() -> io::Result<()> {
             .data(server.clone())
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
-            .service(web::resource(path).route(web::get().to(route)))
+            .service(web::resource(&path).route(web::get().to(route)))
     })
     .bind(addr)?
     .run()
