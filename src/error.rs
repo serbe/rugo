@@ -21,8 +21,8 @@ pub enum ServiceError {
 
     #[error("Serde JSON error: {0}")]
     SJError(SJError),
-    // #[error("Not auth")]
-    // NotAuth,
+    #[error("Not auth")]
+    NotAuth,
     // #[error("Authentication failed")]
     // FailedAuth,
     // #[error("Error get client")]
@@ -58,9 +58,9 @@ impl ResponseError for ServiceError {
             ServiceError::SJError(_) => HttpResponse::BadRequest()
                 .reason("serde json error")
                 .finish(),
-            // ServiceError::NotAuth => HttpResponse::BadRequest()
-            //     .reason("Internal server error. Please try again later")
-            //     .finish(),
+            ServiceError::NotAuth => HttpResponse::BadRequest()
+                .reason("Internal server error. Please try again later")
+                .finish(),
             // ServiceError::FailedAuth => HttpResponse::BadRequest()
             //     .reason("Internal server error. Please try again later")
             //     .finish(),

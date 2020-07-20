@@ -20,6 +20,7 @@ use rpel::select::SelectItem;
 use rpel::siren::{Siren, SirenList};
 use rpel::siren_type::{SirenType, SirenTypeList};
 
+use crate::auth::check;
 use crate::error::ServiceError;
 use crate::server::{Msg, Server};
 
@@ -72,7 +73,8 @@ impl DB {
     }
 
     async fn get_reply(self, message: String) -> Result<String, ServiceError> {
-        let cmd: Command = serde_json::from_str(&message)?;
+        let client_message: ClientMessage = serde_json::from_str(&message)?;
+        let cmd: Command = check(client_message)?;
         let client = self.client().await?;
         let msg = match cmd {
             Command::Get(object) => match object {
@@ -107,6 +109,12 @@ impl Handler<Msg> for DB {
         let this = self.clone();
         Box::new(fut::wrap_future(this.get_reply(message)))
     }
+}
+
+#[derive(Deserialize)]
+pub struct ClientMessage {
+    pub command: Command,
+    pub addon: String,
 }
 
 #[derive(Debug, Deserialize)]
