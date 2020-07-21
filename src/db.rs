@@ -1,9 +1,12 @@
 use std::clone::Clone;
 use std::fmt;
+// use std::sync::Mutex;
+// use std::collections::HashMap;
 
 use actix::{fut, spawn, Actor, Addr, Context, Handler, ResponseActFuture};
 use deadpool_postgres::{Client, Pool};
 use serde::{Deserialize, Serialize};
+// use once_cell::sync::OnceCell;
 
 use rpel::certificate::{Certificate, CertificateList};
 use rpel::company::{Company, CompanyList};
@@ -19,10 +22,19 @@ use rpel::scope::{Scope, ScopeList};
 use rpel::select::SelectItem;
 use rpel::siren::{Siren, SirenList};
 use rpel::siren_type::{SirenType, SirenTypeList};
+// use rpel::user::UserList;
 
 use crate::auth::check;
 use crate::error::ServiceError;
 use crate::server::{Msg, Server};
+
+pub struct UserData {
+    pub id: i64,
+    pub name: String,
+    pub role: i64,
+}
+
+static USERS: OnceCell<HashMap<&str, UserData>> = OnceCell::new();
 
 #[derive(Serialize)]
 pub struct WsMsg {
@@ -62,7 +74,10 @@ impl DB {
     pub fn new(server: Addr<Server>) -> DB {
         let pool = get_pool();
         let fut = async move {
-            get_pool().get().await.expect("DB connection failed");
+            let _client = get_pool().get().await.expect("DB connection failed");
+            // let users = UserList::get_all(&client).await.expect("get UserList failed");
+            // let mut m = HashMap::new();
+            // users.iter().all(|item| m.insert(item.key, v))
         };
         spawn(fut);
         DB { pool, server }

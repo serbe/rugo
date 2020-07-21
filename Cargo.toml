@@ -20,8 +20,9 @@ deadpool-postgres = "0.5"
 dotenv = "0.15"
 env_logger = "0.7"
 log = {version = "0.4", features = ["std"]}
+once_cell = "1.4"
 rand = "0.7"
-rpel = {git = "https://github.com/serbe/rpel", version = "0.3.1"}
+rpel = {git = "https://github.com/serbe/rpel", version = "0.3.2"}
 serde = {version = "1.0", features = ["derive"]}
 serde_json = "1.0"
 thiserror = "1.0"
