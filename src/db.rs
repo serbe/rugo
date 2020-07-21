@@ -4,7 +4,7 @@ use std::fmt;
 use std::iter;
 // use std::sync::Mutex;
 
-use actix::{fut, spawn, Actor, Addr, Context, Handler, ResponseActFuture};
+use actix::{fut, Actor, Addr, Context, Handler, ResponseActFuture};
 use deadpool_postgres::{Client, Pool};
 use once_cell::sync::OnceCell;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
@@ -54,6 +54,33 @@ impl UserData {
 }
 
 static USERS: OnceCell<HashMap<String, UserData>> = OnceCell::new();
+
+pub async fn global_init() -> Result<(), ServiceError> {
+    let mut rng = thread_rng();
+    let client = get_pool().get().await?;
+    let users = UserList::get_all(&client)
+        .await
+        .expect("get UserList failed");
+    let mut hash_map = HashMap::new();
+    for user in users {
+        let key = iter::repeat(())
+            .map(|()| rng.sample(Alphanumeric))
+            .take(20)
+            .collect();
+        hash_map.insert(
+            key,
+            UserData {
+                id: user.id,
+                name: user.name.clone(),
+                key: user.key.clone(),
+                role: user.role,
+            },
+        );
+    }
+    // let mutex = Mutex::new(hash_map);
+    let _g_users = USERS.set(hash_map).expect_err("error");
+    Ok(())
+}
 
 pub fn get_user(key: &str) -> Option<UserData> {
     let users = USERS.get()?;
@@ -113,32 +140,6 @@ impl Actor for DB {
 impl DB {
     pub fn new(server: Addr<Server>) -> DB {
         let pool = get_pool();
-        let fut = async move {
-            let mut rng = thread_rng();
-            let client = get_pool().get().await.expect("DB connection failed");
-            let users = UserList::get_all(&client)
-                .await
-                .expect("get UserList failed");
-            let mut hash_map = HashMap::new();
-            for user in users {
-                let key = iter::repeat(())
-                    .map(|()| rng.sample(Alphanumeric))
-                    .take(20)
-                    .collect();
-                hash_map.insert(
-                    key,
-                    UserData {
-                        id: user.id,
-                        name: user.name.clone(),
-                        key: user.key.clone(),
-                        role: user.role,
-                    },
-                );
-            }
-            // let mutex = Mutex::new(hash_map);
-            let _g_users = USERS.set(hash_map).expect_err("error");
-        };
-        spawn(fut);
         DB { pool, server }
     }
 
