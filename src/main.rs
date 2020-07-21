@@ -2,15 +2,16 @@ use std::io;
 
 use actix::Actor;
 use actix_web::{middleware, web, App, HttpServer};
-use actix_web_httpauth::middleware::HttpAuthentication;
+// use actix_web_httpauth::middleware::HttpAuthentication;
 
-use auth::{login, validator};
+use auth::{login};
 use server::Server;
 use session::wsroute;
 
 mod auth;
 mod db;
 mod error;
+// mod redirect;
 mod server;
 mod session;
 
@@ -20,22 +21,19 @@ async fn main() -> io::Result<()> {
 
     env_logger::init();
 
-    // let _secret_key = dotenv::var("SECRET_KEY").expect("SECRET_KEY must be set");
     let addr = dotenv::var("BIND_ADDR").expect("BIND_ADDR must be set");
-    let login_path = dotenv::var("LOGIN_PATH").expect("LOGIN_PATH must be set");
-    let ws_path = dotenv::var("WS_PATH").expect("WS_PATH must be set");
 
     let server = Server::default().start();
 
     HttpServer::new(move || {
-        let auth = HttpAuthentication::bearer(validator);
+        // let auth = HttpAuthentication::bearer(validator);
         App::new()
             .data(server.clone())
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
-            .wrap(auth)
-            .service(web::resource(&login_path).route(web::post().to(login)))
-            .service(web::resource(&ws_path).route(web::get().to(wsroute)))
+            // .wrap(auth)
+            .service(web::resource("/api/go/login").route(web::post().to(login)))
+            .service(web::resource("/api/go").route(web::get().to(wsroute)))
     })
     .bind(addr)?
     .run()

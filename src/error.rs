@@ -23,8 +23,8 @@ pub enum ServiceError {
     SJError(SJError),
     #[error("Not auth")]
     NotAuth,
-    // #[error("Authentication failed")]
-    // FailedAuth,
+    #[error("Not permission")]
+    NotPermission,
     // #[error("Error get client")]
     // ClientGet,
 }
@@ -67,6 +67,9 @@ impl ResponseError for ServiceError {
             // ServiceError::ClientGet => HttpResponse::BadRequest()
             //     .reason("Internal server error. Please try again later")
             //     .finish(),
+            ServiceError::NotPermission => HttpResponse::BadRequest()
+                .reason("Internal server error. Please try again later")
+                .finish(),
         }
     }
 }
