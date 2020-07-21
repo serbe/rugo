@@ -76,10 +76,6 @@ impl Handler<Connect> for Server {
     type Result = usize;
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
-        // println!("Someone joined");
-
-        // self.send_message(&"Main".to_owned(), "Someone joined", 0);
-
         let id = self.rng.gen::<usize>();
         self.sessions.insert(id, msg.addr);
 
@@ -91,80 +87,24 @@ impl Handler<Disconnect> for Server {
     type Result = ();
 
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
-        // println!("Someone disconnected");
-
         self.sessions.remove(&msg.id);
     }
 }
-
-// impl Handler<ClientMessage> for Server {
-//     type Result = ();
-
-//     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) -> Self::Result {
-//         self.send_message(msg.msg.as_str(), msg.id);
-//     }
-// }
-
-// impl Handler<Join> for Server {
-//     type Result = ();
-
-//     fn handle(&mut self, msg: Join, _: &mut Context<Self>) {
-//         let Join { id } = msg;
-
-//         self.send_message("Someone connected", id);
-//     }
-// }
-
 struct MyWs {
     // pool: Pool,
 }
 
-// pub struct WebData {
-//     pub pool: Pool,
-// }
-
 impl Actor for MyWs {
     type Context = ws::WebsocketContext<Self>;
 }
-
-// impl Handler<Msg> for MyWs {
-//     type Result = Result<WsMsg, ServiceError>;
-
-//     fn handle(&mut self, _msg: Msg, _ctx: &mut Self::Context) -> Self::Result {
-//         Ok(WsMsg::new())
-//     }
-// }
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         match msg {
             Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
             Ok(ws::Message::Text(text)) => ctx.text(text),
-            // let fut = async move {
-            //     let msg = ws_text(self.pool.clone(), text).await;
-            //     match serde_json::to_string(&msg) {
-            //         Ok(txt) => ctx.text(txt),
-            //         Err(err) => (),
-            //     }
-            // };
-            // spawn(fut);
-            // ctx.text(text),
             Ok(ws::Message::Binary(bin)) => ctx.binary(bin),
             _ => (),
         }
     }
 }
-
-// pub async fn ws_index(
-//     // data: web::Data<WebData>,
-//     req: HttpRequest,
-//     stream: web::Payload,
-// ) -> Result<HttpResponse, Error> {
-//     ws::start(
-//         MyWs {
-//             pool: data.pool.clone(),
-//         },
-//         &req,
-//         stream,
-//     )
-// }

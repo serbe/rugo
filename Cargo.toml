@@ -2,20 +2,13 @@
 authors = ["Serbe <mkoctuk@gmail.com>"]
 edition = "2018"
 name = "rugo"
-version = "0.8.2"
+version = "0.8.3"
 
 [dependencies]
-# anyhow = "1.0"
-# chrono = {version = "0.4", features = ["serde"]}
-# futures-util = { version = "0.3", features = ["sink"] }
-# tokio = { version = "0.2", features = ["io-util", "sync", "macros"] }
-# base64 = "0.12"
 actix = "0.9"
 actix-rt = "1.1"
-# actix-service = "1.0"
 actix-web = "2.0"
 actix-web-actors = "2.0"
-# actix-web-httpauth = "0.4"
 deadpool-postgres = "0.5"
 dotenv = "0.15"
 env_logger = "0.7"

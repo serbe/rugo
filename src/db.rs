@@ -2,7 +2,7 @@ use std::clone::Clone;
 use std::collections::HashMap;
 use std::fmt;
 use std::iter;
-// use std::sync::Mutex;
+use std::sync::Mutex;
 
 use actix::{fut, Actor, Addr, Context, Handler, ResponseActFuture};
 use deadpool_postgres::{Client, Pool};
@@ -53,7 +53,7 @@ impl UserData {
     }
 }
 
-static USERS: OnceCell<HashMap<String, UserData>> = OnceCell::new();
+static USERS: OnceCell<Mutex<HashMap<String, UserData>>> = OnceCell::new();
 
 pub async fn global_init() -> Result<(), ServiceError> {
     let mut rng = thread_rng();
@@ -77,29 +77,29 @@ pub async fn global_init() -> Result<(), ServiceError> {
             },
         );
     }
-    // let mutex = Mutex::new(hash_map);
-    let _g_users = USERS.set(hash_map).expect_err("error");
+    let mutex = Mutex::new(hash_map);
+    let _ = USERS.set(mutex);
     Ok(())
 }
 
+pub fn check_global() {
+    let _ = USERS.get().unwrap().lock().unwrap();
+}
+
 pub fn get_user(key: &str) -> Option<UserData> {
-    let users = USERS.get()?;
-    // let users = mutex.lock().ok()?;
+    let mutex = USERS.get()?;
+    let users = mutex.lock().ok()?;
     let user = users.get(key)?;
     Some(user.clone())
 }
 
 pub fn get_key(username: &str, userkey: &str) -> Option<String> {
-    println!("pre users");
-    let users = USERS.get()?;
-    // println!("mutex");
-    // let users = mutex.lock().ok()?;
-    println!("users");
+    let mutex = USERS.get()?;
+    let users = mutex.lock().ok()?;
     let key = users
         .iter()
         .find(|(_key, user)| user.name == username && user.key == userkey)
         .map(|(key, _user)| key)?;
-    println!("key");
     Some(key.clone())
 }
 
@@ -179,7 +179,6 @@ impl Handler<Msg> for DB {
     type Result = ResponseActFuture<Self, Result<String, ServiceError>>;
 
     fn handle(&mut self, msg: Msg, _: &mut Context<Self>) -> Self::Result {
-        // println!("DB MESSAGE: {:?}", msg.0);
         let message = msg.0;
         let this = self.clone();
         Box::new(fut::wrap_future(this.get_reply(message)))

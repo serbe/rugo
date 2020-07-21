@@ -5,7 +5,7 @@ use actix_web::{middleware, web, App, HttpServer};
 // use actix_web_httpauth::middleware::HttpAuthentication;
 
 use auth::login;
-use db::global_init;
+use db::{global_init, check_global};
 use server::Server;
 use session::wsroute;
 
@@ -23,6 +23,7 @@ async fn main() -> io::Result<()> {
     env_logger::init();
 
     global_init().await.unwrap();
+    check_global();
     let addr = dotenv::var("BIND_ADDR").expect("BIND_ADDR must be set");
 
     let server = Server::default().start();

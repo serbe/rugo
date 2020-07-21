@@ -72,7 +72,6 @@ impl Handler<Msg> for Session {
     type Result = Result<String, ServiceError>;
 
     fn handle(&mut self, msg: Msg, _ctx: &mut Self::Context) -> Self::Result {
-        // println!("session get Msg: {}", msg.0);
         Ok(msg.0)
     }
 }
@@ -96,7 +95,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Session {
                 self.hb = Instant::now();
             }
             ws::Message::Text(msg) => {
-                // println!("WEBSOCKET MESSAGE: {:?}", msg);
                 self.db
                     .send(Msg(msg))
                     .into_actor(self)
@@ -129,7 +127,6 @@ impl Session {
     fn hb(&self, ctx: &mut ws::WebsocketContext<Self>) {
         ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
             if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
-                // println!("Websocket Client heartbeat failed, disconnecting!");
                 act.server.do_send(Disconnect { id: act.id });
                 ctx.stop();
                 return;
