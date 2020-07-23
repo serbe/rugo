@@ -16,7 +16,9 @@ struct A {
 }
 
 pub async fn login(data: web::Json<Auth>) -> Result<HttpResponse, ServiceError> {
+    // println!("{}:{}", &data.u, &data.p);
     let key = get_key(&data.u, &data.p).ok_or(ServiceError::NotAuth)?;
+    // println!("{}", &key);
     Ok(HttpResponse::Ok().json(A { t: key }))
 }
 

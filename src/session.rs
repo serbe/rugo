@@ -94,22 +94,21 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Session {
             ws::Message::Pong(_) => {
                 self.hb = Instant::now();
             }
-            ws::Message::Text(msg) => {
-                self.db
-                    .send(Msg(msg))
-                    .into_actor(self)
-                    .then(|res, _self_actor, ctx| {
-                        match res {
-                            Ok(res_wsmsg) => match res_wsmsg {
-                                Ok(txt) => ctx.text(txt),
-                                Err(err) => println!("err wsmsg: {:?}", err.to_string()),
-                            },
-                            _ => println!("Something is wrong"),
-                        }
-                        fut::ready(())
-                    })
-                    .wait(ctx)
-            }
+            ws::Message::Text(msg) => self
+                .db
+                .send(Msg(msg))
+                .into_actor(self)
+                .then(|res, _self_actor, ctx| {
+                    match res {
+                        Ok(res_wsmsg) => match res_wsmsg {
+                            Ok(txt) => ctx.text(txt),
+                            Err(err) => println!("err wsmsg: {:?}", err.to_string()),
+                        },
+                        _ => println!("Something is wrong"),
+                    }
+                    fut::ready(())
+                })
+                .wait(ctx),
             ws::Message::Binary(_) => println!("Unexpected binary"),
             ws::Message::Close(reason) => {
                 ctx.close(reason);

@@ -2,10 +2,11 @@
 authors = ["Serbe <mkoctuk@gmail.com>"]
 edition = "2018"
 name = "rugo"
-version = "0.8.3"
+version = "0.8.4"
 
 [dependencies]
 actix = "0.9"
+actix-cors = "0.2"
 actix-rt = "1.1"
 actix-web = "2.0"
 actix-web-actors = "2.0"

@@ -58,9 +58,7 @@ impl ResponseError for ServiceError {
             ServiceError::SJError(_) => HttpResponse::BadRequest()
                 .reason("serde json error")
                 .finish(),
-            ServiceError::NotAuth => HttpResponse::BadRequest()
-                .reason("Internal server error. Please try again later")
-                .finish(),
+            ServiceError::NotAuth => HttpResponse::NotFound().finish(),
             // ServiceError::FailedAuth => HttpResponse::BadRequest()
             //     .reason("Internal server error. Please try again later")
             //     .finish(),
