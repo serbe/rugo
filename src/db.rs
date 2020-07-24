@@ -93,14 +93,14 @@ pub fn get_user(key: &str) -> Option<UserData> {
     Some(user.clone())
 }
 
-pub fn get_key(username: &str, userkey: &str) -> Option<String> {
+pub fn get_reply(username: &str, userkey: &str) -> Option<(String, i64)> {
     let mutex = USERS.get()?;
     let users = mutex.lock().ok()?;
-    let key = users
+    let reply = users
         .iter()
         .find(|(_key, user)| user.name == username && user.key == userkey)
-        .map(|(key, _user)| key)?;
-    Some(key.clone())
+        .map(|(key, user)| (key, user.role))?;
+    Some((reply.0.clone(), reply.1))
 }
 
 #[derive(Serialize)]

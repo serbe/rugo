@@ -2,7 +2,7 @@ use std::io;
 
 use actix::Actor;
 use actix_cors::Cors;
-use actix_web::{http, middleware, web, App, HttpServer};
+use actix_web::{middleware, web, App, HttpServer};
 
 use auth::login;
 use db::{check_global, global_init};
@@ -12,7 +12,6 @@ use session::wsroute;
 mod auth;
 mod db;
 mod error;
-// mod redirect;
 mod server;
 mod session;
 
@@ -31,12 +30,7 @@ async fn main() -> io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .data(server.clone())
-            .wrap(
-                Cors::new()
-                    .allowed_header(http::header::CONTENT_TYPE)
-                    .max_age(3600)
-                    .finish(),
-            )
+            .wrap(Cors::new().max_age(3600).finish())
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
             .service(web::resource("/api/go/login").route(web::post().to(login)))
