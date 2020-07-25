@@ -78,12 +78,12 @@ pub async fn global_init() -> Result<(), ServiceError> {
         );
     }
     let mutex = Mutex::new(hash_map);
-    let _ = USERS.set(mutex);
+    let _result = USERS.set(mutex);
     Ok(())
 }
 
 pub fn check_global() {
-    let _ = USERS.get().unwrap().lock().unwrap();
+    let _users = USERS.get().unwrap().lock().unwrap();
 }
 
 pub fn get_user(key: &str) -> Option<UserData> {
@@ -117,7 +117,7 @@ impl WsMsg {
             Ok(object) => WsMsg {
                 command: command.to_string(),
                 name,
-                object: object,
+                object,
                 error: String::new(),
             },
             Err(err) => WsMsg {
@@ -324,8 +324,8 @@ async fn get_item(item: &Item, client: &Client) -> Result<DBObject, ServiceError
     }
 }
 
-async fn get_list(name: &String, client: &Client) -> Result<DBObject, ServiceError> {
-    match name.as_str() {
+async fn get_list(name: &str, client: &Client) -> Result<DBObject, ServiceError> {
+    match name {
         "CertificateList" => Ok(DBObject::CertificateList(
             CertificateList::get_all(&client).await?,
         )),
@@ -414,7 +414,7 @@ async fn update_item(object: DBObject, client: &Client) -> Result<i64, ServiceEr
         DBObject::Scope(item) => Scope::update(&client, item).await,
         DBObject::Siren(item) => Siren::update(&client, *item).await,
         DBObject::SirenType(item) => SirenType::update(&client, item).await,
-        _ => Err(ServiceError::BadRequest("bad item object".to_string()))?,
+        _ => return Err(ServiceError::BadRequest("bad item object".to_string())),
     }?;
     Ok(res as i64)
 }
@@ -433,10 +433,10 @@ async fn delete_item(item: &Item, client: &Client) -> Result<i64, ServiceError> 
         "scope" => Scope::delete(client, item.id).await,
         "siren" => Siren::delete(client, item.id).await,
         "siren_type" => SirenType::delete(client, item.id).await,
-        _ => Err(ServiceError::BadRequest(format!(
+        _ => return Err(ServiceError::BadRequest(format!(
             "bad path {:?}",
             item.name
-        )))?,
+        ))),
     }?;
     Ok(res as i64)
 }
