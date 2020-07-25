@@ -105,20 +105,23 @@ pub fn get_reply(username: &str, userkey: &str) -> Option<(String, i64)> {
 
 #[derive(Serialize)]
 pub struct WsMsg {
+    pub command: String,
     pub name: String,
     pub object: DBObject,
     pub error: String,
 }
 
 impl WsMsg {
-    pub fn from_dbo(name: String, dbo: Result<DBObject, ServiceError>) -> WsMsg {
+    pub fn from_dbo(command: &str, name: String, dbo: Result<DBObject, ServiceError>) -> WsMsg {
         match dbo {
             Ok(object) => WsMsg {
+                command: command.to_string(),
                 name,
                 object: object,
                 error: String::new(),
             },
             Err(err) => WsMsg {
+                command: command.to_string(),
                 name,
                 object: DBObject::Null,
                 error: err.to_string(),
@@ -154,21 +157,30 @@ impl DB {
         let msg = match cmd {
             Command::Get(object) => match object {
                 Object::Item(item) => {
-                    WsMsg::from_dbo(item.name.clone(), get_item(&item, &client).await)
+                    WsMsg::from_dbo("Get", item.name.clone(), get_item(&item, &client).await)
                 }
-                Object::List(obj) => WsMsg::from_dbo(obj.clone(), get_list(&obj, &client).await),
+                Object::List(obj) => {
+                    WsMsg::from_dbo("Get", obj.clone(), get_list(&obj, &client).await)
+                }
             },
             Command::Insert(dbobject) => WsMsg::from_dbo(
-                String::new(),
-                Ok(DBObject::Res(insert_item(dbobject, &client).await?)),
+                "Insert",
+                dbobject.name(),
+                Ok(insert_item(dbobject, &client)
+                    .await
+                    .map(|_| DBObject::Null)?),
             ),
             Command::Update(dbobject) => WsMsg::from_dbo(
-                String::new(),
-                Ok(DBObject::Res(update_item(dbobject, &client).await?)),
+                "Update",
+                dbobject.name(),
+                Ok(update_item(dbobject, &client)
+                    .await
+                    .map(|_| DBObject::Null)?),
             ),
             Command::Delete(item) => WsMsg::from_dbo(
-                String::new(),
-                Ok(DBObject::Res(delete_item(&item, &client).await?)),
+                "Delete",
+                item.name.clone(),
+                Ok(delete_item(&item, &client).await.map(|_| DBObject::Null)?),
             ),
         };
         Ok(serde_json::to_string(&msg)?)
@@ -214,7 +226,6 @@ pub enum Command {
 #[derive(Deserialize, Serialize)]
 pub enum DBObject {
     Null,
-    Res(i64),
     Certificate(Certificate),
     CertificateList(Vec<CertificateList>),
     Company(Box<Company>),
@@ -244,41 +255,40 @@ pub enum DBObject {
     SirenTypeList(Vec<SirenTypeList>),
 }
 
-// impl DBObject {
-//     fn name(&self) -> String {
-//         match self {
-//             DBObject::Res(_) => String::new(),
-//             DBObject::Null => String::new(),
-//             DBObject::Certificate(_) => String::from("Certificate"),
-//             DBObject::CertificateList(_) => String::from("CertificateList"),
-//             DBObject::Company(_) => String::from("Company"),
-//             DBObject::CompanyList(_) => String::from("CompanyList"),
-//             DBObject::Contact(_) => String::from("Contact"),
-//             DBObject::ContactList(_) => String::from("ContactList"),
-//             DBObject::Department(_) => String::from("Department"),
-//             DBObject::DepartmentList(_) => String::from("DepartmentList"),
-//             DBObject::Education(_) => String::from("Education"),
-//             DBObject::EducationList(_) => String::from("EducationList"),
-//             DBObject::EducationShort(_) => String::from("EducationShort"),
-//             DBObject::Kind(_) => String::from("Kind"),
-//             DBObject::KindList(_) => String::from("KindList"),
-//             DBObject::Post(_) => String::from("Post"),
-//             DBObject::PostList(_) => String::from("PostList"),
-//             DBObject::Practice(_) => String::from("Practice"),
-//             DBObject::PracticeList(_) => String::from("PracticeList"),
-//             DBObject::PracticeShort(_) => String::from("PracticeShort"),
-//             DBObject::Rank(_) => String::from("Rank"),
-//             DBObject::RankList(_) => String::from("RankList"),
-//             DBObject::Scope(_) => String::from("Scope"),
-//             DBObject::ScopeList(_) => String::from("ScopeList"),
-//             DBObject::SelectItem(_) => String::from("SelectItem"),
-//             DBObject::Siren(_) => String::from("Siren"),
-//             DBObject::SirenList(_) => String::from("SirenList"),
-//             DBObject::SirenType(_) => String::from("SirenType"),
-//             DBObject::SirenTypeList(_) => String::from("SirenTypeList"),
-//         }
-//     }
-// }
+impl DBObject {
+    fn name(&self) -> String {
+        match self {
+            DBObject::Null => String::new(),
+            DBObject::Certificate(_) => String::from("Certificate"),
+            DBObject::CertificateList(_) => String::from("CertificateList"),
+            DBObject::Company(_) => String::from("Company"),
+            DBObject::CompanyList(_) => String::from("CompanyList"),
+            DBObject::Contact(_) => String::from("Contact"),
+            DBObject::ContactList(_) => String::from("ContactList"),
+            DBObject::Department(_) => String::from("Department"),
+            DBObject::DepartmentList(_) => String::from("DepartmentList"),
+            DBObject::Education(_) => String::from("Education"),
+            DBObject::EducationList(_) => String::from("EducationList"),
+            DBObject::EducationShort(_) => String::from("EducationShort"),
+            DBObject::Kind(_) => String::from("Kind"),
+            DBObject::KindList(_) => String::from("KindList"),
+            DBObject::Post(_) => String::from("Post"),
+            DBObject::PostList(_) => String::from("PostList"),
+            DBObject::Practice(_) => String::from("Practice"),
+            DBObject::PracticeList(_) => String::from("PracticeList"),
+            DBObject::PracticeShort(_) => String::from("PracticeShort"),
+            DBObject::Rank(_) => String::from("Rank"),
+            DBObject::RankList(_) => String::from("RankList"),
+            DBObject::Scope(_) => String::from("Scope"),
+            DBObject::ScopeList(_) => String::from("ScopeList"),
+            DBObject::SelectItem(_) => String::from("SelectItem"),
+            DBObject::Siren(_) => String::from("Siren"),
+            DBObject::SirenList(_) => String::from("SirenList"),
+            DBObject::SirenType(_) => String::from("SirenType"),
+            DBObject::SirenTypeList(_) => String::from("SirenTypeList"),
+        }
+    }
+}
 
 impl fmt::Display for Object {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
