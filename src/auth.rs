@@ -11,9 +11,14 @@ pub struct Auth {
 }
 
 #[derive(Deserialize, Serialize)]
-struct A {
+pub struct A {
     t: String,
     r: i64,
+}
+
+#[derive(Serialize)]
+struct C {
+    r: bool,
 }
 
 pub async fn login(data: web::Json<Auth>) -> Result<HttpResponse, ServiceError> {
@@ -22,6 +27,11 @@ pub async fn login(data: web::Json<Auth>) -> Result<HttpResponse, ServiceError> 
         t: reply.0,
         r: reply.1,
     }))
+}
+
+pub async fn check_auth(data: web::Json<A>) -> Result<HttpResponse, ServiceError> {
+    let result = get_user(&data.t).map(|u| u.role == data.r).ok_or(ServiceError::NotAuth)?;
+    Ok(HttpResponse::Ok().json(C {r: result}))
 }
 
 pub fn check(message: ClientMessage) -> Result<Command, ServiceError> {

@@ -4,7 +4,7 @@ use actix::Actor;
 use actix_cors::Cors;
 use actix_web::{middleware, web, App, HttpServer};
 
-use auth::login;
+use auth::{login, check_auth};
 use db::{check_global, global_init};
 use server::Server;
 use session::wsroute;
@@ -33,6 +33,7 @@ async fn main() -> io::Result<()> {
             .wrap(Cors::new().max_age(3600).finish())
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
+            .service(web::resource("/api/go/check").route(web::post().to(check_auth)))
             .service(web::resource("/api/go/login").route(web::post().to(login)))
             .service(web::resource("/api/go").route(web::get().to(wsroute)))
     })
