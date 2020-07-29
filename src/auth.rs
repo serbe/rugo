@@ -10,7 +10,7 @@ pub struct Auth {
     p: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct A {
     t: String,
     r: i64,
@@ -30,6 +30,7 @@ pub async fn login(data: web::Json<Auth>) -> Result<HttpResponse, ServiceError> 
 }
 
 pub async fn check_auth(data: web::Json<A>) -> Result<HttpResponse, ServiceError> {
+    dbg!(&data);
     let result = get_user(&data.t).map(|u| u.role == data.r).ok_or(ServiceError::NotAuth)?;
     Ok(HttpResponse::Ok().json(C {r: result}))
 }
