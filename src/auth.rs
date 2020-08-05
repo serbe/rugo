@@ -31,8 +31,10 @@ pub async fn login(data: web::Json<Auth>) -> Result<HttpResponse, ServiceError> 
 
 pub async fn check_auth(data: web::Json<A>) -> Result<HttpResponse, ServiceError> {
     dbg!(&data);
-    let result = get_user(&data.t).map(|u| u.role == data.r).ok_or(ServiceError::NotAuth)?;
-    Ok(HttpResponse::Ok().json(C {r: result}))
+    let result = get_user(&data.t)
+        .map(|u| u.role == data.r)
+        .ok_or(ServiceError::NotAuth)?;
+    Ok(HttpResponse::Ok().json(C { r: result }))
 }
 
 pub fn check(message: ClientMessage) -> Result<Command, ServiceError> {

@@ -4,16 +4,18 @@ use actix::Actor;
 use actix_cors::Cors;
 use actix_web::{middleware, web, App, HttpServer};
 
-use auth::{login, check_auth};
+use auth::{check_auth, login};
 use db::{check_global, global_init};
 use server::Server;
 use session::wsroute;
 
 mod auth;
 mod db;
+mod dbo;
 mod error;
 mod server;
 mod session;
+mod users;
 
 #[actix_rt::main]
 async fn main() -> io::Result<()> {
