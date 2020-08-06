@@ -227,19 +227,19 @@ pub async fn update_item(object: DBObject, client: &Client) -> Result<i64, Servi
 
 pub async fn delete_item(item: &Item, client: &Client) -> Result<i64, ServiceError> {
     let res = match item.name.as_str() {
-        "certificate" => Certificate::delete(client, item.id).await,
-        "company" => Company::delete(client, item.id).await,
-        "contact" => Contact::delete(client, item.id).await,
-        "department" => Department::delete(client, item.id).await,
-        "education" => Education::delete(client, item.id).await,
-        "kind" => Kind::delete(client, item.id).await,
-        "post" => Post::delete(client, item.id).await,
-        "practice" => Practice::delete(client, item.id).await,
-        "rank" => Rank::delete(client, item.id).await,
-        "scope" => Scope::delete(client, item.id).await,
-        "siren" => Siren::delete(client, item.id).await,
-        "siren_type" => SirenType::delete(client, item.id).await,
-        "user" => User::delete(client, item.id).await,
+        "Certificate" => Certificate::delete(client, item.id).await,
+        "Company" => Company::delete(client, item.id).await,
+        "Contact" => Contact::delete(client, item.id).await,
+        "Department" => Department::delete(client, item.id).await,
+        "Education" => Education::delete(client, item.id).await,
+        "Kind" => Kind::delete(client, item.id).await,
+        "Post" => Post::delete(client, item.id).await,
+        "Practice" => Practice::delete(client, item.id).await,
+        "Rank" => Rank::delete(client, item.id).await,
+        "Scope" => Scope::delete(client, item.id).await,
+        "Siren" => Siren::delete(client, item.id).await,
+        "Siren_type" => SirenType::delete(client, item.id).await,
+        "User" => User::delete(client, item.id).await,
         _ => {
             return Err(ServiceError::BadRequest(format!(
                 "bad path {:?}",
