@@ -34,10 +34,10 @@ impl UserData {
             Command::Update(_) => self.role >> 3 > 0,
             Command::Delete(_) => self.role >> 4 > 0,
             Command::User(UserObject::Get(_)) => self.role >> 5 > 0,
-            Command::User(UserObject::GetList) => self.role >> 6 > 0,
-            Command::User(UserObject::Insert(_)) => self.role >> 7 > 0,
-            Command::User(UserObject::Update(_)) => self.role >> 8 > 0,
-            Command::User(UserObject::Delete(_)) => self.role >> 9 > 0,
+            Command::User(UserObject::GetList) => self.role >> 5 > 0,
+            Command::User(UserObject::Insert(_)) => self.role >> 6 > 0,
+            Command::User(UserObject::Update(_)) => self.role >> 7 > 0,
+            Command::User(UserObject::Delete(_)) => self.role >> 8 > 0,
         } {
             Ok(command)
         } else {
