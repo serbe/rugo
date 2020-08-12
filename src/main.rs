@@ -1,16 +1,15 @@
 use actix_cors::Cors;
 use actix_web::{
-    http::header,
     middleware::{Compress, Logger},
     web, App, HttpServer,
 };
-use actix_web_httpauth::middleware::HttpAuthentication;
+// use actix_web_httpauth::middleware::HttpAuthentication;
 use dotenv::dotenv;
 use log::info;
 
 use rpel::get_pool;
 
-use auth::bearer_auth_validator;
+// use auth::bearer_auth_validator;
 use db::{delete_name_id, get_list_name, get_name_id, jsonpost, post_name_id};
 
 mod auth;
@@ -31,16 +30,12 @@ async fn main() -> std::io::Result<()> {
     info!("Listening on: {}", addr);
 
     HttpServer::new(move || {
-        let auth = HttpAuthentication::bearer(bearer_auth_validator);
+        // let auth = HttpAuthentication::bearer(bearer_auth_validator);
         App::new()
             .data(pool.clone())
-            .wrap(auth)
+            // .wrap(auth)
             .wrap(
                 Cors::new()
-                    .allowed_origin("http://localhost:3000")
-                    .allowed_methods(vec!["GET", "POST", "OPTION"])
-                    .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
-                    .allowed_header(header::CONTENT_TYPE)
                     .max_age(3600)
                     .finish(),
             )
