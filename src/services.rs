@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::auth::check;
 use crate::dbo::{delete_item, get_item, get_list, insert_item, update_item, DBObject};
 use crate::error::ServiceError;
-use crate::users::{user_cmd, UserObject, USERS};
+use crate::users::{user_cmd, UserObject};
 
 #[derive(Deserialize)]
 pub struct ClientMessage {
@@ -31,7 +31,7 @@ pub enum Command {
     Insert(DBObject),
     Update(DBObject),
     Delete(Item),
-    // User(UserObject),
+    User(UserObject),
 }
 
 #[derive(Serialize)]
@@ -61,21 +61,7 @@ impl WsMsg {
     }
 }
 
-pub fn get_reply(username: &str, userkey: &str) -> Option<(String, i64)> {
-    let mutex = USERS.get()?;
-    let users = mutex.lock().ok()?;
-    let reply = users
-        .iter()
-        .find(|(_key, user)| user.name == username && user.key == userkey)
-        .map(|(key, user)| (key, user.role))?;
-    Some((reply.0.clone(), reply.1))
-}
-
-pub async fn jsonpost(
-    db: Pool,
-    msg: ClientMessage,
-) -> Result<WsMsg, ServiceError> {
-    // let msg: ClientMessage = params.into_inner();
+pub async fn get_response(msg: ClientMessage, db: Pool) -> Result<String, ServiceError> {
     let cmd = check(msg)?;
     let client = db.get().await?;
     let msg = match cmd {
@@ -104,7 +90,7 @@ pub async fn jsonpost(
             item.name.clone(),
             Ok(delete_item(&item, &client).await.map(|_| DBObject::Null)?),
         ),
-        // Command::User(obj) => return user_cmd(obj, &client).await,
+        Command::User(obj) => return Ok(serde_json::to_string(&user_cmd(obj, &client).await?)?),
     };
-    Ok(msg)
+    Ok(serde_json::to_string(&msg)?)
 }

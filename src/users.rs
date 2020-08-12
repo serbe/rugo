@@ -46,11 +46,11 @@ impl UserData {
             Command::Insert(_) => self.role >> 2 > 0,
             Command::Update(_) => self.role >> 3 > 0,
             Command::Delete(_) => self.role >> 4 > 0,
-            // Command::User(UserObject::Get(_)) => self.role >> 5 > 0,
-            // Command::User(UserObject::GetList) => self.role >> 5 > 0,
-            // Command::User(UserObject::Insert(_)) => self.role >> 6 > 0,
-            // Command::User(UserObject::Update(_)) => self.role >> 7 > 0,
-            // Command::User(UserObject::Delete(_)) => self.role >> 8 > 0,
+            Command::User(UserObject::Get(_)) => self.role >> 5 > 0,
+            Command::User(UserObject::GetList) => self.role >> 5 > 0,
+            Command::User(UserObject::Insert(_)) => self.role >> 6 > 0,
+            Command::User(UserObject::Update(_)) => self.role >> 7 > 0,
+            Command::User(UserObject::Delete(_)) => self.role >> 8 > 0,
         } {
             Ok(command)
         } else {
@@ -86,9 +86,9 @@ pub async fn global_init() -> Result<(), ServiceError> {
     Ok(())
 }
 
-pub fn check_global() {
-    let _users = USERS.get().unwrap().lock().unwrap();
-}
+// pub fn check_global() {
+//     let _users = USERS.get().unwrap().lock().unwrap();
+// }
 
 pub fn get_user(key: &str) -> Option<UserData> {
     let mutex = USERS.get()?;
