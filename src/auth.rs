@@ -1,52 +1,43 @@
-use actix_identity::Identity;
-use actix_web::{web, HttpResponse};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value::Null};
-use anyhow::Error;
 
-#[derive(Deserialize, Serialize)]
+use crate::error::ServiceError;
+use crate::services::{get_reply, ClientMessage, Command};
+use crate::users::get_user;
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Auth {
-    username: String,
-    password: String,
+    u: String,
+    p: String,
 }
 
-pub fn login(id: Identity, params: web::Json<Auth>) -> HttpResponse {
-    let secret_key = dotenv::var("SECRET_KEY").unwrap();
-    let auth: Auth = params.into_inner();
-    let mut s = auth.username;
-    s.push_str(&auth.password);
-    if base64::encode(s.as_bytes()) == secret_key {
-        id.remember("Member".to_owned());
-    } else {
-        id.forget();
-    }
-    check(id)
+#[derive(Debug, Deserialize, Serialize)]
+pub struct A {
+    t: String,
+    r: i64,
 }
 
-pub fn logout(id: Identity) -> HttpResponse {
-    id.forget();
-    HttpResponse::Ok().json(json!({
-        "error": Null,
-        "user": Null
-    }))
+#[derive(Serialize)]
+struct C {
+    r: bool,
 }
 
-pub fn check(id: Identity) -> HttpResponse {
-    match check_auth(id) {
-        Ok(user) => HttpResponse::Ok().json(json!({
-            "user": user,
-            "error": Null,
-        })),
-        Err(err) => HttpResponse::Ok().json(json!({
-            "user": Null,
-            "error": err,
-        })),
-    }
+pub async fn login(data: Auth) -> Result<A, ServiceError> {
+    let reply = get_reply(&data.u, &data.p).ok_or(ServiceError::NotAuth)?;
+    Ok(A {
+        t: reply.0,
+        r: reply.1,
+    })
 }
 
-pub fn check_auth(id: Identity) -> Result<String, Error> {
-    match id.identity() {
-        Some(i) => Ok(i),
-        None => Err("Not auth".to_owned()),
-    }
+pub async fn check_auth(data: A) -> Result<C, ServiceError> {
+    // dbg!(&data);
+    let result = get_user(&data.t)
+        .map(|u| u.role == data.r)
+        .ok_or(ServiceError::NotAuth)?;
+    Ok(C { r: result })
+}
+
+pub fn check(message: ClientMessage) -> Result<Command, ServiceError> {
+    let user = get_user(&message.addon).ok_or(ServiceError::NotAuth)?;
+    user.permissions(message.command)
 }

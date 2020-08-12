@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use anyhow::{Error, Result};
-use async_tungstenite::{tokio::connect_async, tungstenite::Message};
+use tokio_tungstenite::{accept_async, tungstenite::Message};
 use deadpool_postgres::Pool;
 use futures::StreamExt;
 use futures_util::SinkExt;
@@ -10,14 +10,19 @@ use serde_json;
 use tokio::net::{TcpListener, TcpStream};
 
 use rpel::get_pool;
-
+use services::Command;
 // use db::{get_item, get_list, Command, Object, Response};
 
 // type Tx = UnboundedSender<Message>;
 // type PeerMap = Arc<Mutex<HashMap<SocketAddr, Tx>>>;
+// use error::ServiceError;
 
-// mod auth;
-// mod db;
+mod auth;
+mod dbo;
+mod rpel;
+mod error;
+mod services;
+mod users;
 
 // async fn handle_connection(peer_map: PeerMap, raw_stream: TcpStream, addr: SocketAddr) {
 //     println!("Incoming TCP connection from: {}", addr);
@@ -76,32 +81,36 @@ async fn accept_connection(peer: SocketAddr, stream: TcpStream, pool: Pool) {
 async fn handle_connection(peer: SocketAddr, stream: TcpStream, pool: Pool) -> Result<()> {
     let mut ws_stream = accept_async(stream).await.expect("Failed to accept");
 
-    println!("New WebSocket connection: {}", peer);
+    info!("New WebSocket connection: {}", peer);
 
     while let Some(msg) = ws_stream.next().await {
-        let mut resp = Response::new();
+        // let msg = msg?;
+        // if msg.is_text() || msg.is_binary() {
+        //     ws_stream.send(msg).await?;
+        // }
+        // let mut resp = Response::new();
         let cmd: Command = serde_json::from_str(msg?.to_text()?)?;
-        match cmd {
-            Command::Get(Object::Item(item)) => {
-                resp.name = item.name.clone();
-                match get_item(&item, pool.clone()).await {
-                    Ok(dbo) => resp.object = dbo,
-                    Err(err) => resp.error = err.to_string(),
-                }
-                let msg = serde_json::to_string(&resp)?;
-                ws_stream.send(Message::Text(msg)).await?;
-            }
-            Command::Get(Object::List(list)) => {
-                resp.name = list.clone();
-                match get_list(&list, pool.clone()).await {
-                    Ok(dbo) => resp.object = dbo,
-                    Err(err) => resp.error = err.to_string(),
-                }
-                let msg = serde_json::to_string(&resp)?;
-                ws_stream.send(Message::Text(msg)).await?;
-            }
-            Command::Set(_db_object) => (),
-        }
+        // match cmd {
+        //     Command::Get(Object::Item(item)) => {
+        //         resp.name = item.name.clone();
+        //         match get_item(&item, pool.clone()).await {
+        //             Ok(dbo) => resp.object = dbo,
+        //             Err(err) => resp.error = err.to_string(),
+        //         }
+        //         let msg = serde_json::to_string(&resp)?;
+        //         ws_stream.send(Message::Text(msg)).await?;
+        //     }
+        //     Command::Get(Object::List(list)) => {
+        //         resp.name = list.clone();
+        //         match get_list(&list, pool.clone()).await {
+        //             Ok(dbo) => resp.object = dbo,
+        //             Err(err) => resp.error = err.to_string(),
+        //         }
+        //         let msg = serde_json::to_string(&resp)?;
+        //         ws_stream.send(Message::Text(msg)).await?;
+        //     }
+        //     Command::Set(_db_object) => (),
+        // }
     }
 
     Ok(())
