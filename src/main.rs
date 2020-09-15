@@ -1,3 +1,5 @@
+#![type_length_limit="1297109"]
+
 use std::net::SocketAddr;
 
 use anyhow::{Error, Result};
