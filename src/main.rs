@@ -1,17 +1,17 @@
-#![type_length_limit="1297174"]
+#![type_length_limit = "1297444"]
 
 use std::net::SocketAddr;
 
-use anyhow::{Error, Result};
 use deadpool_postgres::Pool;
 use futures::StreamExt;
 use futures_util::sink::SinkExt;
 use log::{error, info};
 use serde_json;
 use tokio::net::{TcpListener, TcpStream};
-use tokio_tungstenite::{accept_async, tungstenite::Message};
+use tokio_tungstenite::{accept_async, tungstenite::Message, WebSocketStream};
 
-use auth::{check_auth, login, A};
+use auth::{check_auth, login};
+use error::Result;
 use rpel::get_pool;
 use services::get_response;
 use users::Users;
@@ -33,6 +33,17 @@ async fn accept_connection(peer: SocketAddr, stream: TcpStream, pool: Pool, user
     }
 }
 
+async fn send_message(ws: &mut WebSocketStream<TcpStream>, response: Result<String>) -> Result<()> {
+    match response {
+        Ok(item) => ws.send(Message::Text(item)).await?,
+        Err(err) => {
+            info!("error {:?}", err);
+            ws.close(None).await?;
+        }
+    }
+    Ok(())
+}
+
 async fn handle_connection(
     peer: SocketAddr,
     stream: TcpStream,
@@ -47,38 +58,25 @@ async fn handle_connection(
         let msg = msg?;
         let text = msg.to_text()?;
 
-        info!("text {}", text);
-
-        let c: Result<A, serde_json::Error> = serde_json::from_str(text);
-        info!("{:?}", c);
-
         if let Ok(checked_data) = serde_json::from_str(text) {
-            info!("checked_data");
-            let response = check_auth(users, checked_data).await;
-            info!("checked_data {:?}", &response);
-            ws_stream.send(Message::Text(response?)).await?;
+            send_message(&mut ws_stream, check_auth(users, checked_data).await).await?;
         }
         if let Ok(client_message) = serde_json::from_str(text) {
-            info!("client_message");
-            let response = get_response(users, client_message, pool.clone()).await;
-            info!("client_message ok {}", &response.is_ok());
-            ws_stream.send(Message::Text(response?)).await?;
+            send_message(
+                &mut ws_stream,
+                get_response(users, client_message, pool.clone()).await,
+            )
+            .await?;
         }
         if let Ok(login_data) = serde_json::from_str(text) {
-            info!("login_data");
-            let response = login(users, login_data).await;
-            info!("login_data {:?}", &response);
-            ws_stream.send(Message::Text(response?)).await?;
+            send_message(&mut ws_stream, login(users, login_data).await).await?;
         }
-        // } else {
-        //     info!("wrong ws text: {}", text)
-        // }
     }
 
     Ok(())
 }
 
-async fn run() -> Result<(), Error> {
+async fn run() -> Result<()> {
     let addr = dotenv::var("BIND_ADDR").expect("BIND_ADDR must be set");
     std::env::set_var("RUST_LOG", "rugo=info");
     env_logger::init();
@@ -101,7 +99,7 @@ async fn run() -> Result<(), Error> {
     Ok(())
 }
 
-fn main() -> Result<(), Error> {
+fn main() -> Result<()> {
     let mut rt = tokio::runtime::Runtime::new()?;
     rt.block_on(run())
 }
