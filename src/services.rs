@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::auth::check;
 use crate::dbo::{delete_item, get_item, get_list, insert_item, update_item, DBObject};
 use crate::error::ServiceError;
-use crate::users::{user_cmd, UserObject};
+use crate::users::{user_cmd, UserObject, Users};
 
 #[derive(Deserialize)]
 pub struct ClientMessage {
@@ -61,8 +61,12 @@ impl WsMsg {
     }
 }
 
-pub async fn get_response(msg: ClientMessage, db: Pool) -> Result<String, ServiceError> {
-    let cmd = check(msg)?;
+pub async fn get_response(
+    users: &Users,
+    msg: ClientMessage,
+    db: Pool,
+) -> Result<String, ServiceError> {
+    let cmd = check(users, msg)?;
     let client = db.get().await?;
     let msg = match cmd {
         Command::Get(object) => match object {

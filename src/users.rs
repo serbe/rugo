@@ -1,18 +1,18 @@
 use std::collections::HashMap;
 use std::iter;
-use std::sync::Mutex;
 
-use deadpool_postgres::Client;
-use once_cell::sync::OnceCell;
+use deadpool_postgres::{Client, Pool};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 
 use crate::error::ServiceError;
-use crate::rpel::get_pool;
 use crate::rpel::user::{User, UserList};
 use crate::services::Command;
 
-pub static USERS: OnceCell<Mutex<HashMap<String, UserData>>> = OnceCell::new();
+#[derive(Clone)]
+pub struct Users {
+    map: HashMap<String, UserData>,
+}
 
 #[derive(Clone)]
 pub struct UserData {
@@ -59,42 +59,42 @@ impl UserData {
     }
 }
 
-pub async fn global_init() -> Result<(), ServiceError> {
-    let mut rng = thread_rng();
-    let client = get_pool().get().await?;
-    let users = UserList::get_all(&client)
-        .await
-        .expect("get UserList failed");
-    let mut hash_map = HashMap::new();
-    for user in users {
-        let key = iter::repeat(())
-            .map(|()| rng.sample(Alphanumeric))
-            .take(20)
-            .collect();
-        hash_map.insert(
-            key,
-            UserData {
-                id: user.id,
-                name: user.name.clone(),
-                key: user.key.clone(),
-                role: user.role,
-            },
-        );
+impl Users {
+    pub async fn new(pool: &Pool) -> Result<Users, ServiceError> {
+        let mut rng = thread_rng();
+        let client = pool.get().await?;
+        let users = UserList::get_all(&client).await?;
+        let mut map = HashMap::new();
+        for user in users {
+            let key = iter::repeat(())
+                .map(|()| rng.sample(Alphanumeric))
+                .take(20)
+                .collect();
+            map.insert(
+                key,
+                UserData {
+                    id: user.id,
+                    name: user.name.clone(),
+                    key: user.key.clone(),
+                    role: user.role,
+                },
+            );
+        }
+        Ok(Users { map })
     }
-    let mutex = Mutex::new(hash_map);
-    let _result = USERS.set(mutex);
-    Ok(())
-}
 
-// pub fn check_global() {
-//     let _users = USERS.get().unwrap().lock().unwrap();
-// }
+    pub fn get_user(&self, key: &str) -> Option<UserData> {
+        self.map.get(key).cloned()
+    }
 
-pub fn get_user(key: &str) -> Option<UserData> {
-    let mutex = USERS.get()?;
-    let users = mutex.lock().ok()?;
-    let user = users.get(key)?;
-    Some(user.clone())
+    pub fn get_reply(&self, username: &str, userkey: &str) -> Option<(String, i64)> {
+        let reply = self
+            .map
+            .iter()
+            .find(|(_key, user)| user.name == username && user.key == userkey)
+            .map(|(key, user)| (key, user.role))?;
+        Some((reply.0.clone(), reply.1))
+    }
 }
 
 #[derive(Serialize, Deserialize)]

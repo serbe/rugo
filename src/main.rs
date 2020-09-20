@@ -1,4 +1,4 @@
-#![type_length_limit="1297109"]
+#![type_length_limit="1297174"]
 
 use std::net::SocketAddr;
 
@@ -11,10 +11,10 @@ use serde_json;
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::{accept_async, tungstenite::Message};
 
-use auth::{check_auth, login};
+use auth::{check_auth, login, A};
 use rpel::get_pool;
 use services::get_response;
-use users::global_init;
+use users::Users;
 
 mod auth;
 mod dbo;
@@ -23,8 +23,8 @@ mod rpel;
 mod services;
 mod users;
 
-async fn accept_connection(peer: SocketAddr, stream: TcpStream, pool: Pool) {
-    if let Err(e) = handle_connection(peer, stream, pool).await {
+async fn accept_connection(peer: SocketAddr, stream: TcpStream, pool: Pool, users: Users) {
+    if let Err(e) = handle_connection(peer, stream, pool, &users).await {
         // match e {
         //  ttError::ConnectionClosed | ttError::Protocol(_) | ttError::Utf8 => (),
         //  err => println!("Error processing connection: {}", err),
@@ -33,25 +33,46 @@ async fn accept_connection(peer: SocketAddr, stream: TcpStream, pool: Pool) {
     }
 }
 
-async fn handle_connection(peer: SocketAddr, stream: TcpStream, pool: Pool) -> Result<()> {
+async fn handle_connection(
+    peer: SocketAddr,
+    stream: TcpStream,
+    pool: Pool,
+    users: &Users,
+) -> Result<()> {
     let mut ws_stream = accept_async(stream).await.expect("Failed to accept");
 
     info!("New WebSocket connection: {}", peer);
 
     while let Some(msg) = ws_stream.next().await {
         let msg = msg?;
-        if let Ok(client_message) = serde_json::from_str(msg.to_text()?) {
-            let response = get_response(client_message, pool.clone()).await?;
-            ws_stream.send(Message::Text(response)).await?;
-        } else if let Ok(checked_data) = serde_json::from_str(msg.to_text()?) {
-            let response = check_auth(checked_data).await?;
-            ws_stream.send(Message::Text(response)).await?;
-        } else if let Ok(login_data) = serde_json::from_str(msg.to_text()?) {
-            let response = login(login_data).await?;
-            ws_stream.send(Message::Text(response)).await?;
-        } else {
-            info!("wrong ws text: {}", msg.to_text()?)
+        let text = msg.to_text()?;
+
+        info!("text {}", text);
+
+        let c: Result<A, serde_json::Error> = serde_json::from_str(text);
+        info!("{:?}", c);
+
+        if let Ok(checked_data) = serde_json::from_str(text) {
+            info!("checked_data");
+            let response = check_auth(users, checked_data).await;
+            info!("checked_data {:?}", &response);
+            ws_stream.send(Message::Text(response?)).await?;
         }
+        if let Ok(client_message) = serde_json::from_str(text) {
+            info!("client_message");
+            let response = get_response(users, client_message, pool.clone()).await;
+            info!("client_message ok {}", &response.is_ok());
+            ws_stream.send(Message::Text(response?)).await?;
+        }
+        if let Ok(login_data) = serde_json::from_str(text) {
+            info!("login_data");
+            let response = login(users, login_data).await;
+            info!("login_data {:?}", &response);
+            ws_stream.send(Message::Text(response?)).await?;
+        }
+        // } else {
+        //     info!("wrong ws text: {}", text)
+        // }
     }
 
     Ok(())
@@ -61,9 +82,9 @@ async fn run() -> Result<(), Error> {
     let addr = dotenv::var("BIND_ADDR").expect("BIND_ADDR must be set");
     std::env::set_var("RUST_LOG", "rugo=info");
     env_logger::init();
-    global_init().await?;
 
     let pool = get_pool();
+    let users = Users::new(&pool).await?;
 
     let mut listener = TcpListener::bind(&addr).await.expect("Can't listen");
     info!("Listening on: {}", addr);
@@ -74,7 +95,7 @@ async fn run() -> Result<(), Error> {
             .expect("connected streams should have a peer address");
         info!("Peer address: {}", peer);
 
-        tokio::spawn(accept_connection(peer, stream, pool.clone()));
+        tokio::spawn(accept_connection(peer, stream, pool.clone(), users.clone()));
     }
 
     Ok(())
