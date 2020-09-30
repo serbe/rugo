@@ -1,14 +1,13 @@
-#![type_length_limit = "1297444"]
+#![type_length_limit="22068819"]
 
 use std::net::SocketAddr;
 
 use deadpool_postgres::Pool;
-use futures::StreamExt;
+use futures::{StreamExt, stream::SplitSink};
+use warp::{Filter, ws::{Message, WebSocket}};
 use futures_util::sink::SinkExt;
 use log::{error, info};
 use serde_json;
-use tokio::net::{TcpListener, TcpStream};
-use tokio_tungstenite::{accept_async, tungstenite::Message, WebSocketStream};
 
 use auth::{check_auth, login};
 use error::Result;
@@ -23,8 +22,8 @@ mod rpel;
 mod services;
 mod users;
 
-async fn accept_connection(peer: SocketAddr, stream: TcpStream, pool: Pool, users: Users) {
-    if let Err(e) = handle_connection(peer, stream, pool, &users).await {
+async fn accept_connection(socket: WebSocket, users: Users, pool: Pool) {
+    if let Err(e) = handle_connection(socket, &users, pool).await {
         // match e {
         //  ttError::ConnectionClosed | ttError::Protocol(_) | ttError::Utf8 => (),
         //  err => println!("Error processing connection: {}", err),
@@ -33,73 +32,78 @@ async fn accept_connection(peer: SocketAddr, stream: TcpStream, pool: Pool, user
     }
 }
 
-async fn send_message(ws: &mut WebSocketStream<TcpStream>, response: Result<String>) -> Result<()> {
+async fn send_message(tx: &mut SplitSink<WebSocket, Message>, response: Result<String>) -> Result<()> {
     match response {
-        Ok(item) => ws.send(Message::Text(item)).await?,
+        Ok(item) => tx.send(Message::text(item)).await?,
         Err(err) => {
             info!("error {:?}", err);
-            ws.close(None).await?;
+            tx.close().await?;
         }
     }
     Ok(())
 }
 
 async fn handle_connection(
-    peer: SocketAddr,
-    stream: TcpStream,
-    pool: Pool,
+    socket: WebSocket,
     users: &Users,
+    pool: Pool,
 ) -> Result<()> {
-    let mut ws_stream = accept_async(stream).await.expect("Failed to accept");
+    let (mut tx, mut rx) = socket.split();
+    info!("New WebSocket connection: {:?} {:?}", tx, rx);
 
-    info!("New WebSocket connection: {}", peer);
-
-    while let Some(msg) = ws_stream.next().await {
+    while let Some(msg) = rx.next().await {
         let msg = msg?;
-        let text = msg.to_text()?;
+        let text = msg.to_str()?;
+
 
         if let Ok(checked_data) = serde_json::from_str(text) {
-            send_message(&mut ws_stream, check_auth(users, checked_data).await).await?;
+            send_message(&mut tx, check_auth(users, checked_data).await).await?;
         }
         if let Ok(client_message) = serde_json::from_str(text) {
             send_message(
-                &mut ws_stream,
+                &mut tx,
                 get_response(users, client_message, pool.clone()).await,
             )
             .await?;
         }
         if let Ok(login_data) = serde_json::from_str(text) {
-            send_message(&mut ws_stream, login(users, login_data).await).await?;
+            send_message(&mut tx, login(users, login_data).await).await?;
         }
     }
 
     Ok(())
 }
 
-async fn run() -> Result<()> {
-    let addr = dotenv::var("BIND_ADDR").expect("BIND_ADDR must be set");
+async fn run_warp() -> Result<()> {
     std::env::set_var("RUST_LOG", "rugo=info");
     env_logger::init();
 
+    let addr = dotenv::var("BIND_ADDR").expect("BIND_ADDR must be set");
     let pool = get_pool();
     let users = Users::new(&pool).await?;
 
-    let mut listener = TcpListener::bind(&addr).await.expect("Can't listen");
-    info!("Listening on: {}", addr);
+    let users = warp::any().map(move || users.clone());
+    let pool = warp::any().map(move || pool.clone());
 
-    while let Ok((stream, _addr)) = listener.accept().await {
-        let peer = stream
-            .peer_addr()
-            .expect("connected streams should have a peer address");
-        info!("Peer address: {}", peer);
+    let db_ws = warp::path("ws")
+        // The `ws()` filter will prepare the Websocket handshake.
+        .and(warp::ws())
+        .and(users)
+        .and(pool)
+        .map(|ws: warp::ws::Ws, users, pool| {
+            // This will call our function if the handshake succeeds.
+            ws.on_upgrade(move |socket| accept_connection(socket, users, pool))
+        });
 
-        tokio::spawn(accept_connection(peer, stream, pool.clone(), users.clone()));
-    }
+    
+
+    warp::serve(db_ws).run(addr.parse::<SocketAddr>()?).await;
 
     Ok(())
+
 }
 
 fn main() -> Result<()> {
     let mut rt = tokio::runtime::Runtime::new()?;
-    rt.block_on(run())
+    rt.block_on(run_warp())
 }
