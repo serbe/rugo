@@ -6,7 +6,6 @@ use deadpool_postgres::Pool;
 use futures::StreamExt;
 use futures_util::sink::SinkExt;
 use log::{error, info};
-use serde_json;
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::{accept_async, tungstenite::Message, WebSocketStream};
 
