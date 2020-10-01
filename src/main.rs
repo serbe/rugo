@@ -1,13 +1,14 @@
-#![type_length_limit="22068819"]
-
 use std::net::SocketAddr;
 
 use deadpool_postgres::Pool;
-use futures::{StreamExt, stream::SplitSink};
-use warp::{Filter, ws::{Message, WebSocket}};
+use futures::{stream::SplitSink, StreamExt};
 use futures_util::sink::SinkExt;
 use log::{error, info};
 use serde_json;
+use warp::{
+    ws::{Message, WebSocket},
+    Filter,
+};
 
 use auth::{check_auth, login};
 use error::Result;
@@ -32,7 +33,10 @@ async fn accept_connection(socket: WebSocket, users: Users, pool: Pool) {
     }
 }
 
-async fn send_message(tx: &mut SplitSink<WebSocket, Message>, response: Result<String>) -> Result<()> {
+async fn send_message(
+    tx: &mut SplitSink<WebSocket, Message>,
+    response: Result<String>,
+) -> Result<()> {
     match response {
         Ok(item) => tx.send(Message::text(item)).await?,
         Err(err) => {
@@ -43,31 +47,27 @@ async fn send_message(tx: &mut SplitSink<WebSocket, Message>, response: Result<S
     Ok(())
 }
 
-async fn handle_connection(
-    socket: WebSocket,
-    users: &Users,
-    pool: Pool,
-) -> Result<()> {
+async fn handle_connection(socket: WebSocket, users: &Users, pool: Pool) -> Result<()> {
     let (mut tx, mut rx) = socket.split();
-    info!("New WebSocket connection: {:?} {:?}", tx, rx);
+    // info!("New WebSocket connection: {:?} {:?}", tx, rx);
 
     while let Some(msg) = rx.next().await {
         let msg = msg?;
-        let text = msg.to_str()?;
-
-
-        if let Ok(checked_data) = serde_json::from_str(text) {
-            send_message(&mut tx, check_auth(users, checked_data).await).await?;
-        }
-        if let Ok(client_message) = serde_json::from_str(text) {
-            send_message(
-                &mut tx,
-                get_response(users, client_message, pool.clone()).await,
-            )
-            .await?;
-        }
-        if let Ok(login_data) = serde_json::from_str(text) {
-            send_message(&mut tx, login(users, login_data).await).await?;
+        info!("{:?}", msg);
+        if let Ok(text) = msg.to_str() {
+            if let Ok(checked_data) = serde_json::from_str(text) {
+                send_message(&mut tx, check_auth(users, checked_data).await).await?;
+            }
+            if let Ok(client_message) = serde_json::from_str(text) {
+                send_message(
+                    &mut tx,
+                    get_response(users, client_message, pool.clone()).await,
+                )
+                .await?;
+            }
+            if let Ok(login_data) = serde_json::from_str(text) {
+                send_message(&mut tx, login(users, login_data).await).await?;
+            }
         }
     }
 
@@ -95,12 +95,9 @@ async fn run_warp() -> Result<()> {
             ws.on_upgrade(move |socket| accept_connection(socket, users, pool))
         });
 
-    
-
     warp::serve(db_ws).run(addr.parse::<SocketAddr>()?).await;
 
     Ok(())
-
 }
 
 fn main() -> Result<()> {

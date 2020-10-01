@@ -4,8 +4,8 @@ pub type Result<T> = std::result::Result<T, ServiceError>;
 
 #[derive(Debug, Error)]
 pub enum ServiceError {
-    #[error("Null error")]
-    NullError,
+    // #[error("Null error")]
+    // NullError,
     #[error("Socket address parse: {0}")]
     AddrParse(#[from] std::net::AddrParseError),
     #[error("Bad request: {0}")]
@@ -23,11 +23,11 @@ pub enum ServiceError {
     #[error("error executing DB query: {0}")]
     DBQueryError(#[from] tokio_postgres::Error),
     #[error("Warp error: {0}")]
-    WarpError(#[from] warp::Error)
+    WarpError(#[from] warp::Error),
 }
 
-impl From<()> for ServiceError {
-    fn from(_error: ()) -> Self {
-        Self::NullError
-    }
-}
+// impl From<()> for ServiceError {
+//     fn from(_error: ()) -> Self {
+//         Self::NullError
+//     }
+// }
