@@ -1,11 +1,7 @@
-use thiserror::Error;
-
 pub type Result<T> = std::result::Result<T, ServiceError>;
 
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum ServiceError {
-    // #[error("Null error")]
-    // NullError,
     #[error("Socket address parse: {0}")]
     AddrParse(#[from] std::net::AddrParseError),
     #[error("Bad request: {0}")]
