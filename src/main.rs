@@ -1,5 +1,3 @@
-#![type_length_limit = "1297444"]
-
 use std::net::SocketAddr;
 
 use deadpool_postgres::Pool;
@@ -57,18 +55,27 @@ async fn handle_connection(
         let msg = msg?;
         let text = msg.to_text()?;
 
+        info!("{:?}", &text);
+
         if let Ok(checked_data) = serde_json::from_str(text) {
-            send_message(&mut ws_stream, check_auth(users, checked_data).await).await?;
-        }
-        if let Ok(client_message) = serde_json::from_str(text) {
+            let a = send_message(&mut ws_stream, check_auth(users, checked_data).await).await;
+            info!("A {:?}", a);
+            a?;
+        } else if let Ok(client_message) = serde_json::from_str(text) {
+            let cm =
             send_message(
                 &mut ws_stream,
                 get_response(users, client_message, pool.clone()).await,
             )
-            .await?;
-        }
-        if let Ok(login_data) = serde_json::from_str(text) {
-            send_message(&mut ws_stream, login(users, login_data).await).await?;
+            .await;
+            info!("CM {:?}", cm);
+            cm?;
+        } else if let Ok(login_data) = serde_json::from_str(text) {
+            let ld = send_message(&mut ws_stream, login(users, login_data).await).await;
+            info!("LD {:?}", ld);
+            ld?;
+        } else {
+            info!("unknown {:?}", &text);
         }
     }
 
