@@ -4,7 +4,6 @@ use deadpool_postgres::Pool;
 use futures::{stream::SplitSink, StreamExt};
 use futures_util::sink::SinkExt;
 use log::{error, info};
-use serde_json;
 use warp::{
     ws::{Message, WebSocket},
     Filter,
