@@ -1,8 +1,8 @@
 use deadpool_postgres::Pool;
+use log::info;
 use serde::{Deserialize, Serialize};
-// use log::info;
 
-use crate::auth::check;
+use crate::auth::{check, Check, Token};
 use crate::dbo::{delete_item, get_item, get_list, insert_item, update_item, DBObject};
 use crate::error::ServiceError;
 use crate::users::{user_cmd, UserObject, Users};
@@ -35,28 +35,76 @@ pub enum Command {
 }
 
 #[derive(Serialize)]
-pub struct WsMsg {
+pub enum MessageData {
+    Null,
+    DBData(DBObject),
+    Token(Token),
+    Check(Check),
+    ResultInt(i64),
+}
+
+#[derive(Serialize)]
+pub struct ServerMessage {
     pub command: String,
-    pub name: String,
-    pub object: DBObject,
+    pub data: MessageData,
     pub error: String,
 }
 
-impl WsMsg {
-    pub fn from_dbo(command: &str, name: String, dbo: Result<DBObject, ServiceError>) -> WsMsg {
+impl ServerMessage {
+    pub fn from_dbo(command: String, dbo: Result<DBObject, ServiceError>) -> ServerMessage {
         match dbo {
-            Ok(object) => WsMsg {
-                command: command.to_string(),
-                name,
-                object,
+            Ok(object) => ServerMessage {
+                command: command,
+                data: MessageData::DBData(object),
                 error: String::new(),
             },
-            Err(err) => WsMsg {
-                command: command.to_string(),
-                name,
-                object: DBObject::Null,
+            Err(err) => ServerMessage {
+                command: command,
+                data: MessageData::Null,
                 error: err.to_string(),
             },
+        }
+    }
+
+    pub fn from_i64(command: String, dbo: Result<i64, ServiceError>) -> ServerMessage {
+        match dbo {
+            Ok(object) => ServerMessage {
+                command: command,
+                data: MessageData::ResultInt(object),
+                error: String::new(),
+            },
+            Err(err) => ServerMessage {
+                command: command,
+                data: MessageData::Null,
+                error: err.to_string(),
+            },
+        }
+    }
+
+    pub fn from_reply(reply: Result<(String, i64), ServiceError>) -> ServerMessage {
+        info!("reply {:?}", reply);
+        match reply {
+            Ok(object) => ServerMessage {
+                command: "Token".to_string(),
+                data: MessageData::Token(Token {
+                    t: object.0,
+                    r: object.1,
+                }),
+                error: String::new(),
+            },
+            Err(err) => ServerMessage {
+                command: "Token".to_string(),
+                data: MessageData::Null,
+                error: err.to_string(),
+            },
+        }
+    }
+
+    pub fn from_check(check: bool) -> ServerMessage {
+        ServerMessage {
+            command: "Check".to_string(),
+            data: MessageData::Check(Check { r: check }),
+            error: String::new(),
         }
     }
 }
@@ -71,28 +119,23 @@ pub async fn get_response(
     let msg = match cmd {
         Command::Get(object) => match object {
             Object::Item(item) => {
-                WsMsg::from_dbo("Get", item.name.clone(), get_item(&item, &client).await)
+                ServerMessage::from_dbo(item.name.clone(), get_item(&item, &client).await)
             }
-            Object::List(obj) => WsMsg::from_dbo("Get", obj.clone(), get_list(&obj, &client).await),
+            Object::List(obj) => {
+                ServerMessage::from_dbo(obj.clone(), get_list(&obj, &client).await)
+            }
         },
-        Command::Insert(dbobject) => WsMsg::from_dbo(
-            "Insert",
-            dbobject.name(),
-            Ok(insert_item(dbobject, &client)
-                .await
-                .map(|_| DBObject::Null)?),
+        Command::Insert(dbobject) => ServerMessage::from_i64(
+            format!("Insert-{}", dbobject.name()),
+            insert_item(dbobject, &client).await,
         ),
-        Command::Update(dbobject) => WsMsg::from_dbo(
-            "Update",
-            dbobject.name(),
-            Ok(update_item(dbobject, &client)
-                .await
-                .map(|_| DBObject::Null)?),
+        Command::Update(dbobject) => ServerMessage::from_i64(
+            format!("Update-{}", dbobject.name()),
+            update_item(dbobject, &client).await,
         ),
-        Command::Delete(item) => WsMsg::from_dbo(
-            "Delete",
-            item.name.clone(),
-            Ok(delete_item(&item, &client).await.map(|_| DBObject::Null)?),
+        Command::Delete(item) => ServerMessage::from_i64(
+            format!("Delete-{}", item.name),
+            delete_item(&item, &client).await,
         ),
         Command::User(obj) => return Ok(serde_json::to_string(&user_cmd(obj, &client).await?)?),
     };

@@ -35,7 +35,7 @@ async fn send_message(ws: &mut WebSocketStream<TcpStream>, response: Result<Stri
         Ok(item) => ws.send(Message::Text(item)).await?,
         Err(err) => {
             info!("error {:?}", err);
-            ws.close(None).await?;
+            // ws.close(None).await?;
         }
     }
     Ok(())
@@ -55,15 +55,14 @@ async fn handle_connection(
         let msg = msg?;
         let text = msg.to_text()?;
 
-        info!("{:?}", &text);
+        info!("ws_stream.next {:?}", &text);
 
         if let Ok(checked_data) = serde_json::from_str(text) {
             let a = send_message(&mut ws_stream, check_auth(users, checked_data).await).await;
             info!("A {:?}", a);
             a?;
         } else if let Ok(client_message) = serde_json::from_str(text) {
-            let cm =
-            send_message(
+            let cm = send_message(
                 &mut ws_stream,
                 get_response(users, client_message, pool.clone()).await,
             )

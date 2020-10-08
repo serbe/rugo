@@ -22,7 +22,6 @@ use crate::services::{Item, Object};
 
 #[derive(Deserialize, Serialize)]
 pub enum DBObject {
-    Null,
     Certificate(Certificate),
     CertificateList(Vec<CertificateList>),
     Company(Box<Company>),
@@ -57,7 +56,6 @@ pub enum DBObject {
 impl DBObject {
     pub fn name(&self) -> String {
         match self {
-            DBObject::Null => String::new(),
             DBObject::Certificate(_) => String::from("Certificate"),
             DBObject::CertificateList(_) => String::from("CertificateList"),
             DBObject::Company(_) => String::from("Company"),
