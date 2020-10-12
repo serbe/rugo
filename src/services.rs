@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::auth::{check, Check, Token};
 use crate::dbo::{delete_item, get_item, get_list, insert_item, update_item, DBObject};
-use crate::error::ServiceError;
+use anyhow::Result;
 use crate::users::Users;
 
 #[derive(Deserialize)]
@@ -56,7 +56,7 @@ impl ServerMessage {
     pub fn from_dbo(
         id: i64,
         command: String,
-        dbo: Result<DBObject, ServiceError>,
+        dbo: Result<DBObject>,
     ) -> ServerMessage {
         match dbo {
             Ok(object) => ServerMessage {
@@ -74,7 +74,7 @@ impl ServerMessage {
         }
     }
 
-    pub fn from_i64(id: i64, command: String, dbo: Result<i64, ServiceError>) -> ServerMessage {
+    pub fn from_i64(id: i64, command: String, dbo: Result<i64>) -> ServerMessage {
         match dbo {
             Ok(object) => ServerMessage {
                 id,
@@ -91,7 +91,7 @@ impl ServerMessage {
         }
     }
 
-    pub fn from_reply(id: i64, reply: Result<(String, i64), ServiceError>) -> ServerMessage {
+    pub fn from_reply(id: i64, reply: Result<(String, i64)>) -> ServerMessage {
         info!("reply {:?}", reply);
         match reply {
             Ok(object) => ServerMessage {
@@ -121,7 +121,7 @@ impl ServerMessage {
         }
     }
 
-    // pub fn from_rsm(id: i64, rsm: Result<ServerMessage, ServiceError>) -> ServerMessage {
+    // pub fn from_rsm(id: i64, rsm: Result<ServerMessage>) -> ServerMessage {
     //     match rsm {
     //         Ok(sm) => sm,
     //         Err(err) => ServerMessage {
@@ -138,7 +138,7 @@ pub async fn get_response(
     users: &Users,
     msg: ClientMessage,
     db: Pool,
-) -> Result<String, ServiceError> {
+) -> Result<String> {
     let id = msg.id;
     let cmd = check(users, msg)?;
     let client = db.get().await?;

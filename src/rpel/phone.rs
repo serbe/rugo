@@ -2,7 +2,7 @@ use chrono::{Local, NaiveDateTime};
 use deadpool_postgres::Client;
 use serde::{Deserialize, Serialize};
 
-use crate::error::ServiceError;
+use anyhow::Result;
 
 #[derive(Clone, Default, Deserialize, Serialize)]
 pub struct Phone {
@@ -22,7 +22,7 @@ impl Phone {
         Default::default()
     }
 
-    async fn insert(client: &Client, phone: Phone) -> Result<u64, ServiceError> {
+    async fn insert(client: &Client, phone: Phone) -> Result<u64> {
         let stmt = client
             .prepare(
                 "
@@ -67,7 +67,7 @@ impl Phone {
         id: i64,
         fax: bool,
         phones: Vec<i64>,
-    ) -> Result<(), ServiceError> {
+    ) -> Result<()> {
         Phone::delete_contacts(client, id, fax).await?;
         for value in phones {
             let mut phone = Phone::new();
@@ -84,7 +84,7 @@ impl Phone {
         id: i64,
         fax: bool,
         phones: Vec<i64>,
-    ) -> Result<(), ServiceError> {
+    ) -> Result<()> {
         Phone::delete_companies(client, id, fax).await?;
         for value in phones {
             let mut phone = Phone::new();
@@ -96,7 +96,7 @@ impl Phone {
         Ok(())
     }
 
-    pub async fn delete_contacts(client: &Client, id: i64, fax: bool) -> Result<u64, ServiceError> {
+    pub async fn delete_contacts(client: &Client, id: i64, fax: bool) -> Result<u64> {
         let stmt = client
             .prepare(
                 "
@@ -116,7 +116,7 @@ impl Phone {
         client: &Client,
         id: i64,
         fax: bool,
-    ) -> Result<u64, ServiceError> {
+    ) -> Result<u64> {
         let stmt = client
             .prepare(
                 "

@@ -1,8 +1,8 @@
 use chrono::{Local, NaiveDate, NaiveDateTime};
 use deadpool_postgres::Client;
 use serde::{Deserialize, Serialize};
+use anyhow::Result;
 
-use crate::error::ServiceError;
 use crate::rpel::email::Email;
 use crate::rpel::phone::Phone;
 
@@ -54,7 +54,7 @@ impl Contact {
     //     Default::default()
     // }
 
-    pub async fn get(client: &Client, id: i64) -> Result<Contact, ServiceError> {
+    pub async fn get(client: &Client, id: i64) -> Result<Contact> {
         let stmt = client
             .prepare(
                 "
@@ -111,7 +111,7 @@ impl Contact {
         Ok(contact)
     }
 
-    pub async fn insert(client: &Client, contact: Contact) -> Result<Contact, ServiceError> {
+    pub async fn insert(client: &Client, contact: Contact) -> Result<Contact> {
         let mut contact = contact;
         let stmt = client
             .prepare(
@@ -171,7 +171,7 @@ impl Contact {
         Ok(contact)
     }
 
-    pub async fn update(client: &Client, contact: Contact) -> Result<u64, ServiceError> {
+    pub async fn update(client: &Client, contact: Contact) -> Result<u64> {
         let stmt = client
             .prepare(
                 "
@@ -212,7 +212,7 @@ impl Contact {
             .await?)
     }
 
-    pub async fn delete(client: &Client, id: i64) -> Result<u64, ServiceError> {
+    pub async fn delete(client: &Client, id: i64) -> Result<u64> {
         Phone::delete_contacts(client, id, true).await?;
         Phone::delete_contacts(client, id, false).await?;
         Email::delete_contacts(client, id).await?;
@@ -231,7 +231,7 @@ impl Contact {
 }
 
 impl ContactList {
-    pub async fn get_all(client: &Client) -> Result<Vec<ContactList>, ServiceError> {
+    pub async fn get_all(client: &Client) -> Result<Vec<ContactList>> {
         let mut contacts = Vec::new();
         let stmt = client
             .prepare(
@@ -282,7 +282,7 @@ impl ContactShort {
     pub async fn get_by_company(
         client: &Client,
         company_id: i64,
-    ) -> Result<Vec<ContactShort>, ServiceError> {
+    ) -> Result<Vec<ContactShort>> {
         let mut contacts = Vec::new();
         let stmt = client
             .prepare(

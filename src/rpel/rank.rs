@@ -2,7 +2,7 @@ use chrono::{Local, NaiveDateTime};
 use deadpool_postgres::Client;
 use serde::{Deserialize, Serialize};
 
-use crate::error::ServiceError;
+use anyhow::Result;
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Rank {
@@ -28,7 +28,7 @@ impl Rank {
     //     Default::default()
     // }
 
-    pub async fn get(client: &Client, id: i64) -> Result<Rank, ServiceError> {
+    pub async fn get(client: &Client, id: i64) -> Result<Rank> {
         let stmt = client
             .prepare(
                 "
@@ -55,7 +55,7 @@ impl Rank {
         Ok(rank)
     }
 
-    pub async fn insert(client: &Client, rank: Rank) -> Result<Rank, ServiceError> {
+    pub async fn insert(client: &Client, rank: Rank) -> Result<Rank> {
         let mut rank = rank;
         let stmt = client
             .prepare(
@@ -94,7 +94,7 @@ impl Rank {
         Ok(rank)
     }
 
-    pub async fn update(client: &Client, rank: Rank) -> Result<u64, ServiceError> {
+    pub async fn update(client: &Client, rank: Rank) -> Result<u64> {
         let stmt = client
             .prepare(
                 "
@@ -120,7 +120,7 @@ impl Rank {
             .await?)
     }
 
-    pub async fn delete(client: &Client, id: i64) -> Result<u64, ServiceError> {
+    pub async fn delete(client: &Client, id: i64) -> Result<u64> {
         let stmt = client
             .prepare(
                 "
@@ -136,7 +136,7 @@ impl Rank {
 }
 
 impl RankList {
-    pub async fn get_all(client: &Client) -> Result<Vec<RankList>, ServiceError> {
+    pub async fn get_all(client: &Client) -> Result<Vec<RankList>> {
         let mut ranks = Vec::new();
         let stmt = client
             .prepare(

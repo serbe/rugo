@@ -4,8 +4,8 @@ use std::iter;
 use deadpool_postgres::Pool;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use serde::{Deserialize, Serialize};
+use anyhow::{anyhow, Result};
 
-use crate::error::ServiceError;
 use crate::rpel::user::{User, UserList};
 use crate::services::Command;
 
@@ -40,7 +40,7 @@ pub enum DBUserObject {
 }
 
 impl UserData {
-    pub fn permissions(&self, command: Command) -> Result<Command, ServiceError> {
+    pub fn permissions(&self, command: Command) -> Result<Command> {
         if match &command {
             Command::Get(_) => self.role >> 1 > 0,
             Command::Insert(_) => self.role >> 2 > 0,
@@ -54,13 +54,13 @@ impl UserData {
         } {
             Ok(command)
         } else {
-            Err(ServiceError::NotPermission)
+            Err(anyhow!("NotPermission"))
         }
     }
 }
 
 impl Users {
-    pub async fn new(pool: &Pool) -> Result<Users, ServiceError> {
+    pub async fn new(pool: &Pool) -> Result<Users> {
         let mut rng = thread_rng();
         let client = pool.get().await?;
         let users = UserList::get_all(&client).await?;
@@ -146,7 +146,7 @@ impl Users {
 //     }
 // }
 
-// pub async fn user_cmd(id: i64, obj: UserObject, client: &Client) -> Result<ServerMessage, ServiceError> {
+// pub async fn user_cmd(id: i64, obj: UserObject, client: &Client) -> Result<ServerMessage> {
 //     let a =  match obj {
 //         UserObject::Get(user_id) => WsUserMsg::from_get(User::get(&client, user_id).await?),
 //         UserObject::GetList => WsUserMsg::from_list(UserList::get_all(&client).await?),

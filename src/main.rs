@@ -8,14 +8,14 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::{accept_async, tungstenite::Message, WebSocketStream};
 
 use auth::{check_auth, login};
-use error::Result;
+use anyhow::Result;
 use rpel::get_pool;
 use services::get_response;
 use users::Users;
 
 mod auth;
 mod dbo;
-mod error;
+// mod error;
 mod rpel;
 mod services;
 mod users;

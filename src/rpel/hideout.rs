@@ -90,7 +90,7 @@
 // }
 
 // // GetHideout - get one hideout by id
-// pub async fn GetHideout(client: &Client, id: i64) -> Result<Hideout, ServiceError> {
+// pub async fn GetHideout(client: &Client, id: i64) -> Result<Hideout> {
 // // let client = client.get().await?;
 // 	let mut hideout = Hideout::new();
 // 	if id == 0 {

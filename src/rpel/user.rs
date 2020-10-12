@@ -2,7 +2,7 @@ use chrono::{Local, NaiveDateTime};
 use deadpool_postgres::Client;
 use serde::{Deserialize, Serialize};
 
-use crate::error::ServiceError;
+use anyhow::Result;
 
 #[derive(Deserialize, Serialize)]
 pub struct User {
@@ -26,7 +26,7 @@ pub struct UserList {
 }
 
 impl User {
-    pub async fn get(client: &Client, id: i64) -> Result<User, ServiceError> {
+    pub async fn get(client: &Client, id: i64) -> Result<User> {
         let stmt = client
             .prepare(
                 "
@@ -55,7 +55,7 @@ impl User {
         Ok(user)
     }
 
-    pub async fn insert(client: &Client, user: User) -> Result<User, ServiceError> {
+    pub async fn insert(client: &Client, user: User) -> Result<User> {
         let mut user = user;
         let stmt = client
             .prepare(
@@ -97,7 +97,7 @@ impl User {
         Ok(user)
     }
 
-    pub async fn update(client: &Client, user: User) -> Result<u64, ServiceError> {
+    pub async fn update(client: &Client, user: User) -> Result<u64> {
         let stmt = client
             .prepare(
                 "
@@ -125,7 +125,7 @@ impl User {
             .await?)
     }
 
-    pub async fn delete(client: &Client, id: i64) -> Result<u64, ServiceError> {
+    pub async fn delete(client: &Client, id: i64) -> Result<u64> {
         let stmt = client
             .prepare(
                 "
@@ -141,7 +141,7 @@ impl User {
 }
 
 impl UserList {
-    pub async fn get_all(client: &Client) -> Result<Vec<UserList>, ServiceError> {
+    pub async fn get_all(client: &Client) -> Result<Vec<UserList>> {
         let mut users = Vec::new();
         let stmt = client
             .prepare(

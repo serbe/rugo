@@ -1,8 +1,8 @@
 use chrono::{Local, NaiveDate, NaiveDateTime};
 use deadpool_postgres::Client;
 use serde::{Deserialize, Serialize};
+use anyhow::Result;
 
-use crate::error::ServiceError;
 use crate::rpel::contact::ContactShort;
 use crate::rpel::email::Email;
 use crate::rpel::phone::Phone;
@@ -46,7 +46,7 @@ impl Company {
     //     Default::default()
     // }
 
-    pub async fn get(client: &Client, id: i64) -> Result<Company, ServiceError> {
+    pub async fn get(client: &Client, id: i64) -> Result<Company> {
         let stmt = client
             .prepare(
                 "
@@ -95,7 +95,7 @@ impl Company {
         Ok(company)
     }
 
-    pub async fn insert(client: &Client, company: Company) -> Result<Company, ServiceError> {
+    pub async fn insert(client: &Client, company: Company) -> Result<Company> {
         let mut company = company;
         let stmt = client
             .prepare(
@@ -143,7 +143,7 @@ impl Company {
         Ok(company)
     }
 
-    pub async fn update(client: &Client, company: Company) -> Result<u64, ServiceError> {
+    pub async fn update(client: &Client, company: Company) -> Result<u64> {
         let stmt = client
             .prepare(
                 "
@@ -178,7 +178,7 @@ impl Company {
         Ok(result)
     }
 
-    pub async fn delete(client: &Client, id: i64) -> Result<u64, ServiceError> {
+    pub async fn delete(client: &Client, id: i64) -> Result<u64> {
         Phone::delete_companies(&client, id, true).await?;
         Phone::delete_companies(&client, id, false).await?;
         Email::delete_companies(&client, id).await?;
@@ -197,7 +197,7 @@ impl Company {
 }
 
 impl CompanyList {
-    pub async fn get_all(client: &Client) -> Result<Vec<CompanyList>, ServiceError> {
+    pub async fn get_all(client: &Client) -> Result<Vec<CompanyList>> {
         let mut companies = Vec::new();
         let stmt = client
             .prepare(

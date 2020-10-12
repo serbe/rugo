@@ -2,7 +2,7 @@ use chrono::{Local, NaiveDateTime};
 use deadpool_postgres::Client;
 use serde::{Deserialize, Serialize};
 
-use crate::error::ServiceError;
+use anyhow::Result;
 
 #[derive(Clone, Default, Deserialize, Serialize)]
 pub struct Email {
@@ -21,7 +21,7 @@ impl Email {
         Default::default()
     }
 
-    async fn insert(client: &Client, email: Email) -> Result<u64, ServiceError> {
+    async fn insert(client: &Client, email: Email) -> Result<u64> {
         let stmt = client
             .prepare(
                 "
@@ -62,7 +62,7 @@ impl Email {
         client: &Client,
         id: i64,
         emails: Vec<String>,
-    ) -> Result<(), ServiceError> {
+    ) -> Result<()> {
         Email::delete_contacts(client, id).await?;
         for value in emails {
             let mut email = Email::new();
@@ -77,7 +77,7 @@ impl Email {
         client: &Client,
         id: i64,
         emails: Vec<String>,
-    ) -> Result<(), ServiceError> {
+    ) -> Result<()> {
         Email::delete_companies(client, id).await?;
         for value in emails {
             let mut email = Email::new();
@@ -88,7 +88,7 @@ impl Email {
         Ok(())
     }
 
-    pub async fn delete_contacts(client: &Client, id: i64) -> Result<u64, ServiceError> {
+    pub async fn delete_contacts(client: &Client, id: i64) -> Result<u64> {
         let stmt = client
             .prepare(
                 "
@@ -102,7 +102,7 @@ impl Email {
         Ok(client.execute(&stmt, &[&id]).await?)
     }
 
-    pub async fn delete_companies(client: &Client, id: i64) -> Result<u64, ServiceError> {
+    pub async fn delete_companies(client: &Client, id: i64) -> Result<u64> {
         let stmt = client
             .prepare(
                 "

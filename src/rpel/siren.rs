@@ -2,7 +2,7 @@ use chrono::{Local, NaiveDateTime};
 use deadpool_postgres::Client;
 use serde::{Deserialize, Serialize};
 
-use crate::error::ServiceError;
+use anyhow::Result;
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Siren {
@@ -41,7 +41,7 @@ impl Siren {
     //     Default::default()
     // }
 
-    pub async fn get(client: &Client, id: i64) -> Result<Siren, ServiceError> {
+    pub async fn get(client: &Client, id: i64) -> Result<Siren> {
         let stmt = client
             .prepare(
                 "
@@ -90,7 +90,7 @@ impl Siren {
         Ok(siren)
     }
 
-    pub async fn insert(client: &Client, siren: Siren) -> Result<Siren, ServiceError> {
+    pub async fn insert(client: &Client, siren: Siren) -> Result<Siren> {
         let mut siren = siren;
         let stmt = client
             .prepare(
@@ -162,7 +162,7 @@ impl Siren {
         Ok(siren)
     }
 
-    pub async fn update(client: &Client, siren: Siren) -> Result<u64, ServiceError> {
+    pub async fn update(client: &Client, siren: Siren) -> Result<u64> {
         let stmt = client
             .prepare(
                 "
@@ -210,7 +210,7 @@ impl Siren {
             .await?)
     }
 
-    pub async fn delete(client: &Client, id: i64) -> Result<u64, ServiceError> {
+    pub async fn delete(client: &Client, id: i64) -> Result<u64> {
         let stmt = client
             .prepare(
                 "
@@ -226,7 +226,7 @@ impl Siren {
 }
 
 impl SirenList {
-    pub async fn get_all(client: &Client) -> Result<Vec<SirenList>, ServiceError> {
+    pub async fn get_all(client: &Client) -> Result<Vec<SirenList>> {
         let mut sirens = Vec::new();
         let stmt = client
             .prepare(

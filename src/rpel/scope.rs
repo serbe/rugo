@@ -2,7 +2,7 @@ use chrono::{Local, NaiveDateTime};
 use deadpool_postgres::Client;
 use serde::{Deserialize, Serialize};
 
-use crate::error::ServiceError;
+use anyhow::Result;
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Scope {
@@ -28,7 +28,7 @@ impl Scope {
     //     Default::default()
     // }
 
-    pub async fn get(client: &Client, id: i64) -> Result<Scope, ServiceError> {
+    pub async fn get(client: &Client, id: i64) -> Result<Scope> {
         let stmt = client
             .prepare(
                 "
@@ -55,7 +55,7 @@ impl Scope {
         Ok(scope)
     }
 
-    pub async fn insert(client: &Client, scope: Scope) -> Result<Scope, ServiceError> {
+    pub async fn insert(client: &Client, scope: Scope) -> Result<Scope> {
         let mut scope = scope;
         let stmt = client
             .prepare(
@@ -94,7 +94,7 @@ impl Scope {
         Ok(scope)
     }
 
-    pub async fn update(client: &Client, scope: Scope) -> Result<u64, ServiceError> {
+    pub async fn update(client: &Client, scope: Scope) -> Result<u64> {
         let stmt = client
             .prepare(
                 "
@@ -120,7 +120,7 @@ impl Scope {
             .await?)
     }
 
-    pub async fn delete(client: &Client, id: i64) -> Result<u64, ServiceError> {
+    pub async fn delete(client: &Client, id: i64) -> Result<u64> {
         let stmt = client
             .prepare(
                 "
@@ -136,7 +136,7 @@ impl Scope {
 }
 
 impl ScopeList {
-    pub async fn get_all(client: &Client) -> Result<Vec<ScopeList>, ServiceError> {
+    pub async fn get_all(client: &Client) -> Result<Vec<ScopeList>> {
         let mut scopes = Vec::new();
         let stmt = client
             .prepare(

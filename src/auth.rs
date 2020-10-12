@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
+use anyhow::{anyhow, Result};
 
-use crate::error::ServiceError;
 use crate::services::{ClientMessage, Command, ServerMessage};
 use crate::users::Users;
 
@@ -29,25 +29,25 @@ pub struct Check {
     pub r: bool,
 }
 
-pub async fn login(users: &Users, data: ClientAuthRequest) -> Result<String, ServiceError> {
+pub async fn login(users: &Users, data: ClientAuthRequest) -> Result<String> {
     let reply = users
         .get_reply(&data.u, &data.p)
-        .ok_or(ServiceError::NotAuth);
+        .ok_or(anyhow!("NotAuth"));
     Ok(serde_json::to_string(&ServerMessage::from_reply(
         data.i, reply,
     ))?)
 }
 
-pub async fn check_auth(users: &Users, data: ClientTokenRequest) -> Result<String, ServiceError> {
+pub async fn check_auth(users: &Users, data: ClientTokenRequest) -> Result<String> {
     let check = users.get_user(&data.t).map_or(false, |u| u.role == data.r);
     Ok(serde_json::to_string(&ServerMessage::from_check(
         data.i, check,
     ))?)
 }
 
-pub fn check(users: &Users, message: ClientMessage) -> Result<Command, ServiceError> {
+pub fn check(users: &Users, message: ClientMessage) -> Result<Command> {
     let user = users
         .get_user(&message.addon)
-        .ok_or(ServiceError::NotAuth)?;
+        .ok_or(anyhow!("NotAuth"))?;
     user.permissions(message.command)
 }

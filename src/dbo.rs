@@ -2,8 +2,8 @@ use std::fmt;
 
 use deadpool_postgres::Client;
 use serde::{Deserialize, Serialize};
+use anyhow::{Result, anyhow};
 
-use crate::error::ServiceError;
 use crate::rpel::certificate::{Certificate, CertificateList};
 use crate::rpel::company::{Company, CompanyList};
 use crate::rpel::contact::{Contact, ContactList};
@@ -98,7 +98,7 @@ impl fmt::Display for Object {
     }
 }
 
-pub async fn get_item(item: &Item, client: &Client) -> Result<DBObject, ServiceError> {
+pub async fn get_item(item: &Item, client: &Client) -> Result<DBObject> {
     match (item.name.as_str(), item.id) {
         ("Certificate", id) => Ok(DBObject::Certificate(Certificate::get(&client, id).await?)),
         ("Company", id) => Ok(DBObject::Company(Box::new(
@@ -117,14 +117,11 @@ pub async fn get_item(item: &Item, client: &Client) -> Result<DBObject, ServiceE
         ("Siren", id) => Ok(DBObject::Siren(Box::new(Siren::get(&client, id).await?))),
         ("SirenType", id) => Ok(DBObject::SirenType(SirenType::get(&client, id).await?)),
         ("User", id) => Ok(DBObject::User(User::get(&client, id).await?)),
-        (e, id) => Err(ServiceError::BadRequest(format!(
-            "bad item object: {} {}",
-            e, id
-        ))),
+        (e, id) => Err(anyhow!("BadRequest bad item object: {} {}", e, id)),
     }
 }
 
-pub async fn get_list(name: &str, client: &Client) -> Result<DBObject, ServiceError> {
+pub async fn get_list(name: &str, client: &Client) -> Result<DBObject> {
     match name {
         "CertificateList" => Ok(DBObject::CertificateList(
             CertificateList::get_all(&client).await?,
@@ -179,11 +176,11 @@ pub async fn get_list(name: &str, client: &Client) -> Result<DBObject, ServiceEr
             SelectItem::siren_type_all(&client).await?,
         )),
         "UserList" => Ok(DBObject::UserList(UserList::get_all(&client).await?)),
-        e => Err(ServiceError::BadRequest(format!("bad list object: {}", e))),
+        e => Err(anyhow!("BadRequest bad list object: {}", e)),
     }
 }
 
-pub async fn insert_item(object: DBObject, client: &Client) -> Result<i64, ServiceError> {
+pub async fn insert_item(object: DBObject, client: &Client) -> Result<i64> {
     match object {
         DBObject::Certificate(item) => Ok(Certificate::insert(&client, item).await?.id),
         DBObject::Company(item) => Ok(Company::insert(&client, *item).await?.id),
@@ -198,11 +195,11 @@ pub async fn insert_item(object: DBObject, client: &Client) -> Result<i64, Servi
         DBObject::Siren(item) => Ok(Siren::insert(&client, *item).await?.id),
         DBObject::SirenType(item) => Ok(SirenType::insert(&client, item).await?.id),
         DBObject::User(item) => Ok(User::insert(&client, item).await?.id),
-        _ => Err(ServiceError::BadRequest("bad item object".to_string())),
+        _ => Err(anyhow!("BadRequest bad item object")),
     }
 }
 
-pub async fn update_item(object: DBObject, client: &Client) -> Result<i64, ServiceError> {
+pub async fn update_item(object: DBObject, client: &Client) -> Result<i64> {
     let res = match object {
         DBObject::Certificate(item) => Certificate::update(&client, item).await,
         DBObject::Company(item) => Company::update(&client, *item).await,
@@ -217,12 +214,12 @@ pub async fn update_item(object: DBObject, client: &Client) -> Result<i64, Servi
         DBObject::Siren(item) => Siren::update(&client, *item).await,
         DBObject::SirenType(item) => SirenType::update(&client, item).await,
         DBObject::User(item) => User::update(&client, item).await,
-        _ => return Err(ServiceError::BadRequest("bad item object".to_string())),
+        _ => return Err(anyhow!("bad item object")),
     }?;
     Ok(res as i64)
 }
 
-pub async fn delete_item(item: &Item, client: &Client) -> Result<i64, ServiceError> {
+pub async fn delete_item(item: &Item, client: &Client) -> Result<i64> {
     let res = match item.name.as_str() {
         "Certificate" => Certificate::delete(client, item.id).await,
         "Company" => Company::delete(client, item.id).await,
@@ -238,10 +235,7 @@ pub async fn delete_item(item: &Item, client: &Client) -> Result<i64, ServiceErr
         "Siren_type" => SirenType::delete(client, item.id).await,
         "User" => User::delete(client, item.id).await,
         _ => {
-            return Err(ServiceError::BadRequest(format!(
-                "bad path {:?}",
-                item.name
-            )))
+            return Err(anyhow!("BadRequest bad path {:?}", item.name))
         }
     }?;
     Ok(res as i64)

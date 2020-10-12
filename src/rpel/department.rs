@@ -2,7 +2,7 @@ use chrono::{Local, NaiveDateTime};
 use deadpool_postgres::Client;
 use serde::{Deserialize, Serialize};
 
-use crate::error::ServiceError;
+use anyhow::Result;
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Department {
@@ -28,7 +28,7 @@ impl Department {
     //     Default::default()
     // }
 
-    pub async fn get(client: &Client, id: i64) -> Result<Department, ServiceError> {
+    pub async fn get(client: &Client, id: i64) -> Result<Department> {
         let stmt = client
             .prepare(
                 "
@@ -58,7 +58,7 @@ impl Department {
     pub async fn insert(
         client: &Client,
         department: Department,
-    ) -> Result<Department, ServiceError> {
+    ) -> Result<Department> {
         let mut department = department;
         let stmt = client
             .prepare(
@@ -97,7 +97,7 @@ impl Department {
         Ok(department)
     }
 
-    pub async fn update(client: &Client, department: Department) -> Result<u64, ServiceError> {
+    pub async fn update(client: &Client, department: Department) -> Result<u64> {
         let stmt = client
             .prepare(
                 "
@@ -123,7 +123,7 @@ impl Department {
             .await?)
     }
 
-    pub async fn delete(client: &Client, id: i64) -> Result<u64, ServiceError> {
+    pub async fn delete(client: &Client, id: i64) -> Result<u64> {
         let stmt = client
             .prepare(
                 "
@@ -139,7 +139,7 @@ impl Department {
 }
 
 impl DepartmentList {
-    pub async fn get_all(client: &Client) -> Result<Vec<DepartmentList>, ServiceError> {
+    pub async fn get_all(client: &Client) -> Result<Vec<DepartmentList>> {
         let mut departments = Vec::new();
         let stmt = client
             .prepare(
