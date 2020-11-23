@@ -5,19 +5,19 @@ use deadpool_postgres::{Client, Pool};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value::Null};
 
-use rpel::certificate::{Certificate, CertificateList};
-use rpel::company::{Company, CompanyList};
-use rpel::contact::{Contact, ContactList};
-use rpel::department::{Department, DepartmentList};
-use rpel::education::{Education, EducationList, EducationShort};
-use rpel::kind::{Kind, KindList};
-use rpel::post::{Post, PostList};
-use rpel::practice::{Practice, PracticeList, PracticeShort};
-use rpel::rank::{Rank, RankList};
-use rpel::scope::{Scope, ScopeList};
-use rpel::select::SelectItem;
-use rpel::siren::{Siren, SirenList};
-use rpel::siren_type::{SirenType, SirenTypeList};
+use crate::rpel::certificate::{Certificate, CertificateList};
+use crate::rpel::company::{Company, CompanyList};
+use crate::rpel::contact::{Contact, ContactList};
+use crate::rpel::department::{Department, DepartmentList};
+use crate::rpel::education::{Education, EducationList, EducationShort};
+use crate::rpel::kind::{Kind, KindList};
+use crate::rpel::post::{Post, PostList};
+use crate::rpel::practice::{Practice, PracticeList, PracticeShort};
+use crate::rpel::rank::{Rank, RankList};
+use crate::rpel::scope::{Scope, ScopeList};
+use crate::rpel::select::SelectItem;
+use crate::rpel::siren::{Siren, SirenList};
+use crate::rpel::siren_type::{SirenType, SirenTypeList};
 
 use crate::error::ServiceError;
 
@@ -179,7 +179,7 @@ pub async fn update_object(
 
 async fn get_item(item: &Item, client: &Client) -> Result<DBObject, ServiceError> {
     match (item.name.as_str(), item.id) {
-        ("Certificate", id) => Ok(DBObject::Certificate(Certificate::get(&client, id).await?)),
+        ("Certificate", id) => Ok(DBObject::Certificate(Certificate::get(client, id).await?)),
         ("Company", id) => Ok(DBObject::Company(Box::new(
             Company::get(&client, id).await?,
         ))),
@@ -423,25 +423,25 @@ pub async fn get_name_id(
 pub async fn post_name_id(
     // id: Identity,
     db: web::Data<Pool>,
-    path: web::Path<(String, i64)>,
+    web::Path((name, _id)): web::Path<(String, i64)>,
     params: web::Json<DBObject>,
 ) -> Result<HttpResponse, ServiceError> {
     // let a = check_auth(id);
     // a?;
     let client = db.get().await?;
-    let res = post_item(&path.0, params, &client).await;
+    let res = post_item(&name, params, &client).await;
     Ok(http_result_item(res))
 }
 
 pub async fn delete_name_id(
     // id: Identity,
     db: web::Data<Pool>,
-    path: web::Path<(String, i64)>,
+    web::Path((name, id)): web::Path<(String, i64)>,
 ) -> Result<HttpResponse, ServiceError> {
     // let a = check_auth(id);
     //     a?;
     let client = db.get().await?;
-    let res = delete_item(&client, &path.0, path.1).await;
+    let res = delete_item(&client, &name, id).await;
     Ok(match res {
         Ok(_res) => HttpResponse::Ok().json(json!({
             "data": Null,

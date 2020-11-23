@@ -1,10 +1,7 @@
 use actix_web::{error::ResponseError, HttpResponse};
 use deadpool_postgres::PoolError;
-use rpel::error::RpelError;
-use serde_json::error::Error as SJError;
-use thiserror::Error;
 
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum ServiceError {
     // #[error("Internal Server Error")]
     // InternalServerError,
@@ -13,14 +10,14 @@ pub enum ServiceError {
 
     // #[error("IO Error: {0}")]
     // IOError(std::io::Error),
-    #[error("Unable to connect to the database")]
-    PoolError(PoolError),
+    #[error("Pool error: {0}")]
+    PoolError(#[from] PoolError),
 
-    #[error("DB Error: {0}")]
-    DBError(RpelError),
+    #[error("error executing DB query: {0}")]
+    DBQueryError(#[from] tokio_postgres::Error),
 
     #[error("Serde JSON error: {0}")]
-    SJError(SJError),
+    SJError(#[from] serde_json::error::Error),
 
     // #[error("Not auth")]
     // NotAuth,
@@ -28,17 +25,17 @@ pub enum ServiceError {
     FailedAuth,
 }
 
-impl From<RpelError> for ServiceError {
-    fn from(error: RpelError) -> Self {
-        Self::DBError(error)
-    }
-}
+// impl From<RpelError> for ServiceError {
+//     fn from(error: RpelError) -> Self {
+//         Self::DBError(error)
+//     }
+// }
 
-impl From<PoolError> for ServiceError {
-    fn from(error: PoolError) -> Self {
-        Self::PoolError(error)
-    }
-}
+// impl From<PoolError> for ServiceError {
+//     fn from(error: PoolError) -> Self {
+//         Self::PoolError(error)
+//     }
+// }
 
 impl ResponseError for ServiceError {
     fn error_response(&self) -> HttpResponse {
@@ -53,7 +50,7 @@ impl ResponseError for ServiceError {
             ServiceError::PoolError(_) => HttpResponse::BadRequest()
                 .reason("unable to connect to the database")
                 .finish(),
-            ServiceError::DBError(_) => HttpResponse::BadRequest().reason("db error").finish(),
+            // ServiceError::DBError(_) => HttpResponse::BadRequest().reason("db error").finish(),
             ServiceError::SJError(_) => HttpResponse::BadRequest()
                 .reason("serde json error")
                 .finish(),
@@ -61,14 +58,15 @@ impl ResponseError for ServiceError {
             //     .reason("Internal server error. Please try again later")
             //     .finish(),
             ServiceError::FailedAuth => HttpResponse::BadRequest()
-                .reason("Internal server error. Please try again later")
+                .reason("internal server error. please try again later")
                 .finish(),
+            ServiceError::DBQueryError(_) => HttpResponse::BadRequest().reason("db error").finish(),
         }
     }
 }
 
-impl From<SJError> for ServiceError {
-    fn from(error: SJError) -> Self {
-        Self::SJError(error)
-    }
-}
+// impl From<SJError> for ServiceError {
+//     fn from(error: SJError) -> Self {
+//         Self::SJError(error)
+//     }
+// }

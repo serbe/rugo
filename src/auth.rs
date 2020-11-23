@@ -17,7 +17,7 @@ pub async fn bearer_auth_validator(
 ) -> Result<ServiceRequest, Error> {
     let config = req
         .app_data::<Config>()
-        .map(|data| data.get_ref().clone())
+        .map(|data| data.clone())
         .unwrap_or_else(Default::default);
     match validate_token(credentials.token()) {
         Ok(res) => {

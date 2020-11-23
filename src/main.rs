@@ -1,31 +1,31 @@
 use actix_cors::Cors;
 use actix_web::{
+    http::header,
     middleware::{Compress, Logger},
     web, App, HttpServer,
 };
-// use actix_web_httpauth::middleware::HttpAuthentication;
+use env_logger::Env;
 use dotenv::dotenv;
 use log::info;
 
+// use auth::bearer_auth_validator;
+use dbo::{delete_name_id, get_list_name, get_name_id, jsonpost, post_name_id};
 use rpel::get_pool;
 
-// use auth::bearer_auth_validator;
-use db::{delete_name_id, get_list_name, get_name_id, jsonpost, post_name_id};
-
 mod auth;
-mod db;
+mod dbo;
 mod error;
+mod rpel;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
 
-    let _secret_key = dotenv::var("SECRET_KEY").expect("SECRET_KEY must be set");
+    // let _secret_key = dotenv::var("SECRET_KEY").expect("SECRET_KEY must be set");
     let addr = dotenv::var("BIND_ADDR").expect("BIND_ADDR must be set");
     let pool = get_pool();
 
-    std::env::set_var("RUST_LOG", "rugo=info");
-    env_logger::init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("debug")).init();
 
     info!("Listening on: {}", addr);
 
@@ -33,13 +33,19 @@ async fn main() -> std::io::Result<()> {
         // let auth = HttpAuthentication::bearer(bearer_auth_validator);
         App::new()
             .data(pool.clone())
+            .wrap(Logger::default())
             // .wrap(auth)
             .wrap(
-                Cors::new()
-                    .max_age(3600)
-                    .finish(),
+                Cors::default()
+                    .allow_any_origin()
+                    .allowed_methods(vec!["GET", "POST", "OPTIONS"])
+                    .allowed_headers(vec![
+                        header::AUTHORIZATION,
+                        header::ACCEPT,
+                        header::CONTENT_TYPE,
+                    ])
+                    .max_age(3600),
             )
-            .wrap(Logger::default())
             .wrap(Compress::default())
             // .data(web::JsonConfig::default().limit(4096))
             // .service(web::resource("/api/go/check").route(web::get().to(check)))
