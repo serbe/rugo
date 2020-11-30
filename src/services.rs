@@ -67,7 +67,7 @@ impl ServerMessage {
             },
             Err(err) => ServerMessage {
                 id,
-                command: command,
+                command,
                 data: MessageData::Null,
                 error: err.to_string(),
             },
@@ -78,13 +78,13 @@ impl ServerMessage {
         match dbo {
             Ok(object) => ServerMessage {
                 id,
-                command: command,
+                command,
                 data: MessageData::ResultInt(object),
                 error: String::new(),
             },
             Err(err) => ServerMessage {
                 id,
-                command: command,
+                command,
                 data: MessageData::Null,
                 error: err.to_string(),
             },

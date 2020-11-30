@@ -89,7 +89,7 @@ async fn run() -> Result<()> {
     let pool = get_pool();
     let users = Users::new(&pool).await?;
 
-    let mut listener = TcpListener::bind(&addr).await.expect("Can't listen");
+    let listener = TcpListener::bind(&addr).await.expect("Can't listen");
     info!("Listening on: {}", addr);
 
     while let Ok((stream, _addr)) = listener.accept().await {
@@ -105,6 +105,6 @@ async fn run() -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    let mut rt = tokio::runtime::Runtime::new()?;
+    let rt = tokio::runtime::Runtime::new()?;
     rt.block_on(run())
 }

@@ -32,7 +32,7 @@ pub struct Check {
 pub async fn login(users: &Users, data: ClientAuthRequest) -> Result<String> {
     let reply = users
         .get_reply(&data.u, &data.p)
-        .ok_or(anyhow!("NotAuth"));
+        .ok_or_else(|| anyhow!("NotAuth"));
     Ok(serde_json::to_string(&ServerMessage::from_reply(
         data.i, reply,
     ))?)
@@ -48,6 +48,6 @@ pub async fn check_auth(users: &Users, data: ClientTokenRequest) -> Result<Strin
 pub fn check(users: &Users, message: ClientMessage) -> Result<Command> {
     let user = users
         .get_user(&message.addon)
-        .ok_or(anyhow!("NotAuth"))?;
+        .ok_or_else(|| anyhow!("NotAuth"))?;
     user.permissions(message.command)
 }
