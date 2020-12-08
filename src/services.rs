@@ -61,7 +61,7 @@ impl ServerMessage {
         match dbo {
             Ok(object) => ServerMessage {
                 id,
-                command: command,
+                command,
                 data: MessageData::DBData(object),
                 error: String::new(),
             },
