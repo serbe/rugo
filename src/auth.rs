@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use anyhow::{anyhow, Result};
+use serde::{Deserialize, Serialize};
 
 use crate::services::{ClientMessage, Command, ServerMessage};
 use crate::users::Users;

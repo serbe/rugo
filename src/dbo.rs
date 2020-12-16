@@ -1,8 +1,8 @@
 use std::fmt;
 
+use anyhow::{anyhow, Result};
 use deadpool_postgres::Client;
 use serde::{Deserialize, Serialize};
-use anyhow::{Result, anyhow};
 
 use crate::rpel::certificate::{Certificate, CertificateList};
 use crate::rpel::company::{Company, CompanyList};
@@ -234,9 +234,7 @@ pub async fn delete_item(item: &Item, client: &Client) -> Result<i64> {
         "Siren" => Siren::delete(client, item.id).await,
         "Siren_type" => SirenType::delete(client, item.id).await,
         "User" => User::delete(client, item.id).await,
-        _ => {
-            return Err(anyhow!("BadRequest bad path {:?}", item.name))
-        }
+        _ => return Err(anyhow!("BadRequest bad path {:?}", item.name)),
     }?;
     Ok(res as i64)
 }

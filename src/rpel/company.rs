@@ -1,7 +1,7 @@
+use anyhow::Result;
 use chrono::{Local, NaiveDate, NaiveDateTime};
 use deadpool_postgres::Client;
 use serde::{Deserialize, Serialize};
-use anyhow::Result;
 
 use crate::rpel::contact::ContactShort;
 use crate::rpel::email::Email;

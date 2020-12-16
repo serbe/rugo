@@ -55,10 +55,7 @@ impl Department {
         Ok(department)
     }
 
-    pub async fn insert(
-        client: &Client,
-        department: Department,
-    ) -> Result<Department> {
+    pub async fn insert(client: &Client, department: Department) -> Result<Department> {
         let mut department = department;
         let stmt = client
             .prepare(

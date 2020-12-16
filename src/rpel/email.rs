@@ -58,11 +58,7 @@ impl Email {
             .await?)
     }
 
-    pub async fn update_contacts(
-        client: &Client,
-        id: i64,
-        emails: Vec<String>,
-    ) -> Result<()> {
+    pub async fn update_contacts(client: &Client, id: i64, emails: Vec<String>) -> Result<()> {
         Email::delete_contacts(client, id).await?;
         for value in emails {
             let mut email = Email::new();
@@ -73,11 +69,7 @@ impl Email {
         Ok(())
     }
 
-    pub async fn update_companies(
-        client: &Client,
-        id: i64,
-        emails: Vec<String>,
-    ) -> Result<()> {
+    pub async fn update_companies(client: &Client, id: i64, emails: Vec<String>) -> Result<()> {
         Email::delete_companies(client, id).await?;
         for value in emails {
             let mut email = Email::new();

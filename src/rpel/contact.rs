@@ -1,7 +1,7 @@
+use anyhow::Result;
 use chrono::{Local, NaiveDate, NaiveDateTime};
 use deadpool_postgres::Client;
 use serde::{Deserialize, Serialize};
-use anyhow::Result;
 
 use crate::rpel::email::Email;
 use crate::rpel::phone::Phone;
@@ -279,10 +279,7 @@ impl ContactList {
 }
 
 impl ContactShort {
-    pub async fn get_by_company(
-        client: &Client,
-        company_id: i64,
-    ) -> Result<Vec<ContactShort>> {
+    pub async fn get_by_company(client: &Client, company_id: i64) -> Result<Vec<ContactShort>> {
         let mut contacts = Vec::new();
         let stmt = client
             .prepare(

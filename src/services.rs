@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::auth::{check, Check, Token};
 use crate::dbo::{delete_item, get_item, get_list, insert_item, update_item, DBObject};
-use anyhow::Result;
 use crate::users::Users;
+use anyhow::Result;
 
 #[derive(Deserialize)]
 pub struct ClientMessage {
@@ -53,11 +53,7 @@ pub struct ServerMessage {
 }
 
 impl ServerMessage {
-    pub fn from_dbo(
-        id: i64,
-        command: String,
-        dbo: Result<DBObject>,
-    ) -> ServerMessage {
+    pub fn from_dbo(id: i64, command: String, dbo: Result<DBObject>) -> ServerMessage {
         match dbo {
             Ok(object) => ServerMessage {
                 id,
@@ -134,11 +130,7 @@ impl ServerMessage {
     // }
 }
 
-pub async fn get_response(
-    users: &Users,
-    msg: ClientMessage,
-    db: Pool,
-) -> Result<String> {
+pub async fn get_response(users: &Users, msg: ClientMessage, db: Pool) -> Result<String> {
     let id = msg.id;
     let cmd = check(users, msg)?;
     let client = db.get().await?;

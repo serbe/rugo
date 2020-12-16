@@ -1,5 +1,6 @@
 use std::net::SocketAddr;
 
+use anyhow::Result;
 use deadpool_postgres::Pool;
 use futures::StreamExt;
 use futures_util::sink::SinkExt;
@@ -8,7 +9,6 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::{accept_async, tungstenite::Message, WebSocketStream};
 
 use auth::{check_auth, login};
-use anyhow::Result;
 use rpel::get_pool;
 use services::get_response;
 use users::Users;

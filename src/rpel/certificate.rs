@@ -1,7 +1,7 @@
+use anyhow::Result;
 use chrono::{Local, NaiveDate, NaiveDateTime};
 use deadpool_postgres::Client;
 use serde::{Deserialize, Serialize};
-use anyhow::Result;
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Certificate {
@@ -67,10 +67,7 @@ impl Certificate {
         Ok(certificate)
     }
 
-    pub async fn insert(
-        client: &Client,
-        certificate: Certificate,
-    ) -> Result<Certificate> {
+    pub async fn insert(client: &Client, certificate: Certificate) -> Result<Certificate> {
         let mut certificate = certificate;
         let stmt = client
             .prepare(

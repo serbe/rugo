@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use std::iter;
 
+use anyhow::{anyhow, Result};
 use deadpool_postgres::Pool;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use serde::{Deserialize, Serialize};
-use anyhow::{anyhow, Result};
 
 use crate::rpel::user::{User, UserList};
 use crate::services::Command;

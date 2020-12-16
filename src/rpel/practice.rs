@@ -222,10 +222,7 @@ impl PracticeList {
         Ok(practices)
     }
 
-    pub async fn get_by_company(
-        client: &Client,
-        company_id: i64,
-    ) -> Result<Vec<PracticeList>> {
+    pub async fn get_by_company(client: &Client, company_id: i64) -> Result<Vec<PracticeList>> {
         let mut practices = Vec::new();
         let stmt = client
             .prepare(
