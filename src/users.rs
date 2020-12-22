@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::iter;
 
 use anyhow::{anyhow, Result};
 use deadpool_postgres::Pool;
@@ -66,9 +65,10 @@ impl Users {
         let users = UserList::get_all(&client).await?;
         let mut map = HashMap::new();
         for user in users {
-            let key = iter::repeat(())
-                .map(|()| rng.sample(Alphanumeric))
+            let key = (&mut rng)
+                .sample_iter(Alphanumeric)
                 .take(20)
+                .map(char::from)
                 .collect();
             map.insert(
                 key,

@@ -15,10 +15,11 @@ use users::Users;
 
 mod auth;
 mod dbo;
-// mod error;
 mod rpel;
 mod services;
 mod users;
+
+// mod error;
 
 async fn accept_connection(peer: SocketAddr, stream: TcpStream, pool: Pool, users: Users) {
     if let Err(e) = handle_connection(peer, stream, pool, &users).await {
