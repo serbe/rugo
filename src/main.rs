@@ -54,9 +54,10 @@ async fn handle_connection(
 
     while let Some(msg) = ws_stream.next().await {
         let msg = msg?;
+
         let text = msg.to_text()?;
 
-        info!("ws_stream.next {:?}", &text);
+        info!("ws_stream.next() text {:?}", &text);
 
         if let Ok(checked_data) = serde_json::from_str(text) {
             let a = send_message(&mut ws_stream, check_auth(users, checked_data).await).await;
